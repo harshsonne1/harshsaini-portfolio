@@ -1,0 +1,209 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #0a0a0b;
+  --color-surface: #131316;
+  --color-border: #26262b;
+  --color-fg: #ededef;
+  --color-muted: #9a9aa3;
+  --color-accent: #6366f1;
+  --color-accent-fg: #ffffff;
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif;
+}
+
+/* Light theme (opt-in via data-theme on <html>, set by the hero ◐ toggle).
+   Overrides the Tailwind color tokens so content stays readable. */
+:root[data-theme="light"] {
+  --color-bg: #ebebeb;
+  --color-surface: #ffffff;
+  --color-border: #dcdcd6;
+  --color-fg: #1a1a19;
+  --color-muted: #56565e;
+  --color-accent: #4f46e5;
+  --color-accent-fg: #ffffff;
+}
+
+html {
+  scroll-behavior: smooth;
+  /* base color behind the fixed .page-bg; follows the theme */
+  background-color: #0a0a0a;
+}
+:root[data-theme="light"] {
+  background-color: #ebebeb;
+}
+
+body {
+  /* transparent so the fixed .page-bg (z-index:-1) is never occluded */
+  background-color: transparent;
+  color: var(--color-fg);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ---- Page background: gradient + animated noise, one layer for the whole
+   page (hero + sections) so there's no seam. Follows the theme. ---- */
+.page-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+.page-bg__layer {
+  position: absolute;
+  inset: 0;
+}
+/* gradient base — a hint of depth from the top */
+.page-bg__gradient {
+  background: linear-gradient(to bottom, #101013, #0a0a0a 60%);
+}
+:root[data-theme="light"] .page-bg__gradient {
+  background: linear-gradient(to bottom, #f2f2ef, #e2e2dd 60%);
+}
+/* animated film grain — darkens on light, lightens on dark, so it reads on both */
+.page-bg__noise {
+  background-image: url("/noise.gif");
+  opacity: 0.05;
+  mix-blend-mode: screen;
+}
+:root[data-theme="light"] .page-bg__noise {
+  opacity: 0.06;
+  mix-blend-mode: multiply;
+}
+
+/* ---- Hero wordmark (font-hero-1 + font-pixel first letter) ---- */
+.font-hero-1 {
+  font-family: var(--font-hero), ui-sans-serif, system-ui, sans-serif;
+  /* Medium — matches the reference's Neue Montreal weight, not full Bold */
+  font-weight: 500;
+}
+.font-pixel {
+  font-family: var(--font-pixel), ui-monospace, monospace;
+  font-weight: 700;
+}
+/* the big DESIGN ENGINEER / PRODUCT DESIGNER wordmark — Chakra Petch */
+.font-wordmark {
+  font-family: var(--font-pixel), ui-monospace, monospace;
+  font-weight: 500;
+}
+/* section separator hairline — visible in both themes */
+.hairline {
+  background-color: rgba(248, 248, 247, 0.12);
+}
+:root[data-theme="light"] .hairline {
+  background-color: rgba(26, 26, 25, 0.16);
+}
+.leading-tighter {
+  line-height: 0.88;
+}
+/* clip-reveal: each line slides up from within its clipped box on load */
+@keyframes heroReveal {
+  from {
+    transform: translateY(110%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+.hero-line {
+  animation: heroReveal 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+/* periodic glitch flicker on the font-pixel first letters */
+@keyframes pixelFlicker {
+  0%,
+  86%,
+  100% {
+    opacity: 1;
+  }
+  87% {
+    opacity: 0.15;
+  }
+  88% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 0.45;
+  }
+  91% {
+    opacity: 1;
+  }
+  93% {
+    opacity: 0.7;
+  }
+  94% {
+    opacity: 1;
+  }
+}
+.hero-pixel {
+  animation: pixelFlicker 4.5s ease-in-out infinite;
+}
+
+/* ---- TargetCursor (React Bits) ---- */
+.target-cursor-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  z-index: 9999;
+  mix-blend-mode: difference;
+  transform: translate(-50%, -50%);
+}
+.target-cursor-dot {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 4px;
+  height: 4px;
+  background: #fff;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  will-change: transform;
+}
+.target-cursor-corner {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  border: 3px solid #fff;
+  will-change: transform;
+}
+.corner-tl {
+  transform: translate(-150%, -150%);
+  border-right: none;
+  border-bottom: none;
+}
+.corner-tr {
+  transform: translate(50%, -150%);
+  border-left: none;
+  border-bottom: none;
+}
+.corner-br {
+  transform: translate(50%, 50%);
+  border-left: none;
+  border-top: none;
+}
+.corner-bl {
+  transform: translate(-150%, 50%);
+  border-right: none;
+  border-top: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  /* freeze the animated grain for reduced-motion users */
+  .page-bg__noise {
+    background-image: none;
+  }
+  /* skip the reveal / flicker — show the wordmark in place */
+  .hero-line,
+  .hero-pixel {
+    animation: none;
+  }
+}
