@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Space_Grotesk, Chakra_Petch } from "next/font/google";
+import localFont from "next/font/local";
 import { site } from "@/content/site";
 import { PageBackground } from "@/components/PageBackground";
 import "./globals.css";
@@ -18,6 +19,12 @@ const fontPixel = Chakra_Petch({
   variable: "--font-pixel",
   display: "swap",
 });
+// font-monoska: the big wordmark (DESIGN ENGINEER / PRODUCT DESIGNER) + H / S
+const fontMonoska = localFont({
+  src: "./fonts/Monoska.ttf",
+  variable: "--font-monoska",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: `${site.name} — ${site.role}`,
@@ -29,12 +36,22 @@ export const metadata: Metadata = {
   },
 };
 
+// Blocking script: apply the persisted theme to <html> before first paint, so
+// the page (and the page-load skeleton) come up in the selected mode with no
+// flash. Defaults to dark. Kept tiny and inline so it runs before hydration.
+const themeInit = `(function(){try{var t=localStorage.getItem('theme');document.documentElement.dataset.theme=(t==='light'||t==='dark')?t:'dark';}catch(e){document.documentElement.dataset.theme='dark';}})();`;
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${fontHero.variable} ${fontPixel.variable}`}>
+    <html
+      lang="en"
+      className={`${fontHero.variable} ${fontPixel.variable} ${fontMonoska.variable}`}
+      suppressHydrationWarning
+    >
       <body>
+        <script dangerouslySetInnerHTML={{ __html: themeInit }} />
         <PageBackground />
         {children}
       </body>

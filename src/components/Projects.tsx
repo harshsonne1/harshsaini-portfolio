@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { projects, stats } from "@/content/site";
+import { projects } from "@/content/site";
 import TargetCursor from "./TargetCursor";
 
 // gradient placeholders for tiles without an image (cycled by index)
@@ -21,7 +21,7 @@ export function Projects() {
       id="projects"
       onMouseEnter={() => setCursorOn(true)}
       onMouseLeave={() => setCursorOn(false)}
-      className="relative scroll-mt-20 px-6 py-20 sm:px-8 sm:py-28"
+      className="relative scroll-mt-20 px-4 py-20 sm:py-28"
     >
       {cursorOn && (
         <TargetCursor
@@ -35,18 +35,11 @@ export function Projects() {
       )}
 
       <div>
-        {/* header: title + stats */}
-        <div className="mb-14 flex items-start justify-between gap-6">
+        {/* header: title */}
+        <div className="mb-14">
           <h2 className="font-hero-1 text-4xl leading-none text-fg sm:text-5xl">
-            <span className="font-pixel">W</span>ork
+            <span className="font-wordmark">W</span>ork
           </h2>
-          <div className="text-left font-mono text-xs uppercase leading-relaxed tracking-wider text-muted sm:text-sm">
-            {stats.map((s) => (
-              <div key={s.label}>
-                {s.label}: {s.value}
-              </div>
-            ))}
-          </div>
         </div>
 
         {/* tiles in a row (stacks only on small screens) */}
@@ -84,9 +77,9 @@ export function Projects() {
                       {project.year}
                     </div>
                   )}
-                  <h3 className="mt-2 font-hero-1 text-2xl text-fg sm:text-3xl">
-                    <span className="font-pixel">{project.title.charAt(0)}</span>
-                    {project.title.slice(1)}
+                  {/* UI sans-serif (body font) — no display/pixel treatment */}
+                  <h3 className="mt-2 text-2xl text-fg sm:text-3xl">
+                    {project.title}
                   </h3>
                   <p className="mt-2 max-w-md text-sm leading-relaxed text-muted">
                     {project.description}

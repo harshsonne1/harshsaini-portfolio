@@ -25,6 +25,14 @@
   --color-accent-fg: #ffffff;
 }
 
+/* page-load shimmer stroke color — dark by default, muted grey in light mode */
+:root {
+  --loader-stroke: #000000;
+}
+:root[data-theme="light"] {
+  --loader-stroke: #56565e;
+}
+
 html {
   scroll-behavior: smooth;
   /* base color behind the fixed .page-bg; follows the theme */
@@ -83,11 +91,45 @@ body {
   font-family: var(--font-pixel), ui-monospace, monospace;
   font-weight: 700;
 }
-/* the big DESIGN ENGINEER / PRODUCT DESIGNER wordmark — Chakra Petch */
+/* the big DESIGN ENGINEER / PRODUCT DESIGNER wordmark + footer H / S — Monoska */
 .font-wordmark {
-  font-family: var(--font-pixel), ui-monospace, monospace;
-  font-weight: 500;
+  font-family: var(--font-monoska), ui-monospace, monospace;
+  font-weight: normal;
 }
+/* hero CMYK bloom canvas — blend/opacity follow the theme (was inline React
+   state; moved here so AsciiHero's render is theme-independent) */
+.hero-glow {
+  opacity: 0.6;
+  mix-blend-mode: screen;
+}
+:root[data-theme="light"] .hero-glow {
+  opacity: 0.5;
+  mix-blend-mode: multiply;
+}
+
+/* Experience separator — draws in from the left when scrolled into view */
+.exp-line {
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.exp-line.is-drawn {
+  transform: scaleX(1);
+}
+
+/* hero vertical guide lines — faint hairlines flanking the portrait, both themes */
+.hero-guide {
+  background-color: rgba(248, 248, 247, 0.08);
+}
+:root[data-theme="light"] .hero-guide {
+  background-color: rgba(26, 26, 25, 0.1);
+}
+
+/* HorizontalLineLoader — dark-mode only; hidden when the light theme is active */
+:root[data-theme="light"] .hll {
+  display: none;
+}
+
 /* section separator hairline — visible in both themes */
 .hairline {
   background-color: rgba(248, 248, 247, 0.12);
@@ -98,6 +140,39 @@ body {
 .leading-tighter {
   line-height: 0.88;
 }
+/* ---- Intro choreography (runs after the LayoutSkeleton loader clears) ----
+   Loader reveals the noise background (~1.5s), then:
+     1.5s  portrait + vertical guide lines fade in   (.hero-reveal)
+     2.2s  DESIGN ENGINEER / PRODUCT DESIGNER slide up (.hero-line delay, .title-intro fade)
+     2.4s  nav bar drops in from the top             (.nav-intro)              */
+@keyframes introFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes navDrop {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+.hero-reveal {
+  animation: introFade 0.9s ease-out 1.5s both;
+}
+.title-intro {
+  animation: introFade 0.7s ease-out 2.2s both;
+}
+.nav-intro {
+  animation: navDrop 0.7s cubic-bezier(0.16, 1, 0.3, 1) 2.4s both;
+}
+
 /* clip-reveal: each line slides up from within its clipped box on load */
 @keyframes heroReveal {
   from {
@@ -201,9 +276,17 @@ body {
   .page-bg__noise {
     background-image: none;
   }
-  /* skip the reveal / flicker — show the wordmark in place */
+  /* skip the reveal / flicker / intro choreography — show everything in place */
   .hero-line,
-  .hero-pixel {
+  .hero-pixel,
+  .hero-reveal,
+  .title-intro,
+  .nav-intro {
     animation: none;
+  }
+  /* show the experience separators fully, no draw-in */
+  .exp-line {
+    transform: none;
+    transition: none;
   }
 }

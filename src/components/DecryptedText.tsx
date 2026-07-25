@@ -45,6 +45,9 @@ type DecryptedTextProps = {
   clickMode?: "once" | "toggle";
   /* auto-run the scramble on a repeating interval (ms), on top of animateOn */
   intervalMs?: number;
+  /* imperative sync trigger: whenever this value changes, run one scramble.
+     Lets several instances glitch in lockstep from a single shared timer. */
+  glitchKey?: number;
 } & Omit<HTMLAttributes<HTMLSpanElement>, "className">;
 
 export default function DecryptedText({
@@ -61,6 +64,7 @@ export default function DecryptedText({
   animateOn = "hover",
   clickMode = "once",
   intervalMs,
+  glitchKey,
   ...props
 }: DecryptedTextProps) {
   const [displayText, setDisplayText] = useState(text);
@@ -354,6 +358,15 @@ export default function DecryptedText({
     const id = setInterval(() => triggerRef.current(), intervalMs);
     return () => clearInterval(id);
   }, [intervalMs]);
+
+  // synchronized external trigger — scramble once whenever glitchKey changes
+  // (skips the initial value so it only fires on subsequent ticks)
+  const prevGlitchKey = useRef(glitchKey);
+  useEffect(() => {
+    if (glitchKey === undefined || prevGlitchKey.current === glitchKey) return;
+    prevGlitchKey.current = glitchKey;
+    triggerRef.current();
+  }, [glitchKey]);
 
   useEffect(() => {
     if (animateOn !== "view" && animateOn !== "inViewHover") return;

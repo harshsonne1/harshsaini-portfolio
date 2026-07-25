@@ -6,8 +6,8 @@ export const site = {
   tagline:
     "I build fast, accessible web experiences — from pixel-perfect interfaces to the systems behind them.",
   location: "India",
-  email: "hello@harshsaini.dev",
-  resumeUrl: "#",
+  email: "harshsonne1@gmail.com",
+  resumeUrl: "/resume.pdf",
   socials: {
     github: "https://github.com/harshsonne1",
     instagram: "https://www.instagram.com/harsh.saini/",
@@ -54,13 +54,6 @@ export const skills: Skill[] = [
   },
 ];
 
-// Stats shown in the Work section header (edit to your real numbers).
-export const stats = [
-  { label: "PROJECTS", value: "> 100 DEPLOYED" },
-  { label: "USERS_SERVED", value: "1.2M+" },
-  { label: "A/B TESTS", value: "450+" },
-] as const;
-
 export type Project = {
   title: string;
   description: string;
@@ -88,5 +81,44 @@ export const projects: Project[] = [
       "Multidisciplinary studio work across brand, web, and product for a range of clients.",
     tags: ["Brand", "Web", "Product"],
     link: "#",
+  },
+];
+
+export type Experience = {
+  period: string;
+  role: string;
+  company: string;
+  description: string;
+};
+
+// derived from the LinkedIn experience section
+export const experience: Experience[] = [
+  {
+    period: "Oct 2025 - Present",
+    role: "Product Designer",
+    company: "ShopOS",
+    description:
+      "Product designer at ShopOS — a full-time, on-site role in Bangalore, working across Vibe Design, agentic workflows, and the systems that support them.",
+  },
+  {
+    period: "Nov 2024 - Oct 2025",
+    role: "UI/UX Designer",
+    company: "SketchMonk",
+    description:
+      "Remote UI/UX designer at SketchMonk, focused on user experience design (UED) and UI design across product work.",
+  },
+  {
+    period: "Oct 2024 - Jan 2025",
+    role: "Freelance Designer",
+    company: "Digitow Design Studio",
+    description:
+      "Part-time freelance designer with Digitow Design Studio (remote), working across user interface design and Lean UX.",
+  },
+  {
+    period: "Apr 2024 - Oct 2024",
+    role: "Product Design Fellow",
+    company: "ownpath",
+    description:
+      "Product design fellowship at ownpath — a remote internship building foundations in Figma, UX research, and design craft.",
   },
 ];

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { HeroNav } from "./HeroNav";
 import { HeroTitle } from "./HeroTitle";
+import DecryptedText from "./DecryptedText";
 
 /* =====================================================================
    ShopOS ASCII portrait engine (v16) ported to React.
@@ -586,17 +587,29 @@ void main(){
   };
 }
 
+// read the theme already applied to <html> by the blocking init script in the
+// layout; falls back to dark (also the SSR value, so hydration stays stable)
+function getInitialTheme(): "light" | "dark" {
+  if (typeof document === "undefined") return "dark";
+  return document.documentElement.dataset.theme === "light" ? "light" : "dark";
+}
+
 export function AsciiHero() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const glowRef = useRef<HTMLCanvasElement>(null);
   const handleRef = useRef<AsciiHeroHandle | null>(null);
-  const [theme, setTheme] = useState<"light" | "dark">("dark");
+  const [theme, setTheme] = useState<"light" | "dark">(getInitialTheme);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     try {
-      handleRef.current = asciiHero(canvas, { light: 0 }, glowRef.current);
+      const mode = getInitialTheme();
+      handleRef.current = asciiHero(
+        canvas,
+        { light: mode === "light" ? 1 : 0 },
+        glowRef.current,
+      );
       handleRef.current?.setImage("/portrait.png");
     } catch {
       /* WebGL2 unavailable — hero shows a bare background */
@@ -607,9 +620,15 @@ export function AsciiHero() {
     };
   }, []);
 
-  // the hero toggle is the single source of truth for the whole page theme
+  // the hero toggle is the single source of truth for the whole page theme;
+  // persist the choice so a refresh comes up in the same mode
   useEffect(() => {
     document.documentElement.dataset.theme = theme;
+    try {
+      localStorage.setItem("theme", theme);
+    } catch {
+      /* storage unavailable (private mode) — theme just won't persist */
+    }
   }, [theme]);
 
   function toggleTheme() {
@@ -618,51 +637,79 @@ export function AsciiHero() {
     handleRef.current?.setTheme(next);
   }
 
-  const isLight = theme === "light";
-
   return (
     <>
       {/* fixed, page-wide nav — kept outside the hero's overflow-hidden section */}
-      <HeroNav theme={theme} onToggleTheme={toggleTheme} />
+      <HeroNav />
       <section
         id="top"
         className="relative h-[100svh] min-h-[600px] w-full overflow-hidden"
       >
+        {/* version + theme toggle — inside the hero (NOT the fixed nav), so they
+            scroll away with the hero. V1.0 auto-runs the decrypt every 5s. */}
+        <div className="nav-intro pointer-events-none absolute right-4 top-20 z-[1250] flex flex-col items-end gap-3 sm:top-24">
+          <div className="pointer-events-auto hidden text-right text-xs leading-tight text-muted sm:block">
+            <DecryptedText
+              text="V1.0"
+              animateOn="hover"
+              intervalMs={5000}
+              speed={45}
+            />
+          </div>
+          <button
+            type="button"
+            onClick={toggleTheme}
+            title="Toggle light / dark"
+            aria-label="Toggle light / dark"
+            className="pointer-events-auto grid h-9 w-9 place-items-center rounded-full border border-border text-[15px] text-fg transition-colors hover:border-fg/40"
+          >
+            ◐
+          </button>
+        </div>
         {/* transparent — the uniform page background (PageBackground) shows through */}
-        {/* CMYK bloom — downscaled copy of the render, blurred + blended */}
-        <canvas
-          ref={glowRef}
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 z-[1] block h-full w-full"
-          style={{
-            filter: "blur(8px)",
-            opacity: isLight ? 0.5 : 0.6,
-            mixBlendMode: isLight ? "multiply" : "screen",
-          }}
-        />
-        {/* sharp render — a hair of blur removes the pixel-perfect digital edge */}
-        <canvas
-          ref={canvasRef}
-          aria-hidden="true"
-          className="absolute inset-0 z-[2] block h-full w-full cursor-crosshair"
-          style={{ filter: "blur(0.35px)" }}
-        />
+        {/* intro step 1: portrait + vertical lines fade in together after the
+            loader has revealed the background (see .hero-reveal in globals.css) */}
+        <div className="hero-reveal absolute inset-0">
+          {/* two faint vertical guide lines flanking the portrait; sit behind the
+              canvases so the glyphs render over them like the reference */}
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 z-0"
+          >
+            <span className="hero-guide absolute inset-y-0 left-[calc(18%-25px)] w-px" />
+            <span className="hero-guide absolute inset-y-0 right-[calc(18%-25px)] w-px" />
+          </div>
+          {/* CMYK bloom — downscaled copy of the render, blurred + blended */}
+          <canvas
+            ref={glowRef}
+            aria-hidden="true"
+            className="hero-glow pointer-events-none absolute inset-0 z-[1] block h-full w-full"
+            style={{ filter: "blur(8px)" }}
+          />
+          {/* sharp render — a hair of blur removes the pixel-perfect digital edge */}
+          <canvas
+            ref={canvasRef}
+            aria-hidden="true"
+            className="absolute inset-0 z-[2] block h-full w-full"
+            style={{ filter: "blur(0.35px)" }}
+          />
+        </div>
         {/* bottom-corner wordmark — z above the page GradualBlur (z-index 1100)
             so the type stays crisp on top while the blur fades everything else */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[1200] flex items-end justify-between gap-4 p-6 sm:p-8">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-[1200] flex items-end justify-between gap-4 p-4">
           <HeroTitle
             index="01"
             lines={["Design", "Engineer"]}
             align="left"
             label="Design Engineer"
-            flickerOffset={0}
+            glitchBase={4300}
           />
           <HeroTitle
             index="02"
             lines={["Product", "Designer"]}
             align="right"
             label="Product Designer"
-            flickerOffset={1.1}
+            glitchBase={5100}
           />
         </div>
       </section>
