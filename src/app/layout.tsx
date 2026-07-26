@@ -29,6 +29,21 @@ const fontMonoska = localFont({
 export const metadata: Metadata = {
   title: `${site.name} — ${site.role}`,
   description: site.tagline,
+  // favicon swaps with the browser's color scheme
+  icons: {
+    icon: [
+      {
+        url: "/favicon-lightmode.webp",
+        type: "image/webp",
+        media: "(prefers-color-scheme: light)",
+      },
+      {
+        url: "/favicon-darkmode.webp",
+        type: "image/webp",
+        media: "(prefers-color-scheme: dark)",
+      },
+    ],
+  },
   openGraph: {
     title: `${site.name} — ${site.role}`,
     description: site.tagline,
