@@ -54,7 +54,10 @@ export const metadata: Metadata = {
 // Blocking script: apply the persisted theme to <html> before first paint, so
 // the page (and the page-load skeleton) come up in the selected mode with no
 // flash. Defaults to dark. Kept tiny and inline so it runs before hydration.
-const themeInit = `(function(){try{var t=localStorage.getItem('theme');document.documentElement.dataset.theme=(t==='light'||t==='dark')?t:'dark';}catch(e){document.documentElement.dataset.theme='dark';}})();`;
+// Also arms the scroll reveals (see ScrollReveal.tsx) — gating their hidden
+// state on a scripted class keeps content visible if the script never runs,
+// and setting it here rather than on mount avoids a flash of revealed content.
+const themeInit = `(function(){try{var t=localStorage.getItem('theme');document.documentElement.dataset.theme=(t==='light'||t==='dark')?t:'dark';}catch(e){document.documentElement.dataset.theme='dark';}document.documentElement.classList.add('js-reveal');})();`;
 
 export default function RootLayout({
   children,

@@ -8,6 +8,7 @@ import LayoutSkeleton from "@/components/LayoutSkeleton";
 import HorizontalLineLoader from "@/components/HorizontalLineLoader";
 import { BracketLink } from "@/components/BracketLink";
 import { PageBlur } from "@/components/PageBlur";
+import ScrollReveal from "@/components/ScrollReveal";
 import GlitchInitial from "@/components/GlitchInitial";
 
 type Params = { params: Promise<{ slug: string }> };
@@ -45,6 +46,7 @@ export default async function CaseStudy({ params }: Params) {
     <>
       {/* same page-load shimmer as the home page */}
       <LayoutSkeleton color="var(--loader-stroke)" />
+      <ScrollReveal />
       <HeroNav compact />
 
       <main className="px-4 pt-28 sm:pt-36">
@@ -117,7 +119,7 @@ export default async function CaseStudy({ params }: Params) {
       </main>
 
       <div className="mt-24 px-4">
-        <div className="hairline h-px w-full" />
+        <div data-reveal="line" className="hairline h-px w-full" />
       </div>
       <Footer />
 

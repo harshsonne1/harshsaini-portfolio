@@ -18,7 +18,8 @@
 :root[data-theme="light"] {
   --color-bg: #ebebeb;
   --color-surface: #ffffff;
-  --color-border: #dcdcd6;
+  /* #dcdcd6 sat too close to the light background to read as a line */
+  --color-border: #cdcdc5;
   --color-fg: #1a1a19;
   --color-muted: #56565e;
   --color-accent: #4f46e5;
@@ -109,13 +110,76 @@ body {
   mix-blend-mode: multiply;
 }
 
-/* Experience separator — draws in from the left when scrolled into view */
-.exp-line {
+/* ---- Scroll reveals (driven by ScrollReveal.tsx) ----
+   Gated on .js-reveal, which the pre-paint script in layout.tsx sets, so
+   nothing is left invisible if the script never runs. [data-reveal] animates
+   itself; [data-reveal-group] drives its [data-reveal-item] children off one
+   trigger. Stagger an element by setting --reveal-delay on it; every reveal
+   also waits out --reveal-base first, so nothing snaps the instant it crosses
+   the trigger line. */
+:root {
+  --reveal-base: 140ms;
+  --reveal-ease: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.js-reveal [data-reveal="up"],
+.js-reveal [data-reveal-item="up"] {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 0.8s var(--reveal-ease)
+      calc(var(--reveal-base) + var(--reveal-delay, 0ms)),
+    transform 0.8s var(--reveal-ease)
+      calc(var(--reveal-base) + var(--reveal-delay, 0ms));
+}
+.js-reveal [data-reveal="up"].is-in,
+.js-reveal [data-reveal-group].is-in [data-reveal-item="up"] {
+  opacity: 1;
+  transform: none;
+}
+
+/* left-to-right wipe — used for the project card media */
+.js-reveal [data-reveal="wipe"],
+.js-reveal [data-reveal-item="wipe"] {
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path 1.1s var(--reveal-ease)
+    calc(var(--reveal-base) + var(--reveal-delay, 0ms));
+}
+.js-reveal [data-reveal="wipe"].is-in,
+.js-reveal [data-reveal-group].is-in [data-reveal-item="wipe"] {
+  clip-path: inset(0 0 0 0);
+}
+
+/* per-line text reveal (LineReveal.tsx) — each measured line slides up from
+   behind its own mask. The padding/margin pair keeps descenders from being
+   clipped by the mask's overflow. */
+.line-mask {
+  display: block;
+  overflow: hidden;
+  padding-bottom: 0.12em;
+  margin-bottom: -0.12em;
+}
+.js-reveal [data-reveal-item="line-up"] {
+  transform: translateY(110%);
+  transition: transform 0.8s var(--reveal-ease)
+    calc(var(--reveal-base) + var(--reveal-delay, 0ms));
+}
+.js-reveal [data-reveal-group].is-in [data-reveal-item="line-up"] {
+  transform: none;
+}
+
+/* horizontal strokes — every hairline on the page (section breaks, the rule
+   above the footer, the experience separators) fills from the left edge to
+   full width. Not the HorizontalLineLoader, which runs its own sweep. */
+.js-reveal [data-reveal="line"],
+.js-reveal [data-reveal-item="line"] {
   transform: scaleX(0);
   transform-origin: left;
-  transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.9s var(--reveal-ease)
+    calc(var(--reveal-base) + var(--reveal-delay, 0ms));
 }
-.exp-line.is-drawn {
+.js-reveal [data-reveal="line"].is-in,
+.js-reveal [data-reveal-group].is-in [data-reveal-item="line"] {
   transform: scaleX(1);
 }
 
@@ -132,12 +196,23 @@ body {
   display: none;
 }
 
+/* Work card lift — a deep drop in dark mode; in light mode that same shadow
+   reads as grime, so it drops to a barely-there contact shadow. */
+.work-card {
+  box-shadow: 0 40px 90px -30px rgba(0, 0, 0, 0.5);
+}
+:root[data-theme="light"] .work-card {
+  box-shadow:
+    0 12px 28px -18px rgba(26, 26, 25, 0.18),
+    0 2px 6px -3px rgba(26, 26, 25, 0.08);
+}
+
 /* section separator hairline — visible in both themes */
 .hairline {
   background-color: rgba(248, 248, 247, 0.12);
 }
 :root[data-theme="light"] .hairline {
-  background-color: rgba(26, 26, 25, 0.16);
+  background-color: rgba(26, 26, 25, 0.22);
 }
 .leading-tighter {
   line-height: 0.88;
@@ -233,9 +308,12 @@ body {
   .nav-intro {
     animation: none;
   }
-  /* show the experience separators fully, no draw-in */
-  .exp-line {
-    transform: none;
-    transition: none;
+  /* show every scroll-reveal in place, no transition */
+  [data-reveal],
+  [data-reveal-item] {
+    opacity: 1 !important;
+    transform: none !important;
+    clip-path: none !important;
+    transition: none !important;
   }
 }

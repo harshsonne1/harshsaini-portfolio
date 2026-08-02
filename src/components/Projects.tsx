@@ -31,44 +31,64 @@ export function Projects() {
         <div className="grid grid-cols-1 gap-x-8 gap-y-12 md:grid-cols-2">
           {projects.map((project, i) => {
             return (
-              <div key={project.title}>
+              // one trigger per card: the media wipes in, then the copy rises
+              <div key={project.title} data-reveal-group>
                 {/* the tile opens the case study; the live site is linked from there */}
                 <Link
                   href={`/work/${project.slug}`}
                   data-cursor="View case"
                   aria-label={project.title}
-                  className="group relative block aspect-video w-full overflow-hidden shadow-[0_40px_90px_-30px_rgba(0,0,0,0.5)]"
+                  className="work-card group relative block aspect-video w-full overflow-hidden"
                 >
-                  {/* the frame stays put; only this media layer scales on hover */}
-                  <div
-                    className="absolute inset-0 transition-transform duration-700 ease-out group-hover:scale-[1.06]"
-                    style={
-                      project.image
-                        ? {
-                            backgroundImage: `url(${project.image})`,
-                            backgroundSize: "cover",
-                            backgroundPosition: "center",
-                          }
-                        : {
-                            background:
-                              TILE_GRADIENTS[i % TILE_GRADIENTS.length],
-                          }
-                    }
-                  />
+                  {/* wipe layer — kept separate from the link (whose drop shadow
+                      a clip-path would cut) and from the media layer (whose own
+                      transform transition it would override) */}
+                  <div data-reveal-item="wipe" className="absolute inset-0">
+                    {/* the frame stays put; only the media scales on hover */}
+                    <div
+                      className="absolute inset-0 transition-transform duration-700 ease-out group-hover:scale-[1.06]"
+                      style={
+                        project.image
+                          ? {
+                              backgroundImage: `url(${project.image})`,
+                              backgroundSize: "cover",
+                              backgroundPosition: "center",
+                            }
+                          : {
+                              background:
+                                TILE_GRADIENTS[i % TILE_GRADIENTS.length],
+                            }
+                      }
+                    />
+                  </div>
                 </Link>
 
-                {/* meta below the tile */}
+                {/* meta below the tile — rises once the wipe is underway */}
                 <div className="mt-5">
                   {project.year && (
-                    <div className="font-mono text-xs uppercase tracking-wider text-muted">
+                    <div
+                      data-reveal-item="up"
+                      style={
+                        { "--reveal-delay": "550ms" } as React.CSSProperties
+                      }
+                      className="font-mono text-xs uppercase tracking-wider text-muted"
+                    >
                       {project.year}
                     </div>
                   )}
                   {/* UI sans-serif (body font) — no display/pixel treatment */}
-                  <h3 className="mt-2 text-2xl text-fg sm:text-3xl">
+                  <h3
+                    data-reveal-item="up"
+                    style={{ "--reveal-delay": "650ms" } as React.CSSProperties}
+                    className="mt-2 text-2xl text-fg sm:text-3xl"
+                  >
                     {project.title}
                   </h3>
-                  <p className="mt-2 max-w-md text-sm leading-relaxed text-muted">
+                  <p
+                    data-reveal-item="up"
+                    style={{ "--reveal-delay": "750ms" } as React.CSSProperties}
+                    className="mt-2 max-w-md text-sm leading-relaxed text-muted"
+                  >
                     {project.description}
                   </p>
                 </div>
