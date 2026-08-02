@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
 import { projects } from "@/content/site";
-import TargetCursor from "./TargetCursor";
+import MagneticCursor from "./MagneticCursor";
+import GlitchInitial from "./GlitchInitial";
 
 // gradient placeholders for tiles without an image (cycled by index)
 const TILE_GRADIENTS = [
@@ -13,62 +14,48 @@ const TILE_GRADIENTS = [
 ];
 
 export function Projects() {
-  // the reticle cursor only takes over while the pointer is inside this section
-  const [cursorOn, setCursorOn] = useState(false);
-
   return (
-    <section
-      id="projects"
-      onMouseEnter={() => setCursorOn(true)}
-      onMouseLeave={() => setCursorOn(false)}
-      className="relative scroll-mt-20 px-4 py-20 sm:py-28"
-    >
-      {cursorOn && (
-        <TargetCursor
-          spinDuration={2}
-          hideDefaultCursor
-          parallaxOn
-          hoverDuration={0.2}
-          cursorColor="#ffffff"
-          cursorColorOnTarget="#B497CF"
-        />
-      )}
+    <section id="projects" className="relative scroll-mt-20 px-4 py-20 sm:py-28">
+      {/* label cursor — only appears over the project tiles */}
+      <MagneticCursor label="View case" size={150} triggerSelector="[data-cursor]" />
 
       <div>
         {/* header: title */}
         <div className="mb-14">
           <h2 className="font-hero-1 text-4xl leading-none text-fg sm:text-5xl">
-            <span className="font-wordmark">W</span>ork
+            <GlitchInitial letter="W" intervalMs={5200} />ork
           </h2>
         </div>
 
         {/* tiles in a row (stacks only on small screens) */}
         <div className="grid grid-cols-1 gap-x-8 gap-y-12 md:grid-cols-2">
           {projects.map((project, i) => {
-            const external = project.link?.startsWith("http");
             return (
               <div key={project.title}>
-                <a
-                  href={project.link || "#"}
-                  {...(external ? { target: "_blank", rel: "noreferrer" } : {})}
-                  className="cursor-target group relative block aspect-video w-full overflow-hidden shadow-[0_40px_90px_-30px_rgba(0,0,0,0.5)] transition-transform duration-500 ease-out hover:-translate-y-1"
-                  style={
-                    project.image
-                      ? {
-                          backgroundImage: `url(${project.image})`,
-                          backgroundSize: "cover",
-                          backgroundPosition: "center",
-                        }
-                      : { background: TILE_GRADIENTS[i % TILE_GRADIENTS.length] }
-                  }
+                {/* the tile opens the case study; the live site is linked from there */}
+                <Link
+                  href={`/work/${project.slug}`}
+                  data-cursor="View case"
+                  aria-label={project.title}
+                  className="group relative block aspect-video w-full overflow-hidden shadow-[0_40px_90px_-30px_rgba(0,0,0,0.5)]"
                 >
-                  {/* View case — fades in on hover */}
-                  <div className="pointer-events-none absolute inset-0 grid place-items-center opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                    <span className="bg-white/85 px-8 py-6 text-sm font-medium text-black">
-                      View case
-                    </span>
-                  </div>
-                </a>
+                  {/* the frame stays put; only this media layer scales on hover */}
+                  <div
+                    className="absolute inset-0 transition-transform duration-700 ease-out group-hover:scale-[1.06]"
+                    style={
+                      project.image
+                        ? {
+                            backgroundImage: `url(${project.image})`,
+                            backgroundSize: "cover",
+                            backgroundPosition: "center",
+                          }
+                        : {
+                            background:
+                              TILE_GRADIENTS[i % TILE_GRADIENTS.length],
+                          }
+                    }
+                  />
+                </Link>
 
                 {/* meta below the tile */}
                 <div className="mt-5">

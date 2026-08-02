@@ -8,8 +8,10 @@ import { ScheduleCTA } from "./ScheduleCTA";
 
 // characters the monogram flickers through mid-glitch (matches the hero letters)
 const GLITCH_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%&*";
+// H / S monogram — fluid type: 80px floor on phones, 18vw through tablet,
+// capped at the 200px desktop size (reached at a ~1111px viewport).
 const MONOGRAM =
-  "font-wordmark text-7xl leading-none text-fg sm:text-8xl md:text-9xl";
+  "font-wordmark block leading-none text-fg text-[clamp(5rem,18vw,200px)]";
 
 export function Footer() {
   const parts = site.name.trim().split(/\s+/);

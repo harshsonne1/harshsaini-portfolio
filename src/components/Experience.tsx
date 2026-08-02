@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { experience } from "@/content/site";
+import GlitchInitial from "./GlitchInitial";
 
 // Timeline of roles, mirroring the reference: a wide three-column row per job —
 // period (left), role + company (center), description (right). A hairline under
@@ -34,7 +35,7 @@ export function Experience() {
       className="relative scroll-mt-20 px-4 py-20 sm:py-28"
     >
       <h2 className="mb-12 font-hero-1 text-4xl leading-none text-fg sm:mb-16 sm:text-5xl">
-        <span className="font-wordmark">E</span>xperience
+        <GlitchInitial letter="E" intervalMs={5900} />xperience
       </h2>
 
       <div>

@@ -5,6 +5,7 @@ import { Experience } from "@/components/Experience";
 import { Footer } from "@/components/Footer";
 import HorizontalLineLoader from "@/components/HorizontalLineLoader";
 import LayoutSkeleton from "@/components/LayoutSkeleton";
+import { PageBlur } from "@/components/PageBlur";
 
 // inset hairline between sections — padding matches the content padding so the
 // line aligns with everything else instead of bleeding edge-to-edge
@@ -34,6 +35,9 @@ export default function Home() {
       </main>
       <SectionDivider />
       <Footer />
+
+      {/* page-wide bottom blur; hides itself once the footer is in view */}
+      <PageBlur />
 
       {/* faint sweeping line — dark mode only (hidden via .hll in light theme) */}
       <HorizontalLineLoader />

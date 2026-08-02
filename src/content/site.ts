@@ -55,32 +55,81 @@ export const skills: Skill[] = [
 ];
 
 export type Project = {
+  /* url segment — the case study lives at /work/<slug> */
+  slug: string;
   title: string;
   description: string;
   tags: string[];
   year?: string;
+  /* the live site, linked from the case study's Website field */
   link?: string;
   repo?: string;
   /* optional media; falls back to a generated gradient tile */
   image?: string;
+  /* ---- case study page ---- placeholder copy for now */
+  /* the opening statement, set large beside the wordmark */
+  statement?: string;
+  industry?: string;
+  scope?: string;
+  /* short body sections under the cover */
+  body?: { heading: string; text: string }[];
 };
 
 export const projects: Project[] = [
   {
+    slug: "shopos",
     title: "ShopOS.ai",
     year: "2024 — Present",
     description:
       "Designing an AI-native commerce platform — from zero-to-one product flows to a design system that scales.",
     tags: ["Product Design", "Design Systems"],
     link: "https://shopos.ai",
+    image: "/cover-ShopOS.webp",
+    statement:
+      "Commerce tooling had grown dense and hard to move through. I wanted an AI-native surface that did the heavy lifting quietly, and still left the merchant in control.",
+    industry: "AI, Commerce",
+    scope: "Product Design, Design Systems",
+    body: [
+      {
+        heading: "Context",
+        text: "Placeholder copy. The team needed a product surface that could absorb agentic workflows without the interface turning into a control panel.",
+      },
+      {
+        heading: "Approach",
+        text: "Placeholder copy. Zero-to-one flows first, then the primitives underneath them — tokens, layout rules, and a component set the team could extend on its own.",
+      },
+      {
+        heading: "Outcome",
+        text: "Placeholder copy. A system that scales across new surfaces, and a shared language between design and engineering.",
+      },
+    ],
   },
   {
-    title: "Digimonk Design Studio",
+    slug: "sketchmonk",
+    title: "SketchMonk Design Studio",
     year: "2022 — 2024",
     description:
       "Multidisciplinary studio work across brand, web, and product for a range of clients.",
     tags: ["Brand", "Web", "Product"],
-    link: "#",
+    image: "/cover-SKM.webp",
+    statement:
+      "Studio work moves fast and rarely twice the same way. The craft was in finding the through-line — one voice across brand, web, and product for very different clients.",
+    industry: "Studio, Brand",
+    scope: "Brand, Web, Product",
+    body: [
+      {
+        heading: "Context",
+        text: "Placeholder copy. A range of clients, each arriving with a different problem and a different appetite for design.",
+      },
+      {
+        heading: "Approach",
+        text: "Placeholder copy. Set the brand foundations early, then let the web and product work inherit them rather than reinvent per project.",
+      },
+      {
+        heading: "Outcome",
+        text: "Placeholder copy. Faster starts on new engagements, and work that reads as one studio rather than a portfolio of one-offs.",
+      },
+    ],
   },
 ];
 
