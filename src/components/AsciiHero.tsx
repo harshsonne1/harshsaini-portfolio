@@ -50,6 +50,30 @@ function asciiHero(
       misreg: 0.9 /* static plate offset, in cells */,
       inkStrength: 1.15,
       saturation: 1.9 /* light-mode chroma boost; 1 = off, higher = more vivid CMY */,
+
+      /* ---- volumetric layer (pointer only; all of it multiplies by an
+         interaction weight that rests at 0, so an untouched hero renders
+         exactly what it rendered before).
+
+         These three displacements SUM, so they are budgeted together rather
+         than tuned in isolation: at ~0.4uv out from centre the worst case is
+         perspective 0.0066 + parallax 0.0020 + push 0.0034 ≈ 0.0120uv, about
+         12px on a 1000px canvas. Raising any one of them eats the others'
+         headroom.
+
+         Note the perspective term scales with persp × tilt and the parallax
+         term with parallax × tilt, so `tilt` moves all three of rotation,
+         perspective and depth together — scale it alone to change the
+         overall strength, not all three at once. ---- */
+      tilt: 0.038 /* max plate lean, radians (~2.2°) */,
+      persp: 1.1 /* perspective divide strength — near edge grows */,
+      parallax: 0.13 /* how far front cells travel past recessed ones */,
+      push: 0.0034 /* cursor dent depth, in uv */,
+      pushR: 0.125 /* cursor dent radius, aspect-corrected uv */,
+      key: 0.041 /* soft key light gain near the pointer */,
+      lightR: 0.22 /* key light falloff radius */,
+      depthShade: 0.039 /* front cells brighter, recessed dimmer */,
+      depthMid: 0.35 /* lit-field value that reads as the neutral plane */,
     },
     opts,
   );
@@ -166,6 +190,9 @@ precision highp float;
 uniform sampler2D uSource, uFlow, uAtlas;
 uniform vec2 uRes;
 uniform float uCell, uGlyphs, uDistort, uChroma, uTime, uLight, uMisreg, uInk, uAnimT, uFlicker, uSat;
+/* volumetric layer — uAct is the interaction weight, 0 when untouched */
+uniform vec2 uMouse, uTilt;
+uniform float uPersp, uParallax, uPush, uPushR, uKey, uLightR, uDepthShade, uDepthMid, uAct;
 out vec4 o;
 float hash21(vec2 p){ p = fract(p*vec2(234.34,435.345)); p += dot(p,p+34.23); return fract(p.x*p.y); }
 
@@ -191,8 +218,46 @@ void main(){
   vec2 disp = flow * uDistort;
   float fl = length(flow);
 
-  /* feature strength at this cell: brows, lashes, lips, beard, borders */
-  float eF = texture(uSource, cc - disp).b;
+  /* one source tap, reused twice: .b is the feature strength at this cell
+     (brows, lashes, lips, beard, borders) and .r is the lit field, which
+     doubles as a height map — lit cells read as the front of the face,
+     shadowed ones sit further back. Costs no extra fetch: this tap already
+     read the whole texel and threw the rest away. */
+  vec4 s0 = texture(uSource, cc - disp);
+  float eF = s0.b;
+  float hgt = s0.r - uDepthMid;
+
+  /* ---------- volumetric layer ----------
+     Everything here scales by uAct, which springs to 0 the moment the
+     pointer leaves, so the idle frame is byte-for-byte the old one. */
+  float ar = uRes.x / uRes.y;
+  vec2 dm = cc - uMouse;
+  dm.x *= ar;
+  float d2 = dot(dm, dm);
+
+  /* the sampling plane leans a few degrees toward the pointer. Dividing by
+     w is the perspective term: the side leaning in magnifies and the far
+     side shrinks, instead of the whole face sliding sideways */
+  vec2 q = cc - 0.5;
+  q.x *= ar;
+  float w = 1.0 + uPersp * dot(q, uTilt);
+  vec2 warp = q / max(w, 0.35) - q;
+
+  /* depth parallax — front cells travel further than recessed ones, which
+     is the part that actually reads as a surface with thickness */
+  warp += uTilt * hgt * uParallax;
+
+  /* a soft local dent riding with the pointer: cells lean away from it */
+  float pushF = exp(-d2 / (uPushR * uPushR));
+  warp += dm * inversesqrt(max(d2, 1e-6)) * pushF * uPush;
+
+  disp += warp * uAct;
+
+  /* the pointer as a very soft key light, plus depth shading — front
+     marginally brighter, recessed marginally dimmer. Pure multiply, so the
+     existing colour treatment is untouched. */
+  float shade = 1.0 + uAct * (uKey * exp(-d2 / (uLightR * uLightR))
+                            + uDepthShade * hgt);
 
   /* plate offsets: static misregistration + flow widens the split;
      feature edges split harder in light mode -> colored halos around
@@ -241,7 +306,8 @@ void main(){
 
   if(uLight > 0.5){
     /* CMY ink glyphs, transparent everywhere there is no ink */
-    vec3 ink = clamp(vec3(pA * gA, pB * gB, pC * gC) * uInk * jit, 0.0, 1.0);
+    /* light mode paints ink, so "brighter" means *less* of it */
+    vec3 ink = clamp(vec3(pA * gA, pB * gB, pC * gC) * uInk * jit * (2.0 - shade), 0.0, 1.0);
     ink = pow(ink, vec3(0.68));                 /* lift: denser ink, less washed-out */
     /* saturation boost around luminance: kills the pastel wash while keeping
        hue, so plate combinations stay a vivid CMY / RGB rainbow */
@@ -257,7 +323,7 @@ void main(){
     o = vec4(col, aOut);
   }else{
     /* additive R/G/B glyphs, transparent black elsewhere */
-    vec3 col = vec3(pA * gA, pB * gB, pC * gC) * (1.42 * jit * colStreak);
+    vec3 col = vec3(pA * gA, pB * gB, pC * gC) * (1.42 * jit * colStreak * shade);
     col.b *= 1.05;
     col = clamp(col, 0.0, 1.0);
     float aOut = clamp(max(col.r, max(col.g, col.b)) * 1.5, 0.0, 1.0);
@@ -282,6 +348,20 @@ void main(){
       throw new Error(gl!.getProgramInfoLog(p) || "program link error");
     return p;
   }
+  /* uniform locations never change for a linked program, so look each one up
+     once instead of doing ~20 string lookups per program per frame */
+  const uCache = new Map<string, WebGLUniformLocation | null>();
+  let progTag = 0;
+  const progId = new WeakMap<WebGLProgram, number>();
+  function loc(p: WebGLProgram, name: string) {
+    let id = progId.get(p);
+    if (id === undefined) progId.set(p, (id = ++progTag));
+    const key = id + name;
+    let l = uCache.get(key);
+    if (l === undefined) uCache.set(key, (l = gl!.getUniformLocation(p, name)));
+    return l;
+  }
+
   function texParams() {
     gl!.texParameteri(gl!.TEXTURE_2D, gl!.TEXTURE_MIN_FILTER, gl!.LINEAR);
     gl!.texParameteri(gl!.TEXTURE_2D, gl!.TEXTURE_MAG_FILTER, gl!.LINEAR);
@@ -333,14 +413,7 @@ void main(){
     const t = gl!.createTexture();
     gl!.bindTexture(gl!.TEXTURE_2D, t);
     gl!.pixelStorei(gl!.UNPACK_FLIP_Y_WEBGL, true);
-    gl!.texImage2D(
-      gl!.TEXTURE_2D,
-      0,
-      gl!.RGBA,
-      gl!.RGBA,
-      gl!.UNSIGNED_BYTE,
-      c,
-    );
+    gl!.texImage2D(gl!.TEXTURE_2D, 0, gl!.RGBA, gl!.RGBA, gl!.UNSIGNED_BYTE, c);
     gl!.pixelStorei(gl!.UNPACK_FLIP_Y_WEBGL, false);
     texParams();
     return { tex: t, count: chars.length };
@@ -369,8 +442,34 @@ void main(){
     lastReal = 0;
   let dpr = Math.min(devicePixelRatio || 1, 2);
 
+  /* the volumetric layer's own state. `act` is the interaction weight, `tx/ty`
+     the current plate lean and `ttx/tty` where it is easing toward. All of it
+     lives here rather than in React — nothing below re-renders. */
+  const view = {
+    act: 0,
+    tAct: 0,
+    tx: 0,
+    ty: 0,
+    ttx: 0,
+    tty: 0,
+    mx: 0.5,
+    my: 0.5,
+  };
+  /* pointer-driven depth is desktop-only: no cursor to track on touch, and
+     reduced-motion opts out of the movement entirely */
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const pointerFX =
+    !reduced && matchMedia("(hover: hover) and (pointer: fine)").matches;
+
+  /* cached so pointermove doesn't force a layout read on every event */
+  let rect = canvas.getBoundingClientRect();
+  const readRect = () => {
+    rect = canvas.getBoundingClientRect();
+  };
+
   function resize() {
     const r = canvas.getBoundingClientRect();
+    rect = r;
     /* phones: cap dpr a step lower — 3 full-res passes at dpr 2 is GPU tax */
     dpr = Math.min(devicePixelRatio || 1, r.width < 520 ? 1.75 : 2);
     canvas.width = Math.max(2, Math.round(r.width * dpr));
@@ -402,16 +501,31 @@ void main(){
   ro.observe(canvas);
   resize();
 
+  /* pointer handlers only ever write target values — the RAF loop does the
+     interpolating and the drawing */
+  function relax() {
+    view.tAct = 0;
+    view.ttx = 0;
+    view.tty = 0;
+  }
+
   function onMove(cx: number, cy: number) {
-    const r = canvas.getBoundingClientRect();
-    const nx = (cx - r.left) / r.width;
-    const ny = 1.0 - (cy - r.top) / r.height;
-    if (nx < -0.1 || nx > 1.1 || ny < -0.1 || ny > 1.1) return;
+    const nx = (cx - rect.left) / rect.width;
+    const ny = 1.0 - (cy - rect.top) / rect.height;
+    if (nx < -0.1 || nx > 1.1 || ny < -0.1 || ny > 1.1) {
+      relax(); /* off the hero: settle back to neutral */
+      return;
+    }
     vel.x += (nx - mouse.x) * 5.5;
     vel.y += (ny - mouse.y) * 5.5;
     mouse.x = nx;
     mouse.y = ny;
     lastReal = performance.now();
+    if (!pointerFX) return;
+    view.tAct = 1;
+    /* lean toward the cursor, capped at CFG.tilt in each axis */
+    view.ttx = (nx - 0.5) * 2.0 * CFG.tilt;
+    view.tty = (ny - 0.5) * 2.0 * CFG.tilt;
   }
   const onPointerMove = (e: PointerEvent) => onMove(e.clientX, e.clientY);
   const onTouchMove = (e: TouchEvent) => {
@@ -421,15 +535,23 @@ void main(){
   const onTouchStart = (e: TouchEvent) => {
     const t = e.touches[0];
     const r = canvas.getBoundingClientRect();
-    mouse.x = (t.clientX - r.left) / r.width; /* jump, don't smear from old pos */
+    mouse.x =
+      (t.clientX - r.left) / r.width; /* jump, don't smear from old pos */
     mouse.y = 1.0 - (t.clientY - r.top) / r.height;
     vel.x += 0.35;
     vel.y += 0.25; /* small pulse so a tap is felt */
     lastReal = performance.now();
   };
+  /* the pointer can leave the window without a final move over the hero */
+  const onPointerOut = (e: PointerEvent) => {
+    if (!e.relatedTarget) relax();
+  };
   addEventListener("pointermove", onPointerMove);
   addEventListener("touchmove", onTouchMove, { passive: true });
   addEventListener("touchstart", onTouchStart, { passive: true });
+  addEventListener("scroll", readRect, { passive: true });
+  addEventListener("blur", relax);
+  document.addEventListener("pointerout", onPointerOut);
 
   function setImage(src: string) {
     const img = new Image();
@@ -467,13 +589,38 @@ void main(){
   io.observe(canvas);
 
   const t0 = performance.now();
-  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   let raf = 0;
   let killed = false;
+  let lastT = t0;
 
   function frame(now: number) {
     if (killed || !visible) return;
     const t = (now - t0) / 1000;
+    /* clamped so a backgrounded tab or a dropped frame can't jump the easing */
+    const dt = Math.min(0.05, Math.max(0.001, (now - lastT) / 1000));
+    lastT = now;
+
+    if (pointerFX) {
+      /* One exponential filter per channel, run fast. First-order is the
+         point: it moves at full speed on the first frame after the cursor
+         does, so the response is immediate and the only easing is the decay
+         into position — no ramp-in, which is what read as lag. It still
+         cannot overshoot, so there is nothing to bounce.
+         Response, dt-independent: light 50% @50ms / 90% @150ms · lean 67ms /
+         200ms · fade in and out 83ms / 233ms. */
+      const ka = 1 - Math.exp(-dt * 10.0);
+      view.act += (view.tAct - view.act) * ka;
+
+      /* the light tracks tightest — a visibly trailing highlight is the most
+         obvious tell that something is being animated at you */
+      const km = 1 - Math.exp(-dt * 16.0);
+      view.mx += (mouse.x - view.mx) * km;
+      view.my += (mouse.y - view.my) * km;
+
+      const kt = 1 - Math.exp(-dt * 12.0);
+      view.tx += (view.ttx - view.tx) * kt;
+      view.ty += (view.tty - view.ty) * kt;
+    }
 
     if (!reduced && CFG.idle && now - lastReal > 2500) {
       const ix = 0.5 + 0.3 * Math.sin(t * 0.55) * Math.cos(t * 0.21);
@@ -487,22 +634,16 @@ void main(){
     gl!.bindFramebuffer(gl!.FRAMEBUFFER, srcFBO!.fb);
     gl!.viewport(0, 0, srcFBO!.w, srcFBO!.h);
     gl!.useProgram(progSrc);
-    gl!.uniform2f(gl!.getUniformLocation(progSrc, "uRes"), srcFBO!.w, srcFBO!.h);
-    gl!.uniform1f(gl!.getUniformLocation(progSrc, "uTime"), t);
-    gl!.uniform1f(
-      gl!.getUniformLocation(progSrc, "uUseImage"),
-      state.useImage ? 1 : 0,
-    );
-    gl!.uniform1f(
-      gl!.getUniformLocation(progSrc, "uImgAspect"),
-      state.imgAspect,
-    );
-    gl!.uniform1f(gl!.getUniformLocation(progSrc, "uZoom"), state.effZoom);
-    gl!.uniform1f(gl!.getUniformLocation(progSrc, "uShiftY"), state.effShift);
+    gl!.uniform2f(loc(progSrc, "uRes"), srcFBO!.w, srcFBO!.h);
+    gl!.uniform1f(loc(progSrc, "uTime"), t);
+    gl!.uniform1f(loc(progSrc, "uUseImage"), state.useImage ? 1 : 0);
+    gl!.uniform1f(loc(progSrc, "uImgAspect"), state.imgAspect);
+    gl!.uniform1f(loc(progSrc, "uZoom"), state.effZoom);
+    gl!.uniform1f(loc(progSrc, "uShiftY"), state.effShift);
     if (state.useImage && state.imgTex) {
       gl!.activeTexture(gl!.TEXTURE0);
       gl!.bindTexture(gl!.TEXTURE_2D, state.imgTex);
-      gl!.uniform1i(gl!.getUniformLocation(progSrc, "uImage"), 0);
+      gl!.uniform1i(loc(progSrc, "uImage"), 0);
     }
     gl!.drawArrays(gl!.TRIANGLES, 0, 3);
 
@@ -511,12 +652,12 @@ void main(){
     gl!.useProgram(progFlow);
     gl!.activeTexture(gl!.TEXTURE0);
     gl!.bindTexture(gl!.TEXTURE_2D, flowA.tex);
-    gl!.uniform1i(gl!.getUniformLocation(progFlow, "uPrev"), 0);
-    gl!.uniform2f(gl!.getUniformLocation(progFlow, "uRes"), FLOW_RES, FLOW_RES);
-    gl!.uniform2f(gl!.getUniformLocation(progFlow, "uMouse"), mouse.x, mouse.y);
-    gl!.uniform2f(gl!.getUniformLocation(progFlow, "uVel"), vel.x, vel.y);
-    gl!.uniform1f(gl!.getUniformLocation(progFlow, "uDecay"), CFG.decay);
-    gl!.uniform1f(gl!.getUniformLocation(progFlow, "uRadius"), CFG.radius);
+    gl!.uniform1i(loc(progFlow, "uPrev"), 0);
+    gl!.uniform2f(loc(progFlow, "uRes"), FLOW_RES, FLOW_RES);
+    gl!.uniform2f(loc(progFlow, "uMouse"), mouse.x, mouse.y);
+    gl!.uniform2f(loc(progFlow, "uVel"), vel.x, vel.y);
+    gl!.uniform1f(loc(progFlow, "uDecay"), CFG.decay);
+    gl!.uniform1f(loc(progFlow, "uRadius"), CFG.radius);
     gl!.drawArrays(gl!.TRIANGLES, 0, 3);
     [flowA, flowB] = [flowB, flowA];
 
@@ -530,31 +671,37 @@ void main(){
     const A = CFG.light ? atlasBold : atlasFine;
     gl!.activeTexture(gl!.TEXTURE2);
     gl!.bindTexture(gl!.TEXTURE_2D, A.tex);
-    gl!.uniform1i(gl!.getUniformLocation(progOut, "uSource"), 0);
-    gl!.uniform1i(gl!.getUniformLocation(progOut, "uFlow"), 1);
-    gl!.uniform1i(gl!.getUniformLocation(progOut, "uAtlas"), 2);
-    gl!.uniform2f(
-      gl!.getUniformLocation(progOut, "uRes"),
-      canvas.width,
-      canvas.height,
-    );
+    gl!.uniform1i(loc(progOut, "uSource"), 0);
+    gl!.uniform1i(loc(progOut, "uFlow"), 1);
+    gl!.uniform1i(loc(progOut, "uAtlas"), 2);
+    gl!.uniform2f(loc(progOut, "uRes"), canvas.width, canvas.height);
     gl!.uniform1f(
-      gl!.getUniformLocation(progOut, "uCell"),
+      loc(progOut, "uCell"),
       (CFG.light ? CFG.cellLight : CFG.cellDark) * dpr,
     );
-    gl!.uniform1f(gl!.getUniformLocation(progOut, "uGlyphs"), A.count);
-    gl!.uniform1f(gl!.getUniformLocation(progOut, "uDistort"), CFG.distort);
-    gl!.uniform1f(gl!.getUniformLocation(progOut, "uChroma"), CFG.chroma);
-    gl!.uniform1f(gl!.getUniformLocation(progOut, "uTime"), t);
-    gl!.uniform1f(gl!.getUniformLocation(progOut, "uLight"), CFG.light);
-    gl!.uniform1f(gl!.getUniformLocation(progOut, "uMisreg"), CFG.misreg);
-    gl!.uniform1f(gl!.getUniformLocation(progOut, "uInk"), CFG.inkStrength);
-    gl!.uniform1f(gl!.getUniformLocation(progOut, "uSat"), CFG.saturation);
-    gl!.uniform1f(gl!.getUniformLocation(progOut, "uAnimT"), reduced ? 0.0 : t);
-    gl!.uniform1f(
-      gl!.getUniformLocation(progOut, "uFlicker"),
-      reduced ? 0.0 : CFG.flicker,
-    );
+    gl!.uniform1f(loc(progOut, "uGlyphs"), A.count);
+    gl!.uniform1f(loc(progOut, "uDistort"), CFG.distort);
+    gl!.uniform1f(loc(progOut, "uChroma"), CFG.chroma);
+    gl!.uniform1f(loc(progOut, "uTime"), t);
+    gl!.uniform1f(loc(progOut, "uLight"), CFG.light);
+    gl!.uniform1f(loc(progOut, "uMisreg"), CFG.misreg);
+    gl!.uniform1f(loc(progOut, "uInk"), CFG.inkStrength);
+    gl!.uniform1f(loc(progOut, "uSat"), CFG.saturation);
+    gl!.uniform1f(loc(progOut, "uAnimT"), reduced ? 0.0 : t);
+    gl!.uniform1f(loc(progOut, "uFlicker"), reduced ? 0.0 : CFG.flicker);
+
+    /* volumetric layer — uAct rests at 0, which zeroes every term above */
+    gl!.uniform2f(loc(progOut, "uMouse"), view.mx, view.my);
+    gl!.uniform2f(loc(progOut, "uTilt"), view.tx, view.ty);
+    gl!.uniform1f(loc(progOut, "uPersp"), CFG.persp);
+    gl!.uniform1f(loc(progOut, "uParallax"), CFG.parallax);
+    gl!.uniform1f(loc(progOut, "uPush"), CFG.push);
+    gl!.uniform1f(loc(progOut, "uPushR"), CFG.pushR);
+    gl!.uniform1f(loc(progOut, "uKey"), CFG.key);
+    gl!.uniform1f(loc(progOut, "uLightR"), CFG.lightR);
+    gl!.uniform1f(loc(progOut, "uDepthShade"), CFG.depthShade);
+    gl!.uniform1f(loc(progOut, "uDepthMid"), CFG.depthMid);
+    gl!.uniform1f(loc(progOut, "uAct"), view.act);
     gl!.drawArrays(gl!.TRIANGLES, 0, 3);
 
     /* copy the freshly drawn frame into the bloom canvas (same tick, so the
@@ -583,6 +730,9 @@ void main(){
       removeEventListener("pointermove", onPointerMove);
       removeEventListener("touchmove", onTouchMove);
       removeEventListener("touchstart", onTouchStart);
+      removeEventListener("scroll", readRect);
+      removeEventListener("blur", relax);
+      document.removeEventListener("pointerout", onPointerOut);
     },
   };
 }
