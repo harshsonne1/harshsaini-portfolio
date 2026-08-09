@@ -63,24 +63,14 @@ export function Projects() {
                   </div>
                 </Link>
 
-                {/* meta below the tile — rises once the wipe is underway */}
+                {/* meta below the tile — rises once the wipe is underway.
+                    The year lives on the case study's meta row, not the card. */}
                 <div className="mt-5">
-                  {project.year && (
-                    <div
-                      data-reveal-item="up"
-                      style={
-                        { "--reveal-delay": "550ms" } as React.CSSProperties
-                      }
-                      className="font-mono text-xs uppercase tracking-wider text-muted"
-                    >
-                      {project.year}
-                    </div>
-                  )}
                   {/* UI sans-serif (body font) — no display/pixel treatment */}
                   <h3
                     data-reveal-item="up"
                     style={{ "--reveal-delay": "650ms" } as React.CSSProperties}
-                    className="mt-2 text-2xl text-fg sm:text-3xl"
+                    className="text-2xl text-fg sm:text-3xl"
                   >
                     {project.title}
                   </h3>

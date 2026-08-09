@@ -60,15 +60,35 @@ export default function MagneticCursor({
       bounds = container.getBoundingClientRect();
     };
 
-    // clip the (fixed-position) box to the container so it can never paint
-    // outside the section. inset() is in the element's own pre-transform box,
-    // whose origin sits at the pointer, hence the clientX/clientY offsets.
+    // the box is centred on the pointer (translate(-50%,-50%)), so it occupies
+    // x ± half / y ± half on screen
+    const half = size / 2;
+
+    // hold the box inside the container instead of letting it run off the edge
+    // and lose half its label. Near a boundary it stops tracking that axis —
+    // the same thing an edge-aware tooltip does.
+    const clampToContainer = (x: number, y: number) => {
+      const cx =
+        bounds.width < size
+          ? bounds.left + bounds.width / 2
+          : Math.min(Math.max(x, bounds.left + half), bounds.right - half);
+      const cy =
+        bounds.height < size
+          ? bounds.top + bounds.height / 2
+          : Math.min(Math.max(y, bounds.top + half), bounds.bottom - half);
+      return { cx, cy };
+    };
+
+    // safety net for a container smaller than the box: clip whatever still
+    // sticks out. inset() applies to the element's own PRE-transform box, which
+    // runs [x, x + size] — hence the extra half when converting from the
+    // on-screen edges, which run [x - half, x + half].
     let lastClip = "";
     const clipToContainer = (x: number, y: number) => {
-      const top = Math.max(0, bounds.top - y);
-      const left = Math.max(0, bounds.left - x);
-      const right = Math.max(0, x + size - bounds.right);
-      const bottom = Math.max(0, y + size - bounds.bottom);
+      const top = Math.max(0, bounds.top + half - y);
+      const left = Math.max(0, bounds.left + half - x);
+      const right = Math.max(0, x + half - bounds.right);
+      const bottom = Math.max(0, y + half - bounds.bottom);
       const clip = `inset(${top}px ${right}px ${bottom}px ${left}px)`;
       if (clip !== lastClip) {
         cursor.style.clipPath = clip;
@@ -76,19 +96,26 @@ export default function MagneticCursor({
       }
     };
 
+    // the raw pointer, so a scroll/resize re-clamps against the new bounds
+    // rather than re-clamping an already-clamped value
     let lastX = 0;
     let lastY = 0;
+    const place = (x: number, y: number) => {
+      const { cx, cy } = clampToContainer(x, y);
+      setX(cx);
+      setY(cy);
+      clipToContainer(cx, cy);
+    };
+
     const onMove = (e: MouseEvent) => {
       lastX = e.clientX;
       lastY = e.clientY;
-      setX(e.clientX);
-      setY(e.clientY);
-      clipToContainer(e.clientX, e.clientY);
+      place(e.clientX, e.clientY);
     };
 
     const onScrollOrResize = () => {
       readBounds();
-      clipToContainer(lastX, lastY);
+      place(lastX, lastY);
     };
 
     const onEnter = (e: Event) => {
