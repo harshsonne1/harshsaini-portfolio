@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+
 import { site } from "@/content/site";
 import DecryptedText from "./DecryptedText";
 import { ScheduleCTA } from "./ScheduleCTA";
@@ -13,7 +15,8 @@ export function HeroNav({ compact = false }: HeroNavProps) {
   return (
     <nav className="nav-intro fixed inset-x-0 top-0 z-[1300] flex items-start justify-between gap-4 p-4 text-sm">
       <div className="leading-tight">
-        <div className="text-fg">
+        {/* wordmark doubles as the way back home from case study pages */}
+        <Link href="/" aria-label={`${site.name} — back to home`} className="block text-fg">
           &gt;{" "}
           <DecryptedText
             text={site.name}
@@ -23,7 +26,7 @@ export function HeroNav({ compact = false }: HeroNavProps) {
             className="text-fg"
             encryptedClassName="text-muted"
           />
-        </div>
+        </Link>
         <div className="text-muted">{site.role}</div>
       </div>
 
