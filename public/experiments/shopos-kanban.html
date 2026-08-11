@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ShopOS Agent OS Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --n950:#0a0a0a; --n900:#171717; --n800:#262626; --n700:#404040;
+    --n600:#525252; --n500:#737373; --n400:#a3a3a3;
+    --violet:#a78bfa; --blue:#3b82f6; --orange:#f97316; --emerald:#34d399;
+  }
+  html,body{height:100%}
+  body{
+    background:var(--n950); color:#fff;
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+    -webkit-font-smoothing:antialiased;
+    display:flex; align-items:center; justify-content:center;
+  }
+
+  .stage{position:relative;width:1600px;height:900px;flex:none;transform-origin:center center}
+  .screen{position:absolute;inset:0;overflow:hidden;background:var(--n950);display:flex;flex-direction:column}
+
+  .glow{position:absolute;inset:0;pointer-events:none}
+  .glow::before,.glow::after{content:'';position:absolute;border-radius:50%;filter:blur(140px)}
+  .glow::before{width:900px;height:900px;left:-220px;top:-360px;background:rgba(167,139,250,.16)}
+  .glow::after{width:900px;height:900px;right:-260px;top:-300px;background:rgba(59,130,246,.13)}
+  .glow2{position:absolute;width:1000px;height:700px;left:38%;bottom:-380px;border-radius:50%;
+    filter:blur(150px);background:rgba(249,115,22,.10);pointer-events:none}
+
+  .inner{position:relative;z-index:10;width:100%;max-width:1400px;margin:0 auto;
+    padding:64px 40px 0;display:flex;flex-direction:column;flex:1;overflow:hidden}
+
+  .brandbar{display:flex;align-items:center;gap:12px;margin-bottom:28px}
+  .mark{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,#a78bfa,#3b82f6);
+    display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#0a0a0a}
+  .brandbar .t{font-size:14px;font-weight:600;letter-spacing:.01em}
+  .brandbar .s{font-size:13px;color:var(--n500);font-weight:500}
+
+  .board{display:flex;align-items:flex-start;gap:14px;flex:1;overflow:hidden}
+  .col{flex:1;min-width:0;background:var(--n900);border-radius:24px;padding:20px 16px;
+    display:flex;flex-direction:column;gap:16px;border:1px solid rgba(255,255,255,.04)}
+  .colhead{display:flex;align-items:center;gap:8px}
+  .colhead .name{font-size:14px;font-weight:500;color:#fff}
+  .dot{width:10px;height:10px;border-radius:50%}
+  .checkwrap{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    background:rgba(52,211,153,.2)}
+  .count{margin-left:auto;border-radius:6px;padding:2px 8px;font-size:12px;font-weight:500;line-height:18px;
+    transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
+  .count.bump{transform:scale(1.28)}
+
+  .cards{display:flex;flex-direction:column;gap:12px;min-height:8px}
+
+  .card-wrap{will-change:transform}
+  .card{background:var(--n800);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px;
+    box-shadow:0 0 0 0 rgba(255,255,255,0);transition:box-shadow .45s ease, background .45s ease}
+  .card.moving{box-shadow:0 0 0 1px rgba(255,255,255,.14), 0 12px 32px -8px rgba(0,0,0,.65);
+    background:#2e2e2e}
+  .card .title{font-size:15px;line-height:24px;color:#fff}
+  .card .desc{font-size:13px;line-height:20px;color:var(--n400);
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .ct{display:flex;flex-direction:column;gap:6px}
+
+  .track{height:4px;width:100%;border-radius:999px;background:var(--n700);overflow:hidden}
+  .bar{height:100%;border-radius:999px;background:#fb923c;transition:width 1.1s ease-out}
+
+  .meta{display:flex;align-items:center;justify-content:space-between}
+  .metaL{display:flex;align-items:center;gap:10px}
+  .agent{display:flex;align-items:center;gap:4px;background:var(--n700);border-radius:5px;padding:4px 8px 4px 4px}
+  .av{width:20px;height:20px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;
+    font-size:10px;font-weight:600;color:rgba(0,0,0,.62)}
+  .agent .an{font-size:12px;font-weight:500;line-height:18px;color:#fff}
+  .sep{width:1px;height:16px;background:var(--n600)}
+  .time{display:flex;align-items:center;gap:4px;font-size:12px;font-weight:500;color:var(--n500)}
+  .ico{width:14px;height:14px;color:var(--n500)}
+  .ico16{width:16px;height:16px;color:var(--n500)}
+
+  .fade{position:absolute;left:0;right:0;bottom:0;height:260px;pointer-events:none;
+    background:linear-gradient(to top,var(--n950) 25%,rgba(10,10,10,.8) 50%,transparent)}
+
+  .pill{position:absolute;left:50%;transform:translateX(-50%);bottom:34px;width:340px;z-index:60}
+  .pill .g{position:absolute;inset:0;filter:url(#gooey)}
+  .pill .body{position:relative;height:92px}
+  .row1{display:flex;align-items:center;gap:12px;padding:0 16px;height:42px}
+  .row2{display:flex;align-items:center;gap:12px;padding:0 16px;height:50px}
+  .ping{position:relative;display:flex;width:7px;height:7px;flex:none}
+  .ping i{position:absolute;inset:0;border-radius:50%;background:var(--emerald);opacity:.75;
+    animation:ping 1.6s cubic-bezier(0,0,.2,1) infinite}
+  .ping b{position:relative;width:7px;height:7px;border-radius:50%;background:var(--emerald)}
+  @keyframes ping{75%,100%{transform:scale(2.2);opacity:0}}
+  .row1 span{font-size:14px;font-weight:500;color:rgba(255,255,255,.9)}
+  .row2 .msg{flex:1;font-size:14px;font-weight:500;color:rgba(255,255,255,.8);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:opacity .3s,filter .3s}
+  .row2 .av{transition:opacity .3s,transform .3s}
+
+  @media (prefers-reduced-motion: reduce){
+    .ping i{animation:none}
+  }
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="screen">
+    <div class="glow"></div><div class="glow2"></div>
+
+    <div class="inner">
+      <div class="brandbar">
+        <div class="mark">S</div>
+        <span class="t">ShopOS</span>
+        <span class="s">/ Agent Operating System</span>
+      </div>
+      <div class="board" id="board"></div>
+    </div>
+
+    <div class="fade"></div>
+
+    <div class="pill">
+      <svg class="g" width="340" height="92" viewBox="0 0 340 92" aria-hidden="true">
+        <defs>
+          <filter id="gooey" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+            <feGaussianBlur in="SourceGraphic" stdDeviation="8" result="blur"/>
+            <feColorMatrix in="blur" mode="matrix"
+              values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 20 -10" result="goo"/>
+            <feComposite in="SourceGraphic" in2="goo" operator="atop"/>
+          </filter>
+        </defs>
+        <rect x="0" y="0" rx="16" ry="16" width="340" height="66" fill="#262626"/>
+        <rect x="0" y="42" rx="16" ry="16" width="340" height="50" fill="#262626"/>
+      </svg>
+      <div class="body">
+        <div class="row1">
+          <span class="ping"><i></i><b></b></span>
+          <span>Live Notifications</span>
+        </div>
+        <div class="row2">
+          <span class="msg" id="ticker">Booting agent fleet…</span>
+          <div class="av" id="tickerAv" style="background:#b993cd">M</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ────────────────────────────── data ────────────────────────────── */
+const AGENTS = {
+  Monica:      {c:'#b993cd', i:'M'},
+  'Big Head':  {c:'#e5cd77', i:'B'},
+  Dinesh:      {c:'#c0ebfb', i:'D'},
+  Erlich:      {c:'#fbafdc', i:'E'},
+  Russ:        {c:'#5971c9', i:'R'},
+  'Jian-Yang': {c:'#1d9e75', i:'J'},
+};
+
+const COLS = [
+  {key:'scheduled', name:'Scheduled',      color:'#a78bfa', icon:'clock'},
+  {key:'attention', name:'Need Attention', color:'#3b82f6', icon:'dot'},
+  {key:'progress',  name:'In Progress',    color:'#f97316', icon:'dot'},
+  {key:'done',      name:'Completed',      color:'#34d399', icon:'check'},
+];
+
+/* task library — agents pull from this queue forever */
+const LIBRARY = [
+  {t:'Campaign Sprint Planning',    d:'Prioritize next 2-week sprint. Align agent workloads with launch calendar and budget.', a:'Monica'},
+  {t:'UGC-Style Video Cut',         d:'6s vertical video with native feel. Hook in first 1.5s, product demo mid, CTA end-card.', a:'Jian-Yang'},
+  {t:'Trend Report: Q2 Hooks',      d:'Identify top-performing hook styles across vertical. Map which formats are gaining traction.', a:'Big Head'},
+  {t:'Cross-Agent Status Sync',     d:'Consolidate progress from all agents. Flag blockers, reallocate tasks if behind schedule.', a:'Monica'},
+  {t:'Stakeholder Report',          d:'Executive summary of campaign performance, creative pipeline status, and next actions.', a:'Monica'},
+  {t:'Ad Copy Variants',            d:'4 headlines across Fear / Status / Value / Social Proof angles. Each paired with matching body.', a:'Russ'},
+  {t:'Klaviyo Flow Audit',          d:'Abandoned cart + post-purchase flows. Identify drop-off points and fix timing gaps.', a:'Dinesh'},
+  {t:'Shopify Webhook Integration', d:'Connect order events to analytics pipeline. Ensure real-time sync for inventory-aware ads.', a:'Dinesh'},
+  {t:'PostHog Funnel Review',       d:'PDP → Cart → Checkout. Find the biggest drop and correlate with session recordings.', a:'Dinesh'},
+  {t:'Brand Voice Refresh',         d:'Audit last 30 creatives for tone drift. Propose updated voice guidelines with examples.', a:'Erlich'},
+  {t:'Creative Fatigue Check',      d:'Flag assets past frequency 2.4. Queue replacements before CPM climbs further.', a:'Big Head'},
+  {t:'PDP Copy Rewrite',            d:'Above-fold benefit stack, spec table, and objection-handling FAQ for top 3 SKUs.', a:'Russ'},
+  {t:'Retention Cohort Pull',       d:'90-day repeat rate by acquisition channel. Isolate which source compounds.', a:'Dinesh'},
+  {t:'Static Ad Batch',             d:'8 statics across 2 formats. Same offer, different visual hierarchy per angle.', a:'Jian-Yang'},
+  {t:'Competitor Ad Sweep',         d:'Pull live creatives from 6 rivals. Cluster by angle and note format shifts.', a:'Erlich'},
+];
+
+/* ────────────────────────────── render ────────────────────────────── */
+const clockSVG = `<svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+  stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>`;
+const chatSVG = `<svg class="ico16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+  stroke-linecap="round" stroke-linejoin="round"><path d="M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z"></path></svg>`;
+
+function headIcon(col){
+  if(col.icon==='clock') return `<svg style="width:16px;height:16px;color:${col.color}" viewBox="0 0 24 24"
+    fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="12" cy="12" r="10"></circle><path d="M12 6v6l4 2"></path></svg>`;
+  if(col.icon==='check') return `<div class="checkwrap"><svg style="width:12px;height:12px;color:${col.color}"
+    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+    stroke-linejoin="round"><path d="M20 6 9 17l-5-5"></path></svg></div>`;
+  return `<div class="dot" style="background:${col.color}"></div>`;
+}
+
+const board = document.getElementById('board');
+board.innerHTML = COLS.map(c => `
+  <div class="col" role="region" aria-label="${c.name} tasks">
+    <div class="colhead">
+      ${headIcon(c)}
+      <span class="name">${c.name}</span>
+      <span class="count" id="count-${c.key}" style="color:${c.color};background:${c.color}1a">0</span>
+    </div>
+    <div class="cards" id="cards-${c.key}"></div>
+  </div>`).join('');
+
+const lane = k => document.getElementById('cards-' + k);
+
+let uid = 0;
+function buildCard(spec, withBar){
+  const ag = AGENTS[spec.a];
+  const wrap = document.createElement('div');
+  wrap.className = 'card-wrap';
+  wrap.dataset.id = ++uid;
+  wrap.innerHTML = `
+    <div class="card">
+      <div class="ct">
+        <p class="title">${spec.t}</p>
+        <p class="desc">${spec.d}</p>
+      </div>
+      ${withBar ? `<div class="track"><div class="bar" style="width:${spec.p||8}%"></div></div>` : ''}
+      <div class="meta">
+        <div class="metaL">
+          <div class="agent">
+            <div class="av" style="background:${ag.c}">${ag.i}</div>
+            <span class="an">${spec.a}</span>
+          </div>
+          <div class="sep"></div>
+          <div class="time">${clockSVG}<span class="t">0m 00s</span></div>
+        </div>
+        ${chatSVG}
+      </div>
+    </div>`;
+  wrap._spec = spec;
+  wrap._elapsed = spec.seed !== undefined ? spec.seed : Math.floor(Math.random()*180);
+  paintTime(wrap);
+  return wrap;
+}
+
+function paintTime(wrap){
+  const s = wrap._elapsed;
+  wrap.querySelector('.time .t').textContent =
+    `${Math.floor(s/60)}m ${String(s%60).padStart(2,'0')}s`;
+}
+
+/* ───────────────────────────── FLIP engine ───────────────────────────── */
+let SCALE = 1;
+function flip(mutate){
+  const before = new Map();
+  document.querySelectorAll('.card-wrap').forEach(e => before.set(e, e.getBoundingClientRect()));
+
+  mutate();
+
+  document.querySelectorAll('.card-wrap').forEach(e => {
+    const f = before.get(e);
+    const l = e.getBoundingClientRect();
+    if(!f){
+      e.animate(
+        [{opacity:0, transform:'translateY(-10px) scale(.985)'},{opacity:1, transform:'none'}],
+        {duration:460, easing:'cubic-bezier(.22,1,.36,1)'}
+      );
+      return;
+    }
+    // rects are in scaled screen px; the transform applies inside the scaled stage
+    const dx = (f.left - l.left) / SCALE;
+    const dy = (f.top  - l.top ) / SCALE;
+    if(Math.abs(dx) > .5 || Math.abs(dy) > .5){
+      e.animate(
+        [{transform:`translate(${dx}px, ${dy}px)`},{transform:'none'}],
+        {duration:640, easing:'cubic-bezier(.22,1,.36,1)'}
+      );
+    }
+  });
+  updateCounts();
+}
+
+function removeCard(wrap, cb){
+  const anim = wrap.animate(
+    [{opacity:1, transform:'none'},{opacity:0, transform:'translateY(6px) scale(.98)'}],
+    {duration:340, easing:'ease-in'}
+  );
+  anim.onfinish = () => flip(() => { wrap.remove(); cb && cb(); });
+}
+
+function updateCounts(){
+  COLS.forEach(c => {
+    const el = document.getElementById('count-' + c.key);
+    const n = lane(c.key).children.length;
+    if(el.textContent !== String(n)){
+      el.textContent = n;
+      el.classList.add('bump');
+      setTimeout(() => el.classList.remove('bump'), 300);
+    }
+  });
+}
+
+/* card gains / loses its progress bar as it enters / leaves In Progress */
+function setBar(wrap, on, pct){
+  const card = wrap.querySelector('.card');
+  const existing = wrap.querySelector('.track');
+  if(on && !existing){
+    const track = document.createElement('div');
+    track.className = 'track';
+    track.innerHTML = `<div class="bar" style="width:${pct||8}%"></div>`;
+    card.insertBefore(track, card.querySelector('.meta'));
+  } else if(!on && existing){
+    existing.remove();
+  }
+}
+
+function moveCard(wrap, toKey){
+  const card = wrap.querySelector('.card');
+  card.classList.add('moving');
+  flip(() => {
+    setBar(wrap, toKey === 'progress', 8);
+    if(toKey === 'done' || toKey === 'attention') lane(toKey).prepend(wrap);
+    else lane(toKey).appendChild(wrap);
+  });
+  setTimeout(() => card.classList.remove('moving'), 900);
+}
+
+/* ───────────────────────────── seed state ───────────────────────────── */
+let libIdx = 0;
+const nextSpec = () => LIBRARY[libIdx++ % LIBRARY.length];
+
+[
+  ['scheduled', 2], ['attention', 3], ['progress', 3], ['done', 3],
+].forEach(([key, n]) => {
+  for(let i=0;i<n;i++){
+    const spec = nextSpec();
+    if(key === 'progress') spec.p = 20 + Math.floor(Math.random()*45);
+    lane(key).appendChild(buildCard(spec, key === 'progress'));
+  }
+});
+updateCounts();
+
+/* ───────────────────────────── the machine ───────────────────────────── */
+const NOTES = {
+  start:    n => [`Picked up “${n}”.`],
+  progress: n => [`Working “${n}”, mid-run.`, `“${n}” passed checkpoint.`],
+  attention:n => [`“${n}” needs your call.`, `Blocked on “${n}”. Review needed.`],
+  done:     n => [`Shipped “${n}”.`, `“${n}” complete.`],
+  spawn:    n => [`Queued “${n}”.`, `Scheduled “${n}” for next window.`],
+  idle:     () => ['Reallocating blocked tasks.', 'Rebalancing agent workloads.', 'Syncing fleet state.'],
+};
+const pick = a => a[Math.floor(Math.random()*a.length)];
+
+const tEl = document.getElementById('ticker');
+const tAv = document.getElementById('tickerAv');
+function notify(msg, who){
+  tEl.style.opacity = 0; tEl.style.filter = 'blur(4px)';
+  tAv.style.opacity = 0; tAv.style.transform = 'scale(.7)';
+  setTimeout(() => {
+    tEl.textContent = msg;
+    if(who && AGENTS[who]){ tAv.textContent = AGENTS[who].i; tAv.style.background = AGENTS[who].c; }
+    tEl.style.opacity = 1; tEl.style.filter = 'blur(0)';
+    tAv.style.opacity = 1; tAv.style.transform = 'scale(1)';
+  }, 300);
+}
+
+const WIP_CAP = 3, DONE_CAP = 4, SCHED_CAP = 3, ATTN_CAP = 5;
+
+/* 1. progress ticks — every 1.4s each in-progress card advances */
+setInterval(() => {
+  [...lane('progress').children].forEach(wrap => {
+    const bar = wrap.querySelector('.bar');
+    if(!bar) return;
+    const cur = parseFloat(bar.style.width) || 0;
+    const next = Math.min(100, cur + 4 + Math.random()*11);
+    bar.style.width = next.toFixed(0) + '%';
+    wrap._done = next >= 100;
+  });
+}, 1400);
+
+/* 2. elapsed timers */
+setInterval(() => {
+  document.querySelectorAll('.card-wrap').forEach(w => { w._elapsed++; paintTime(w); });
+}, 1000);
+
+/* 3. the scheduler — one meaningful board event every ~2.2s */
+function tick(){
+  const sched = [...lane('scheduled').children];
+  const wip   = [...lane('progress').children];
+  const attn  = [...lane('attention').children];
+  const done  = [...lane('done').children];
+
+  // a) finish anything at 100%
+  const finished = wip.find(w => w._done);
+  if(finished){
+    const name = finished._spec.t, who = finished._spec.a;
+    // 25% of the time it needs a human instead of completing clean
+    const toAttention = Math.random() < .25 && attn.length < ATTN_CAP;
+    finished._done = false;
+    moveCard(finished, toAttention ? 'attention' : 'done');
+    notify(pick(NOTES[toAttention ? 'attention' : 'done'](name)), who);
+    if(!toAttention){
+      const overflow = [...lane('done').children];
+      if(overflow.length > DONE_CAP) removeCard(overflow[overflow.length - 1]);
+    }
+    return;
+  }
+
+  // b) pull scheduled work into progress when there's capacity
+  if(wip.length < WIP_CAP && sched.length){
+    const w = sched[0];
+    moveCard(w, 'progress');
+    notify(pick(NOTES.start(w._spec.t)), w._spec.a);
+    return;
+  }
+
+  // c) resolve something that was waiting on a human
+  if(attn.length > 2 && Math.random() < .55){
+    const w = attn[attn.length - 1];
+    moveCard(w, 'done');
+    notify(pick(NOTES.done(w._spec.t)), w._spec.a);
+    const overflow = [...lane('done').children];
+    if(overflow.length > DONE_CAP) removeCard(overflow[overflow.length - 1]);
+    return;
+  }
+
+  // d) queue new work
+  if(sched.length < SCHED_CAP){
+    const spec = nextSpec();
+    flip(() => lane('scheduled').appendChild(buildCard({...spec, seed:0}, false)));
+    notify(pick(NOTES.spawn(spec.t)), spec.a);
+    return;
+  }
+
+  notify(pick(NOTES.idle()), pick(Object.keys(AGENTS)));
+}
+setTimeout(tick, 900);
+setInterval(tick, 2200);
+
+/* ───────────────────────────── fit to viewport ───────────────────────────── */
+function fit(){
+  SCALE = Math.min(window.innerWidth / 1600, window.innerHeight / 900);
+  document.getElementById('stage').style.transform = `scale(${SCALE})`;
+}
+fit(); window.addEventListener('resize', fit);
+</script>
+</body>
+</html>

@@ -12,6 +12,7 @@
 
 import Image from "next/image";
 import type { CaseStudy, CaseStudyBlock, CaseStudyMedia } from "@/content/site";
+import type { RailItem } from "@/components/SectionRail";
 
 // Empty image slots still render as labelled frames so the art direction is
 // visible while assets are being cut. Flip to false to hide every slot that
@@ -35,6 +36,56 @@ const SECTION_GRID =
 // the two column bands blocks can occupy
 const NARROW = "lg:col-span-6 lg:col-start-7";
 const WIDE = "lg:col-span-12 lg:col-start-1";
+
+// ---- section ids, shared with the right-edge rail ----
+// `storySectionIds` stamps an id on every section here; `storyRailItems` hands
+// the page the subset that earns a tick. Both walk the same list in the same
+// order, so ids can't drift between the anchor and the thing pointing at it.
+
+function slugify(text: string) {
+  return (
+    text
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 48)
+      .replace(/-+$/, "") || "section"
+  );
+}
+
+// [overview, my role, ...sections] — one id per rendered section
+function storySectionIds(story: CaseStudy): string[] {
+  // two headings can slugify to the same string — number the repeats
+  const counts = new Map<string, number>();
+  const unique = (base: string) => {
+    const n = (counts.get(base) ?? 0) + 1;
+    counts.set(base, n);
+    return n === 1 ? base : `${base}-${n}`;
+  };
+
+  return [
+    unique("overview"),
+    unique("my-role"),
+    ...story.sections.map((section) => unique(slugify(section.heading))),
+  ];
+}
+
+// The rail's stops: everything except the supporting beats marked `railSkip`.
+// Those sections still render and still hold their anchor — they just don't
+// get a mark, which keeps the rail at a countable 10–12.
+export function storyRailItems(story: CaseStudy): RailItem[] {
+  const ids = storySectionIds(story);
+
+  return [
+    { id: ids[0], label: "Overview" },
+    { id: ids[1], label: "My role" },
+    ...story.sections.flatMap((section, i) =>
+      section.railSkip
+        ? []
+        : [{ id: ids[i + 2], label: section.heading, act: section.act }],
+    ),
+  ];
+}
 
 function Media({ item }: { item: CaseStudyMedia }) {
   if (item.src) {
@@ -170,9 +221,7 @@ function Block({ block }: { block: CaseStudyBlock }) {
             <div
               key={point.title}
               data-reveal-item="up"
-              style={
-                { "--reveal-delay": `${i * 90}ms` } as React.CSSProperties
-              }
+              style={{ "--reveal-delay": `${i * 90}ms` } as React.CSSProperties}
             >
               <h3 className="text-lg leading-snug text-fg">{point.title}</h3>
               <p className="mt-2 leading-relaxed text-muted">{point.text}</p>
@@ -206,10 +255,12 @@ function toRuns(blocks: CaseStudyBlock[]): Run[] {
 }
 
 function StorySection({
+  id,
   act,
   heading,
   blocks,
 }: {
+  id: string;
   act?: string;
   heading: string;
   blocks: CaseStudyBlock[];
@@ -217,7 +268,8 @@ function StorySection({
   const runs = toRuns(blocks);
 
   return (
-    <section className={SECTION_PAD}>
+    // scroll-mt clears the fixed nav when the rail jumps to this section
+    <section id={id} className={`scroll-mt-24 ${SECTION_PAD}`}>
       {runs.map((run, runIndex) =>
         run.media ? (
           // full viewport width, in the footer's 16px gutters
@@ -253,10 +305,12 @@ function StorySection({
               <div
                 className={`${SECTION_GRID} ${runIndex === 0 && !act ? "pt-6" : ""}`}
               >
+                {/* body sans, not the display face: these headings sit in the
+                    reading column beside the copy, not over it */}
                 {runIndex === 0 && (
                   <h2
                     data-reveal="up"
-                    className="font-hero-1 text-2xl leading-tight text-fg sm:text-3xl lg:col-span-6 lg:col-start-1"
+                    className="text-[2.25rem] leading-tight text-fg lg:col-span-6 lg:col-start-1"
                   >
                     {heading}
                   </h2>
@@ -274,20 +328,26 @@ function StorySection({
 }
 
 export function CaseStudyStory({ story }: { story: CaseStudy }) {
+  // same list the rail is built from: [overview, my role, ...sections]
+  const ids = storySectionIds(story);
+
   return (
     <div className="mt-12 sm:mt-16">
       <StorySection
+        id={ids[0]}
         heading="Overview"
         blocks={[{ type: "pairs", items: story.summary }]}
       />
       <StorySection
+        id={ids[1]}
         heading="My role"
         blocks={[{ type: "pairs", items: story.role }]}
       />
 
-      {story.sections.map((section) => (
+      {story.sections.map((section, i) => (
         <StorySection
-          key={section.heading}
+          key={ids[i + 2]}
+          id={ids[i + 2]}
           act={section.act}
           heading={section.heading}
           blocks={section.blocks}

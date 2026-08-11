@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>ASCII art playground</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0a0a0a;
+    color: #e8e8e8;
+    font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+    padding: 24px;
+    min-height: 100vh;
+  }
+  .shell { max-width: 1200px; margin: 0 auto; }
+  h1 { font-size: 18px; font-weight: 500; margin-bottom: 4px; }
+  .sub { font-size: 13px; color: #888; margin-bottom: 20px; }
+  .drop {
+    border: 1px dashed #333;
+    border-radius: 10px;
+    padding: 20px;
+    text-align: center;
+    font-size: 13px;
+    color: #777;
+    margin-bottom: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .drop:hover, .drop.over { border-color: #666; color: #ccc; background: #111; }
+  .stage {
+    width: 100%;
+    background: #000;
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+    aspect-ratio: 16/9;
+  }
+  canvas { display: block; width: 100%; height: 100%; }
+  .controls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px 24px;
+    margin-top: 18px;
+  }
+  label { display: flex; flex-direction: column; gap: 5px; font-size: 12px; color: #999; }
+  .row { display: flex; align-items: center; gap: 10px; }
+  input[type=range] { flex: 1; accent-color: #888; }
+  .v { font-family: ui-monospace, monospace; font-size: 11px; color: #666; min-width: 38px; text-align: right; }
+  .code {
+    margin-top: 24px;
+    background: #111;
+    border: 1px solid #222;
+    border-radius: 8px;
+    padding: 14px 16px;
+    font-family: ui-monospace, monospace;
+    font-size: 12px;
+    line-height: 1.7;
+    color: #9cc;
+    white-space: pre;
+    overflow-x: auto;
+  }
+  .hint { font-size: 11px; color: #555; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div class="shell">
+  <h1>ASCII art playground</h1>
+  <p class="sub">Drop in your image, dial in the settings, then copy the props into your component.</p>
+
+  <div class="drop" id="drop">
+    Click or drop an image here &middot; <span id="fname">ascii-art.webp</span>
+  </div>
+
+  <div class="stage"><canvas id="cv"></canvas></div>
+
+  <div class="controls">
+    <label>Font size <div class="row"><input type="range" id="fs" min="4" max="20" value="8" step="1"><span class="v" id="fs-v">8</span></div></label>
+    <label>Photo blend <div class="row"><input type="range" id="ib" min="0" max="100" value="55" step="5"><span class="v" id="ib-v">55%</span></div></label>
+    <label>Char opacity <div class="row"><input type="range" id="co" min="0" max="100" value="50" step="5"><span class="v" id="co-v">50%</span></div></label>
+    <label>Glow strength <div class="row"><input type="range" id="gl" min="0" max="100" value="55" step="5"><span class="v" id="gl-v">55%</span></div></label>
+    <label>Glow spread <div class="row"><input type="range" id="gs" min="4" max="40" value="14" step="2"><span class="v" id="gs-v">14%</span></div></label>
+    <label>Scan speed <div class="row"><input type="range" id="sp" min="0" max="5" value="1.2" step="0.2"><span class="v" id="sp-v">1.2</span></div></label>
+    <label>Char lift <div class="row"><input type="range" id="lf" min="0" max="140" value="70" step="10"><span class="v" id="lf-v">70</span></div></label>
+    <label>Charset <div class="row">
+      <select id="cs" style="flex:1;background:#111;color:#ccc;border:1px solid #333;border-radius:4px;padding:5px">
+        <option value=" ..::++xX$&amp;#8@">dense (default)</option>
+        <option value=" .:-=+*#%@">classic</option>
+        <option value=" 08X#$&amp;@">blocky</option>
+        <option value=" .oO0@">round</option>
+        <option value=" 01">binary</option>
+      </select>
+    </div></label>
+  </div>
+
+  <div class="code" id="out"></div>
+  <p class="hint">Paste these props into &lt;AsciiArt /&gt; in your project.</p>
+</div>
+
+<script>
+const cv = document.getElementById('cv');
+const ctx = cv.getContext('2d');
+let CHARS = ' ..::++xX$&#8@';
+let FS=8, IB=0.55, CO=0.5, GL=0.55, GS=0.14, SP=1.2, LF=70;
+let scanY = 0, srcCanvas, srcCtx, aid;
+
+// the image the renderer starts on, and what the props readout quotes
+const DEFAULT_SRC = 'ascii-art.webp';
+let SRC = '/experiments/' + DEFAULT_SRC;
+
+const img = new Image();
+
+// fallback only — drawn if the default image ever fails to load, so the
+// playground still demonstrates the renderer
+function demoImage() {
+  const oc = document.createElement('canvas');
+  oc.width = 1280; oc.height = 720;
+  const o = oc.getContext('2d');
+  const sky = o.createLinearGradient(0,0,0,oc.height*0.62);
+  sky.addColorStop(0,'#3ba9e0'); sky.addColorStop(1,'#8fd8f2');
+  o.fillStyle = sky; o.fillRect(0,0,oc.width,oc.height);
+  const sun = o.createRadialGradient(oc.width*.68,oc.height*.3,0,oc.width*.68,oc.height*.3,oc.width*.25);
+  sun.addColorStop(0,'rgba(255,244,180,.6)'); sun.addColorStop(1,'rgba(255,210,80,0)');
+  o.fillStyle = sun; o.fillRect(0,0,oc.width,oc.height);
+  const g = o.createLinearGradient(0,oc.height*.55,0,oc.height);
+  g.addColorStop(0,'#7ba844'); g.addColorStop(1,'#28501a');
+  o.fillStyle = g;
+  o.beginPath(); o.ellipse(oc.width/2,oc.height*.92,oc.width*.75,oc.height*.4,0,0,Math.PI*2); o.fill();
+  for (let i=0;i<70;i++){
+    const x=Math.random()*oc.width, y=oc.height*(0.62+Math.random()*0.35);
+    const pal=[[235,90,180],[255,205,50],[240,240,235],[190,120,230]];
+    const [r,gg,b]=pal[Math.floor(Math.random()*pal.length)];
+    o.fillStyle=`rgba(${r},${gg},${b},${0.5+Math.random()*0.5})`;
+    o.beginPath(); o.arc(x,y,3+Math.random()*7,0,Math.PI*2); o.fill();
+  }
+  return oc.toDataURL();
+}
+
+function buildSrc() {
+  const r = cv.parentElement.getBoundingClientRect();
+  const dpr = Math.min(devicePixelRatio, 2);
+  cv.width  = Math.floor(r.width * dpr);
+  cv.height = Math.floor(r.width * 9/16 * dpr);
+  srcCanvas = document.createElement('canvas');
+  srcCanvas.width = cv.width; srcCanvas.height = cv.height;
+  srcCtx = srcCanvas.getContext('2d');
+  srcCtx.drawImage(img, 0, 0, cv.width, cv.height);
+}
+
+function draw() {
+  const W = cv.width, H = cv.height;
+  ctx.clearRect(0,0,W,H);
+
+  if (IB > 0 && srcCanvas) {
+    ctx.globalAlpha = IB;
+    ctx.drawImage(srcCanvas, 0, 0);
+    ctx.globalAlpha = 1;
+  }
+  if (!srcCtx) { aid = requestAnimationFrame(draw); return; }
+
+  const dpr = Math.min(devicePixelRatio, 2);
+  const fs = FS * dpr, cwd = fs * 0.6, chh = fs;
+  const cols = Math.floor(W/cwd), rows = Math.floor(H/chh);
+
+  ctx.font = fs + 'px ui-monospace, monospace';
+  ctx.textBaseline = 'top';
+
+  const data = srcCtx.getImageData(0,0,W,H).data;
+
+  for (let r = 0; r < rows; r++) {
+    const dist = Math.abs(r*chh - scanY);
+    const glow = Math.max(0, 1 - dist/(H*GS)) * GL;
+    for (let c = 0; c < cols; c++) {
+      const px = Math.min(Math.floor(c*cwd + cwd/2), W-1);
+      const py = Math.min(Math.floor(r*chh + chh/2), H-1);
+      const i = (py*W + px)*4;
+      const R=data[i], G=data[i+1], B=data[i+2];
+      const lum = 0.299*R + 0.587*G + 0.114*B;
+      const ci = Math.floor((lum/255)*(CHARS.length-1));
+      const ch = CHARS[ci];
+      if (ch === ' ') continue;
+      const a = Math.min(1, CO*(lum/255) + glow);
+      ctx.fillStyle = `rgba(${Math.min(255,R+LF)},${Math.min(255,G+LF)},${Math.min(255,B+LF)},${a.toFixed(2)})`;
+      ctx.fillText(ch, Math.floor(c*cwd), Math.floor(r*chh));
+    }
+  }
+
+  scanY = (scanY + SP*dpr) % H;
+  aid = requestAnimationFrame(draw);
+}
+
+function updateCode() {
+  document.getElementById('out').textContent =
+`<AsciiArt
+  src="${SRC}"
+  fontSize={${FS}}
+  imageOpacity={${IB.toFixed(2)}}
+  charOpacity={${CO.toFixed(2)}}
+  glow={${GL.toFixed(2)}}
+  glowSpread={${GS.toFixed(2)}}
+  scanSpeed={${SP}}
+  charLift={${LF}}
+  charset="${CHARS.replace(/&/g,'&amp;')}"
+/>`;
+}
+
+img.onload = () => { buildSrc(); cancelAnimationFrame(aid); draw(); };
+img.onerror = () => {
+  document.getElementById('fname').textContent = 'using demo gradient';
+  SRC = '/your-image.jpg';
+  img.onerror = null;
+  img.src = demoImage();
+  updateCode();
+};
+img.src = DEFAULT_SRC;
+
+// controls
+const bind = (id, out, fn, sfx='') => {
+  document.getElementById(id).addEventListener('input', e => {
+    fn(+e.target.value);
+    document.getElementById(out).textContent = e.target.value + sfx;
+    updateCode();
+  });
+};
+bind('fs','fs-v', v => FS = v);
+bind('ib','ib-v', v => IB = v/100, '%');
+bind('co','co-v', v => CO = v/100, '%');
+bind('gl','gl-v', v => GL = v/100, '%');
+bind('gs','gs-v', v => GS = v/100, '%');
+bind('sp','sp-v', v => SP = v);
+bind('lf','lf-v', v => LF = v);
+document.getElementById('cs').addEventListener('change', e => {
+  CHARS = e.target.value; updateCode();
+});
+
+// file drop
+const drop = document.getElementById('drop');
+const fname = document.getElementById('fname');
+function loadFile(f) {
+  if (!f || !f.type.startsWith('image/')) return;
+  fname.textContent = f.name;
+  SRC = '/' + f.name;
+  updateCode();
+  const fr = new FileReader();
+  fr.onload = ev => { img.src = ev.target.result; };
+  fr.readAsDataURL(f);
+}
+drop.addEventListener('click', () => {
+  const inp = document.createElement('input');
+  inp.type = 'file'; inp.accept = 'image/*';
+  inp.onchange = e => loadFile(e.target.files[0]);
+  inp.click();
+});
+drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+drop.addEventListener('drop', e => {
+  e.preventDefault(); drop.classList.remove('over');
+  loadFile(e.dataTransfer.files[0]);
+});
+
+window.addEventListener('resize', () => { buildSrc(); });
+updateCode();
+</script>
+</body>
+</html>

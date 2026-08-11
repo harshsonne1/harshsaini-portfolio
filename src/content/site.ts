@@ -4,7 +4,7 @@ export const site = {
   name: "Harsh Saini",
   role: "Product Designer",
   tagline:
-    "I build fast, accessible web experiences — from pixel-perfect interfaces to the systems behind them.",
+    "I build fast, accessible web experiences, from pixel-perfect interfaces to the systems behind them.",
   location: "India",
   email: "harshsonne1@gmail.com",
   resumeUrl: "/resume.pdf",
@@ -82,6 +82,11 @@ export type CaseStudySection = {
   /* act header, printed once above the first section that carries it */
   act?: string;
   heading: string;
+  /* Supporting beat: still a full section on the page, but it gets no tick on
+     the right-edge rail. The rail is a map of the story, not a table of
+     contents — it holds at 10–12 stops so the marks stay countable at a
+     glance. Never set this on a section that opens an act. */
+  railSkip?: boolean;
   blocks: CaseStudyBlock[];
 };
 
@@ -107,6 +112,10 @@ export type Project = {
   repo?: string;
   /* optional media; falls back to a generated gradient tile */
   image?: string;
+  /* looping cover, on the work card and at the top of the case study. Set
+     `image` alongside it to give it a poster; on its own, the video's first
+     frame is what the tile rests on. */
+  video?: string;
   /* ---- case study page ---- */
   /* the opening statement, set large beside the wordmark */
   statement?: string;
@@ -124,7 +133,7 @@ export const projects: Project[] = [
     title: "Brand Memory",
     year: "2026",
     description:
-      "The shared memory layer behind ShopOS's AI agents — from a brand's website to structured context.",
+      "The shared memory layer behind ShopOS's AI agents, from a brand's website to structured context.",
     tags: ["Product Design", "AI Systems"],
     link: "https://shopos.ai",
     image: "/cover-ShopOS.webp",
@@ -133,7 +142,7 @@ export const projects: Project[] = [
     scope: "Product Design, AI Systems, Experimentation",
     story: {
       subhead:
-        "From a simple brand-context feature to the shared memory layer behind AI agents — and the experiment that changed when users should encounter it.",
+        "From a simple brand-context feature to the shared memory layer behind AI agents, and the experiment that changed when users should encounter it.",
       summary: [
         {
           label: "Challenge",
@@ -168,7 +177,7 @@ export const projects: Project[] = [
       ],
       sections: [
         {
-          act: "Act One — The Memory",
+          act: "Act One: The Memory",
           heading: "AI could generate. It couldn't remember.",
           blocks: [
             {
@@ -178,6 +187,7 @@ export const projects: Project[] = [
           ],
         },
         {
+          railSkip: true,
           heading: "The problem was not generation. It was context.",
           blocks: [
             {
@@ -194,13 +204,14 @@ export const projects: Project[] = [
                 {
                   kind: "visual",
                   title: "Before / after generation",
-                  note: "A generic generation beside a brand-consistent one — the proof of the problem, before the product enters.",
+                  note: "A generic generation beside a brand-consistent one: the proof of the problem, before the product enters.",
                 },
               ],
             },
           ],
         },
         {
+          railSkip: true,
           heading: "Before Brand Memory was a system, it was a whiteboard.",
           blocks: [
             {
@@ -217,7 +228,7 @@ export const projects: Project[] = [
                 {
                   kind: "visual",
                   title: "Early exploration",
-                  note: "Sketches, early IA, whiteboard or flow diagram — visibly rougher than the finished UI.",
+                  note: "Sketches, early IA, whiteboard or flow diagram, visibly rougher than the finished UI.",
                 },
               ],
             },
@@ -243,6 +254,7 @@ export const projects: Project[] = [
           ],
         },
         {
+          railSkip: true,
           heading: "A brand has a memory. A campaign has a mood.",
           blocks: [
             {
@@ -255,7 +267,7 @@ export const projects: Project[] = [
                 {
                   kind: "ui",
                   title: "Brand DNA + Mood Boards",
-                  note: "Brand DNA, editable brand attributes or Mood Boards — the place for an early → final evolution.",
+                  note: "Brand DNA, editable brand attributes or Mood Boards: the place for an early → final evolution.",
                 },
               ],
             },
@@ -278,7 +290,7 @@ export const projects: Project[] = [
                 {
                   kind: "ui",
                   title: "An agent using Brand Memory",
-                  note: "An agent or workflow consuming Brand Memory — proof that memory powers the rest of the product.",
+                  note: "An agent or workflow consuming Brand Memory: proof that memory powers the rest of the product.",
                 },
               ],
             },
@@ -304,7 +316,7 @@ export const projects: Project[] = [
           ],
         },
         {
-          act: "Act Two — The Test",
+          act: "Act Two: The Test",
           heading: "The product worked. The onboarding question didn't.",
           blocks: [
             {
@@ -342,13 +354,14 @@ export const projects: Project[] = [
                 {
                   kind: "visual",
                   title: "Experiment metrics",
-                  note: "A clean table or analytics view — the +12pp highlighted, the contradictory metrics around it.",
+                  note: "A clean table or analytics view with the +12pp highlighted and the contradictory metrics around it.",
                 },
               ],
             },
           ],
         },
         {
+          railSkip: true,
           heading:
             "A variant that wins on one metric is not necessarily a winner.",
           blocks: [
@@ -392,6 +405,7 @@ export const projects: Project[] = [
           ],
         },
         {
+          railSkip: true,
           heading: "The funnel was measuring passage, not accomplishment.",
           blocks: [
             {
@@ -412,14 +426,14 @@ export const projects: Project[] = [
                 {
                   kind: "visual",
                   title: "Session replay / behaviour",
-                  note: "A redacted replay frame or a simplified interaction trace — where the human enters the story.",
+                  note: "A redacted replay frame or a simplified interaction trace, where the human enters the story.",
                 },
               ],
             },
           ],
         },
         {
-          act: "Act Three — The Decision",
+          act: "Act Three: The Decision",
           heading: "Move the ask to where the need appears.",
           blocks: [
             {
@@ -484,7 +498,7 @@ export const projects: Project[] = [
           ],
         },
         {
-          act: "Act Four — What It Became",
+          act: "Act Four: What It Became",
           heading: "Brand Memory became more than a feature.",
           blocks: [
             {
@@ -502,7 +516,10 @@ export const projects: Project[] = [
                   label: "UX",
                   text: "Forced setup → memory introduced when it becomes useful.",
                 },
-                { label: "Decision", text: "+12pp apparent lift → do not ship." },
+                {
+                  label: "Decision",
+                  text: "+12pp apparent lift → do not ship.",
+                },
                 {
                   label: "System",
                   text: "Internal benchmarks: ≈3× fewer tokens, 3.4× retrieval accuracy, and 10+ brand attributes per query.",
@@ -555,68 +572,72 @@ export const projects: Project[] = [
     },
   },
   {
-    slug: "generative-video",
-    title: "Generative Video Systems",
+    slug: "adaptive-intelligence",
+    title: "Adaptive Intelligence",
     year: "2026",
     description:
-      "Four generative video pipelines from one architecture — and the moment reusing it became the mistake.",
+      "One AI video pipeline adapted across four domains, and the moment reuse became the wrong abstraction.",
     tags: ["AI Systems", "Prompt Architecture"],
-    image: "/cover-SKM.webp",
-    statement: "One system. Four worlds. Two architectures.",
+    /* no still cover — the video is the cover, on the card and on the page */
+    video: "/adaptive-intelligence.webm",
+    statement: "When reuse becomes the wrong abstraction.",
     industry: "AI, Fashion, Commerce",
     scope: "Product Design, AI Systems, Prompt Architecture",
     story: {
       subhead:
-        "Four generative video pipelines built from one starting point — and the moment when reusing the same system became the mistake.",
+        "One system. Four worlds. Two architectures. I adapted one AI video pipeline across four domains, and discovered that the hardest part was knowing when the original architecture no longer fit.",
       summary: [
         {
           label: "Challenge",
-          text: "A node-based AI video pipeline built for one Western fashion brand had to serve Indian ethnicwear, a Gulf marketplace, merchandise, and luxury product reveals. Rebuilding it each time was not viable. Reusing it blindly produced output that was fluent and wrong.",
+          text: "A node-based AI video pipeline built for a Western fashion brand had to expand into Indian ethnicwear, a Gulf marketplace, merchandise, and luxury product reveals. Rebuilding the workflow for every domain was not viable. Reusing it blindly produced something more dangerous: output that looked complete, but was wrong.",
         },
         {
           label: "Approach",
-          text: "Hold the architecture fixed and treat domain knowledge as a swappable payload. For each vertical, find the one moment the output cannot omit. Then identify where that logic stops applying.",
+          text: "Answer one question for every vertical: what can remain reusable, and what must become domain-specific. Hold the graph fixed, treat domain knowledge as a swappable payload, and find the one moment each domain's output cannot afford to miss.",
         },
         {
           label: "Solution",
-          text: "Two pipeline families: a narrative family for garments, built around a single source of truth for consistency; and a reveal family for objects, built around constrained scene selection and reasoning.",
+          text: "Two architectures rather than one. A source-of-truth architecture for garments, where the hard problem is keeping one person and one garment identical across frames. A reasoning architecture for objects, where the hard problem is deciding what world the object belongs in.",
         },
         {
           label: "Outcome",
-          text: "All four pipelines shipped. The luxury reveal workflow replaced a half-day to full-day manual step per product and became a live sales instrument, contributing to one closed enterprise deal and two SLG clients.",
+          text: "All four pipelines shipped. The luxury reveal replaced a half-day to full-day manual step per product and became a sales instrument, used in the pitch for one closed enterprise deal and two SLG clients.",
         },
       ],
       role: [
         {
           label: "Owned",
-          text: "Pipeline architecture, genre and category taxonomies, domain judgment calls, error detection and QA across every node.",
+          text: "Pipeline architecture, genre and category taxonomies, domain judgment calls, error detection and QA across the workflows.",
         },
         {
           label: "Co-created",
-          text: "System prompts with AI assistance under my direction and specification.",
+          text: "System prompts, with AI assistance under my direction and specification.",
         },
         {
           label: "Guided",
-          text: "Implementation and wiring in the Vibe workflow canvas.",
+          text: "Implementation and wiring in the workflow canvas.",
         },
       ],
       sections: [
         {
-          act: "Act One — The Port",
+          act: "01: The Port",
           heading: "A pipeline that only knew one kind of clothes.",
           blocks: [
-            { type: "pull", text: "The pipeline worked. That was the problem." },
             {
               type: "p",
-              text: "It had been built for a Western fashion brand. Its analyst understood garments through silhouette, construction, hardware, labels and branding.",
+              text: "The original system understood Western garments through silhouette, construction, hardware, labels and branding. Point it at Indian ethnicwear and it still produced a confident analysis.",
             },
             {
               type: "p",
-              text: "Point it at Indian ethnicwear and it still produced a complete, confident analysis. It just had no vocabulary for a dupatta, no concept of chikankari, and no way to distinguish a sangeet from a mehendi.",
+              text: "It had no vocabulary for a dupatta, no concept of chikankari, and no read on the cultural context behind events such as sangeet and mehendi.",
             },
             {
               type: "pull",
               text: "Nothing failed. The output was fluent and wrong.",
+            },
+            {
+              type: "p",
+              text: "That produced the first design principle: localisation was not a translation problem. It was a beat problem.",
             },
             {
               type: "media",
@@ -624,37 +645,29 @@ export const projects: Project[] = [
                 {
                   kind: "system",
                   title: "The original Western fashion pipeline",
-                  note: "The original node graph and one representative output — the system as it stood before adaptation.",
+                  note: "The original node graph and one representative output: the system as it stood before adaptation.",
                 },
               ],
             },
           ],
         },
         {
-          heading: "This wasn't a translation problem. It was a beat problem.",
+          heading: "Every vertical had one moment the output could not miss.",
           blocks: [
-            {
-              type: "p",
-              text: "Adding garment terms and rewriting genre tables helped, but did not solve what made the output feel authentic.",
-            },
-            {
-              type: "pull",
-              text: "Every vertical had one moment the output could not skip. Finding that moment became the localisation work.",
-            },
             {
               type: "pairs",
               items: [
                 {
                   label: "Ishin Fashions",
-                  text: "The dupatta — its drape, fall and embellishment.",
+                  text: "The dupatta: its drape, fall and embellishment.",
                 },
                 {
                   label: "6th Street",
-                  text: "Footwear cohesion — the outfit must read as one purchase.",
+                  text: "Footwear cohesion: the outfit must read as one purchase.",
                 },
                 {
                   label: "Bento House",
-                  text: "Logo fidelity — the brand mark is the product.",
+                  text: "Logo fidelity: the brand mark is the product.",
                 },
               ],
             },
@@ -671,30 +684,15 @@ export const projects: Project[] = [
           ],
         },
         {
-          heading: "What stays fixed: eight nodes, two branches, one video.",
+          heading: "Eight nodes, two branches, one video.",
           blocks: [
             {
               type: "p",
-              text: "Underneath the swapped payloads, the graph did not move. Inputs were packaged, garments analysed, storyboards created, story and camera direction separated, then prompts assembled for video.",
+              text: "The underlying graph stayed fixed: inputs were packaged, garments analysed, storyboards created, story and camera direction separated, and prompts assembled for video. Domain knowledge became the swappable payload.",
             },
-            {
-              type: "media",
-              items: [
-                {
-                  kind: "system",
-                  title: "The reusable pipeline",
-                  note: "The eight-node, two-branch architecture — the fixed structure separated visually from the domain payload.",
-                },
-              ],
-            },
-          ],
-        },
-        {
-          heading: "Genre was not a parameter. It became the system.",
-          blocks: [
             {
               type: "p",
-              text: "Genre entered as an ordinary variable and simultaneously overrode the analyst's system prompt through a direct edge. Selecting a genre swapped in specialist knowledge at runtime.",
+              text: "Genre was treated as a runtime system switch. Selecting a genre injected specialist knowledge into the analyst without changing the underlying graph.",
             },
             {
               type: "pull",
@@ -705,19 +703,27 @@ export const projects: Project[] = [
               items: [
                 {
                   kind: "system",
-                  title: "The runtime genre switch",
-                  note: "Genre selector → specialist prompt → analyst. The key design-engineering moment.",
+                  title: "The reusable architecture and the genre switch",
+                  note: "The eight-node, two-branch graph with the fixed structure separated from the domain payload, and the genre selector feeding the analyst.",
                 },
               ],
             },
           ],
         },
         {
-          heading: "One analyst owns every fact, or the video drifts.",
+          heading: "Consistency needs a source of truth.",
           blocks: [
             {
               type: "p",
-              text: "A nine-panel storyboard and a fifteen-second video have to describe the same person wearing the same thing. The forensic analyst became the single source of truth; downstream nodes were not allowed to re-derive those facts.",
+              text: "A nine-panel storyboard and a fifteen-second video still need to describe the same person wearing the same garment. The forensic analyst became the single source of truth, and downstream nodes were not allowed to independently re-derive those facts.",
+            },
+            {
+              type: "p",
+              text: "I also challenged assumptions inside the reusable system. Sport could not inherit the walk and showcase behaviour used for fashion. Athletic products needed movement with intent: a drill or athlete format.",
+            },
+            {
+              type: "p",
+              text: "Conditional logic mattered as much. If a fusion garment included a dupatta, the workflow documented it. If it did not, the system substituted a fabric-motion beat instead of forcing a false product attribute.",
             },
             {
               type: "media",
@@ -732,69 +738,7 @@ export const projects: Project[] = [
           ],
         },
         {
-          heading: "Sport does not walk.",
-          blocks: [
-            {
-              type: "p",
-              text: "The format system assumed every genre resolved into a walk or showcase. That worked for dresses. It failed for running shoes.",
-            },
-            {
-              type: "pull",
-              text: "Athletic products needed movement with intent, not a runway.",
-            },
-            {
-              type: "pairs",
-              items: [
-                {
-                  label: "Lifestyle · Street · Resort",
-                  text: "Walk / Showcase",
-                },
-                { label: "Sport", text: "Drill / Athlete" },
-                { label: "Formal", text: "Arrive / Showcase" },
-              ],
-            },
-            {
-              type: "media",
-              items: [
-                {
-                  kind: "visual",
-                  title: "The format system",
-                  note: "The genre → format mapping, with one Sport example beside a fashion one.",
-                },
-              ],
-            },
-          ],
-        },
-        {
-          heading:
-            "The beat isn't always there, so the beat became conditional.",
-          blocks: [
-            {
-              type: "p",
-              text: "Fusion garments broke the assumption that every ethnic product has a dupatta. Hardcoding either answer would break part of the catalogue.",
-            },
-            {
-              type: "p",
-              text: "The fix: document the dupatta if it appears. Otherwise substitute a fabric-motion beat so the reveal still has something to resolve.",
-            },
-            {
-              type: "media",
-              items: [
-                {
-                  kind: "visual",
-                  title: "Conditional logic",
-                  note: "Dupatta present → document it. Absent → substitute the fabric-motion beat.",
-                },
-              ],
-            },
-            {
-              type: "pull",
-              text: "This is where the system became more interesting than the prompt.",
-            },
-          ],
-        },
-        {
-          act: "Act Two — The Fork",
+          act: "02: The Fork",
           heading: "A watch does not walk anywhere.",
           blocks: [
             {
@@ -802,23 +746,8 @@ export const projects: Project[] = [
               text: "Luxury product reveal arrived. The obvious move was to port the fashion architecture again. It was the wrong move.",
             },
             {
-              type: "media",
-              items: [
-                {
-                  kind: "visual",
-                  title: "Fashion vs luxury",
-                  note: "A garment pipeline beside a luxury object, annotated: consistency problem vs world-building problem.",
-                },
-              ],
-            },
-            { type: "pull", text: "The fashion pipeline solved consistency." },
-            {
               type: "p",
-              text: "One person. One garment. Identical across frames and into motion.",
-            },
-            {
-              type: "p",
-              text: "A luxury object has no wearer, gait or narrative arc. The hard problem was deciding what world the object belonged in.",
+              text: "The fashion pipeline solved a consistency problem: one person, one garment, identical across frames and into motion. A luxury object has no wearer, no gait and no narrative arc. The hard problem was different: deciding what world the object belonged in.",
             },
             {
               type: "pull",
@@ -841,15 +770,19 @@ export const projects: Project[] = [
           blocks: [
             {
               type: "p",
-              text: "The original reveal chain required three images: product, logo and scene reference. The scene reference was the bottleneck because someone had to find or create it.",
-            },
-            {
-              type: "p",
-              text: "In practice, that took half a day to a full day for one product. Most pitches therefore relied on pre-made work.",
+              text: "The original reveal chain required three inputs: product, logo and a scene reference. The scene reference was the bottleneck, because someone had to find or create it. Preparing one bespoke product could take half a day to a full day.",
             },
             {
               type: "pull",
-              text: "The system went from three inputs to two: product + logo. The world was derived from the object.",
+              text: "Two inputs: product + logo. The world became something the system derived from the object.",
+            },
+            {
+              type: "p",
+              text: "Creativity happened once, at authoring time. Rather than letting a reasoning model freely invent scenes, I gave it a decision procedure that selected from authored scene libraries. That preserved creative range without sacrificing repeatability.",
+            },
+            {
+              type: "p",
+              text: "The reasoning output became a contract for downstream generation: identification → image prompt → video prompt.",
             },
             {
               type: "media",
@@ -864,58 +797,74 @@ export const projects: Project[] = [
           ],
         },
         {
-          heading: "Creativity happens once, at authoring time.",
+          act: "03: Four Worlds, Two Architectures",
+          heading: "Four pipelines, and where each one bent.",
           blocks: [
             {
-              type: "p",
-              text: "A reasoning model could freely pick a scene, but that creates variety at the expense of repeatability. Instead, the model received a decision procedure that selected from authored scene libraries.",
+              type: "pairs",
+              items: [
+                {
+                  label: "Ishin Fashions",
+                  text: "Indian ethnicwear: reusable narrative architecture plus specialist genre knowledge.",
+                },
+                {
+                  label: "6th Street",
+                  text: "Gulf footwear: brand system, casting standards and genre-format combinations.",
+                },
+                {
+                  label: "Bento House",
+                  text: "Merchandise: forked to static output with print/substrate analysis and compositing.",
+                },
+                {
+                  label: "Luxury Reveal",
+                  text: "Luxury objects: reasoning architecture for world selection and reveal generation.",
+                },
+              ],
             },
             {
               type: "media",
               items: [
                 {
                   kind: "system",
-                  title: "Scene selection logic",
-                  note: "Identify category → visual analysis → scene selection → setting selection → prompt package, with a sample of the scene library.",
+                  title: "Four worlds, two architectures",
+                  note: "The four pipelines side by side, grouped by the architecture each one runs on.",
                 },
               ],
             },
           ],
         },
         {
-          act: "Act Three — What It Did",
-          heading: "The output format became the interface.",
+          act: "04: What It Changed",
+          heading: "The output became the interface.",
           blocks: [
             {
               type: "p",
-              text: "The reasoning node did not produce prose for a human. Its output went directly into image and video generation. The format itself became the contract.",
-            },
-            {
-              type: "media",
-              items: [
-                {
-                  kind: "system",
-                  title: "The output contract",
-                  note: "IDENTIFICATION → IMAGE PROMPT → VIDEO PROMPT → END. The structure only, not the full prompt.",
-                },
-              ],
-            },
-          ],
-        },
-        {
-          heading: "What it was actually for.",
-          blocks: [
-            {
-              type: "p",
-              text: "The luxury reveal pipeline was not ultimately a production tool. It was a sales instrument.",
+              text: "The luxury reveal workflow was not ultimately a production tool. It became a sales instrument.",
             },
             {
               type: "p",
-              text: "Before it existed, preparing bespoke pitch material took half a day to a day. Prospects were shown somebody else's product.",
+              text: "Product Managers and Sales could upload a prospect's product and logo and generate premium, brand-specific material live during a pitch.",
             },
             {
               type: "pull",
-              text: "The demo stopped being a portfolio and became a mirror.",
+              text: "Instead of showing prospects somebody else's product, the demo became a mirror of their own brand.",
+            },
+            {
+              type: "pairs",
+              items: [
+                {
+                  label: "Manual production",
+                  text: "Half a day to a full day of bespoke material per product → replaced by live generation for the reveal workflow.",
+                },
+                {
+                  label: "Commercial",
+                  text: "Used in the pitch for one closed enterprise deal and two SLG clients.",
+                },
+                {
+                  label: "Operations",
+                  text: "Output volume increased for the teams operating the workflow.",
+                },
+              ],
             },
             {
               type: "media",
@@ -930,104 +879,46 @@ export const projects: Project[] = [
           ],
         },
         {
-          heading: "All four pipelines shipped.",
-          blocks: [
-            {
-              type: "pairs",
-              items: [
-                {
-                  label: "Ishin Fashions",
-                  text: "Six system prompts across eight nodes; twelve genre values across six genres, with walk and showcase variants.",
-                },
-                {
-                  label: "6th Street",
-                  text: "Ported architecture with a four-tier brand system, Gulf casting standards and ten genre-format combinations.",
-                },
-                {
-                  label: "Bento House",
-                  text: "Forked to static output with a print/substrate analyst and compositor; no video branch.",
-                },
-                {
-                  label: "Luxury Reveal",
-                  text: "Seven nodes, nine edges; reasoning, hero image and a ten-second video with audio.",
-                },
-              ],
-            },
-          ],
-        },
-        {
-          act: "Act Four — Residue",
-          heading: "The outcome was a change in the sales conversation.",
+          act: "05: What I Learned",
+          heading: "AI systems can be wrong without looking broken.",
           blocks: [
             {
               type: "p",
-              text: "Product Managers and Sales could run the luxury reveal live: upload the prospect's product and logo, then generate premium brand-specific output while they watched.",
+              text: "One prompt declared twelve categories while the underlying library contained fourteen. Nothing visibly failed. The contradiction simply survived.",
             },
             {
-              type: "pairs",
-              items: [
-                {
-                  label: "Manual step",
-                  text: "Half a day to a full day of bespoke material per product → replaced by live generation for the reveal workflow.",
-                },
-                {
-                  label: "Commercial",
-                  text: "Used in the pitch for one closed enterprise deal and two SLG clients.",
-                },
-                {
-                  label: "Operations",
-                  text: "Output volume rose for the teams operating the workflow.",
-                },
-                {
-                  label: "Next metric",
-                  text: "Share of pitches using prospect-specific output, from a baseline near zero.",
-                },
-              ],
+              type: "pull",
+              text: "AI QA cannot only test whether a workflow runs. It has to test whether the system's sources of truth agree.",
             },
-            {
-              type: "media",
-              items: [
-                {
-                  kind: "visual",
-                  title: "Outcome / live demo",
-                  note: "The strongest final output or a pitch moment. This should feel like the payoff.",
-                },
-              ],
-            },
-          ],
-        },
-        {
-          heading: "What I would do differently.",
-          blocks: [
             {
               type: "points",
               items: [
                 {
                   title: "Turn the quality gate on for production.",
-                  text: "The evaluator existed but was deliberately disabled because the workflow needed to run live in pitches. That trade-off makes sense for demos, not automatically for production.",
-                },
-                {
-                  title: "Keep system truth synchronized.",
-                  text: "The prompt declared twelve categories while the library had fourteen. The system worked, but the contradiction survived because it did not visibly fail.",
+                  text: "The evaluator existed but was deliberately disabled because the workflow needed to run live in pitches. That trade-off made sense for demos; production requires stronger quality gates.",
                 },
                 {
                   title: "Name the system for its operators.",
-                  text: "Product Managers and Sales used the workflow, but several node names described the author's mental model rather than the operator's task.",
+                  text: "Some node names reflected the builder's mental model rather than the Product Manager or Sales user's task. The next iteration would make the workflow legible to the people operating it.",
                 },
                 {
                   title: "Test what is merely working.",
-                  text: "Questions remained around storyboard reference selection and whether a very long system prompt was actually necessary.",
+                  text: "Questions remain around storyboard reference selection, and whether very long system prompts are actually necessary.",
                 },
               ],
             },
-            { type: "p", text: "The rule that survived every pipeline:" },
-            {
-              type: "pull",
-              text: "Reuse until the shape of the problem changes. Then stop.",
-            },
+          ],
+        },
+        {
+          heading: "Reuse until the shape of the problem changes. Then stop.",
+          blocks: [
             {
               type: "p",
-              text: "Four pipelines. Two architectures. One principle: the job is not to make one system handle everything. It is to know where the system should bend — and where it should break.",
+              text: "Four pipelines. Two architectures. One principle.",
+            },
+            {
+              type: "pull",
+              text: "The job is not to make one system handle everything. It is to know where the system should bend, and where it should break.",
             },
           ],
         },
@@ -1050,7 +941,7 @@ export const experience: Experience[] = [
     role: "Product Designer",
     company: "ShopOS",
     description:
-      "Product designer at ShopOS — a full-time, on-site role in Bangalore, working across Vibe Design, agentic workflows, and the systems that support them.",
+      "Product designer at ShopOS: a full-time, on-site role in Bangalore, working across Vibe Design, agentic workflows, and the systems that support them.",
   },
   {
     period: "Nov 2024 - Oct 2025",
@@ -1071,6 +962,6 @@ export const experience: Experience[] = [
     role: "Product Design Fellow",
     company: "ownpath",
     description:
-      "Product design fellowship at ownpath — a remote internship building foundations in Figma, UX research, and design craft.",
+      "Product design fellowship at ownpath: a remote internship building foundations in Figma, UX research, and design craft.",
   },
 ];

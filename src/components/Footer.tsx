@@ -93,7 +93,7 @@ export function Footer() {
           tablet / desktop: large display CTA */}
       <div className="flex flex-col items-center gap-6 text-center">
         <p className="text-2xl uppercase leading-none text-muted sm:text-4xl md:text-5xl">
-          Let&apos;s work together
+          Let&rsquo;s make it happen
         </p>
         {/* mobile only — same button as the nav */}
         <div className="sm:hidden">

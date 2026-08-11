@@ -292,6 +292,298 @@ body {
   animation: pixelFlicker 4.5s ease-in-out infinite;
 }
 
+/* ---- Experiments bento ----
+   Justified rows, not a fixed grid. Every tile declares the aspect ratio of
+   the thing inside it (--exp-aspect) and takes width in proportion to it, so
+   a row's tiles all land on one height and NOTHING is cropped to fit a cell —
+   a portrait drawing stays portrait, a square video stays square.
+   Row height falls out of the maths: (row width) / (sum of its aspects), which
+   is why each row below is composed to a sum rather than a tile count.
+   Each tile is a clipped viewport around a LIVE component, never a screenshot. */
+.exp-gallery {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.exp-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* Square corners and no lift, glow or shadow: the tiles butt up against each
+   other and against the viewport edges, so the only hover state is the card
+   coming up to full strength. */
+.exp-card {
+  position: relative;
+  overflow: hidden; /* the tile is the viewport */
+  /* width proportional to the tile's own aspect, height derived from it */
+  flex-grow: var(--exp-aspect, 1);
+  flex-shrink: 1;
+  flex-basis: 0;
+  aspect-ratio: var(--exp-aspect, 1);
+  /* phones take one tile per line, at full width and full height — a justified
+     row of three on a 390px screen leaves every tile too short to read */
+  min-width: 100%;
+  background-color: color-mix(in srgb, var(--color-surface) 70%, transparent);
+  /* resting: well down, so the wall reads as one dark calm block and the
+     hovered card is the only thing lit */
+  filter: brightness(0.58) saturate(0.72);
+  transition: filter 0.3s ease;
+}
+@media (min-width: 640px) {
+  /* wide enough for the authored rows to hold; a row only breaks if its tiles
+     would go under 150px */
+  .exp-card {
+    min-width: 150px;
+  }
+}
+.exp-card:hover {
+  filter: none; /* back to the component's own brightness */
+}
+:root[data-theme="light"] .exp-card {
+  filter: brightness(0.94) saturate(0.8);
+}
+/* while one card is lit the rest of the wall recedes further. :has() keeps
+   this in CSS — no hover state in React, nothing running per mousemove */
+.exp-gallery:has(.exp-card:hover) .exp-card:not(:hover) {
+  filter: brightness(0.42) saturate(0.55);
+}
+:root[data-theme="light"]
+  .exp-gallery:has(.exp-card:hover)
+  .exp-card:not(:hover) {
+  filter: brightness(0.86) saturate(0.62);
+}
+
+/* Touch and narrow screens: there is no pointer to reveal a tile with, so the
+   muting has nothing to resolve it — every card sits at full strength. */
+@media (hover: none), (max-width: 767px) {
+  .exp-card,
+  :root[data-theme="light"] .exp-card,
+  .exp-gallery:has(.exp-card:hover) .exp-card:not(:hover),
+  :root[data-theme="light"]
+    .exp-gallery:has(.exp-card:hover)
+    .exp-card:not(:hover) {
+    filter: none;
+  }
+}
+
+/* The live component's box. `isolation` gives it its own stacking context so
+   the card's chrome can never paint into it, and `container-type` lets an
+   experiment size itself in cqi units against the card instead of the page. */
+.exp-stage {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem;
+  overflow: hidden;
+  isolation: isolate;
+  container-type: inline-size;
+  text-align: center;
+  line-height: 1.15;
+}
+
+/* The name of an openable tile, revealed on hover. Only tiles that open carry
+   one — everything else stays pure at rest and on hover. Set with a shadow
+   rather than a scrim so it can sit over a live board without dimming it. */
+.exp-title {
+  position: absolute;
+  left: 0.875rem;
+  bottom: 0.75rem;
+  z-index: 20;
+  max-width: calc(100% - 3rem);
+  font-size: 1rem;
+  font-weight: 500;
+  line-height: 1.3;
+  color: var(--color-fg);
+  text-shadow:
+    0 1px 14px var(--color-bg),
+    0 0 4px var(--color-bg);
+  opacity: 0;
+  transform: translateY(0.25rem);
+  pointer-events: none;
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.exp-card:hover .exp-title,
+.exp-card:focus-within .exp-title {
+  opacity: 1;
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .exp-title {
+    transition: opacity 0.3s ease;
+    transform: none;
+  }
+}
+
+/* The only other mark a tile carries: a corner arrow on the ones that open
+   full size. */
+.exp-open {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  z-index: 20;
+  width: 0.875rem;
+  height: 0.875rem;
+  pointer-events: none;
+  color: color-mix(in srgb, var(--color-fg) 60%, transparent);
+  transition: color 0.3s ease;
+}
+.exp-card:hover .exp-open {
+  color: var(--color-fg);
+}
+
+/* Tiles whose content is dark in every theme: the ASCII render, which paints
+   lit characters over the ground it was composed against, and the agent board,
+   which is a dark UI of its own. In the light theme they keep the dark
+   background, and everything drawn on top of them inverts to match — a
+   near-black title or arrow on a near-black tile is simply invisible. */
+:root[data-theme="light"] .exp-on-dark {
+  background-color: #0a0a0b;
+}
+:root[data-theme="light"] .exp-on-dark .exp-title {
+  color: #ededef;
+  text-shadow:
+    0 1px 14px #0a0a0b,
+    0 0 4px #0a0a0b;
+}
+:root[data-theme="light"] .exp-on-dark .exp-open {
+  color: color-mix(in srgb, #ededef 60%, transparent);
+}
+:root[data-theme="light"] .exp-on-dark:hover .exp-open {
+  color: #ededef;
+}
+
+/* The matrix's own colours, taken from the theme rather than fixed neutrals:
+   a lit dot is the foreground and a dark one is a trace of it, so the rally
+   reads as light-on-dark in the dark theme and dark-on-light in the light one.
+   Fixed greys inverted in light mode — the lit dots were the ones vanishing. */
+.exp-dot {
+  background-color: color-mix(in srgb, var(--color-fg) 22%, transparent);
+}
+.exp-dot.active {
+  background-color: var(--color-fg);
+}
+
+/* the dot matrix ships at 54px — too small to hold a tile, so it is zoomed
+   (not transformed) to keep the dots crisp at every step */
+.exp-pong {
+  zoom: 2.4;
+}
+@media (min-width: 640px) {
+  .exp-pong {
+    zoom: 3;
+  }
+}
+@media (min-width: 1024px) {
+  .exp-pong {
+    zoom: 3.6;
+  }
+}
+
+/* ---- Case study section rail ----
+   Fixed ticks down the right edge, one per story section. It stays pure marks
+   — no hover reveal, nothing to read — so it never competes with the copy;
+   the only state is which section you're in. Below lg the reading column runs
+   to the gutters, so the rail is hidden there. */
+.cs-section-rail {
+  display: none;
+}
+@media (min-width: 1024px) {
+  .cs-section-rail {
+    position: fixed;
+    /* the page's own gutter — the same 16px (px-4) edge the full-bleed covers
+       and section figures run to, so the rail shares the page's outer line
+       instead of floating at an offset of its own */
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 40;
+    display: flex;
+    flex-direction: column;
+    /* tightens on short viewports so a long story still fits without scrolling
+       the rail itself */
+    gap: clamp(7px, 1.1vh, 10px);
+    align-items: flex-end;
+    /* left pad is hit area: the pointer reaches the rail before the 14px tick */
+    padding: 8px 0 8px 24px;
+    /* the rail belongs to the story — it's parked until the header scrolls by
+       (SectionRail sets .is-visible) */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.45s ease;
+  }
+  .cs-section-rail.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+.cs-rail-tick {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  /* held at the active tick's width so every mark shares one right edge */
+  width: 24px;
+  background: transparent;
+  border: none;
+  padding: 3px 0;
+  cursor: pointer;
+}
+/* the tick itself is 2px tall — this carries the click into the rail's left
+   padding and into the gap above and below, so it can be hit without aiming.
+   Kept just under the 18px pitch so two targets never overlap. */
+.cs-rail-tick::before {
+  content: "";
+  position: absolute;
+  inset: -4px 0 -4px -24px;
+}
+/* an act break gets a little air above it, so the rail reads as chapters */
+.cs-rail-tick[data-act-start] {
+  margin-top: 8px;
+}
+.cs-rail-tick:first-child[data-act-start] {
+  margin-top: 0;
+}
+
+.cs-rail-mark {
+  height: 2px;
+  border-radius: 1px;
+  display: block;
+  flex-shrink: 0;
+  width: 14px;
+  background-color: color-mix(in srgb, var(--color-fg) 55%, transparent);
+  /* a soft halo in the page's own background colour — the rail floats over
+     full-bleed covers, and a bare 2px line disappears into a bright one */
+  box-shadow: 0 0 4px 1px color-mix(in srgb, var(--color-bg) 65%, transparent);
+  transition:
+    width 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 0.3s ease;
+}
+/* only the section being read is lit — no hover state; the rail reacts to
+   where you are on the page, not to where the pointer is */
+.cs-rail-tick[aria-current] .cs-rail-mark {
+  width: 24px;
+  background-color: var(--color-fg);
+}
+/* keyboard only — the focus ring is the one thing a pointer never triggers */
+.cs-rail-tick:focus-visible .cs-rail-mark {
+  outline: 1px solid var(--color-fg);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* the width change is the motion here — the contrast carries it instead */
+  .cs-section-rail,
+  .cs-rail-mark {
+    transition: none;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;

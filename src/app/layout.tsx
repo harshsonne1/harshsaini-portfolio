@@ -27,7 +27,7 @@ const fontMonoska = localFont({
 });
 
 export const metadata: Metadata = {
-  title: `${site.name} — ${site.role}`,
+  title: `${site.name}, ${site.role}`,
   description: site.tagline,
   // favicon swaps with the browser's color scheme
   icons: {
@@ -45,7 +45,7 @@ export const metadata: Metadata = {
     ],
   },
   openGraph: {
-    title: `${site.name} — ${site.role}`,
+    title: `${site.name}, ${site.role}`,
     description: site.tagline,
     type: "website",
   },

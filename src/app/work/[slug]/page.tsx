@@ -11,7 +11,9 @@ import { BracketLink } from "@/components/BracketLink";
 import { PageBlur } from "@/components/PageBlur";
 import ScrollReveal from "@/components/ScrollReveal";
 import GlitchInitial from "@/components/GlitchInitial";
-import { CaseStudyStory } from "@/components/CaseStudyStory";
+import { CaseStudyStory, storyRailItems } from "@/components/CaseStudyStory";
+import { CoverVideo } from "@/components/CoverVideo";
+import SectionRail from "@/components/SectionRail";
 
 type Params = { params: Promise<{ slug: string }> };
 
@@ -24,13 +26,19 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const project = projects.find((p) => p.slug === slug);
   if (!project) return {};
   return {
-    title: `${project.title} — ${site.name}`,
+    title: `${project.title} by ${site.name}`,
     description: project.description,
   };
 }
 
 // one meta cell of the Year / Industry / Scope / Website row
-function Meta({ label, children }: { label: string; children: React.ReactNode }) {
+function Meta({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
   return (
     <div>
       <div className="text-xs uppercase tracking-wider text-muted">{label}</div>
@@ -50,6 +58,9 @@ export default async function CaseStudy({ params }: Params) {
       <LayoutSkeleton color="var(--loader-stroke)" />
       <ScrollReveal />
       <HeroNav compact />
+
+      {/* section rail — only the long-form stories have sections to page through */}
+      {project.story && <SectionRail items={storyRailItems(project.story)} />}
 
       {/* main is unpadded: text blocks carry the 1400px container themselves so
           images can run the full viewport in the footer's gutters */}
@@ -104,22 +115,32 @@ export default async function CaseStudy({ params }: Params) {
                 />
               </span>
             ) : (
-              <span className="text-muted">—</span>
+              <span className="text-muted">Not public</span>
             )}
           </Meta>
         </div>
 
-        {/* cover — full viewport width, in the footer's gutters */}
-        {project.image && (
+        {/* cover — full viewport width, in the footer's gutters. When the
+            project carries a video, it plays here as soon as the cover comes
+            into view, over the still it uses as its poster. */}
+        {(project.image || project.video) && (
           <div className="mt-14 w-full px-4 sm:mt-20">
             <div
-              className="hero-reveal aspect-video w-full overflow-hidden"
-              style={{
-                backgroundImage: `url(${project.image})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-              }}
-            />
+              className="hero-reveal relative aspect-video w-full overflow-hidden"
+              style={
+                project.image
+                  ? {
+                      backgroundImage: `url(${project.image})`,
+                      backgroundSize: "cover",
+                      backgroundPosition: "center",
+                    }
+                  : undefined
+              }
+            >
+              {project.video && (
+                <CoverVideo src={project.video} poster={project.image} />
+              )}
+            </div>
           </div>
         )}
 

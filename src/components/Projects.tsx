@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { projects } from "@/content/site";
+import { CoverVideo } from "./CoverVideo";
 import MagneticCursor from "./MagneticCursor";
 import GlitchInitial from "./GlitchInitial";
 
@@ -15,15 +16,23 @@ const TILE_GRADIENTS = [
 
 export function Projects() {
   return (
-    <section id="projects" className="relative scroll-mt-20 px-4 py-20 sm:py-28">
+    <section
+      id="projects"
+      className="relative scroll-mt-20 px-4 py-20 sm:py-28"
+    >
       {/* label cursor — only appears over the project tiles */}
-      <MagneticCursor label="View case" size={150} triggerSelector="[data-cursor]" />
+      <MagneticCursor
+        label="View case"
+        size={150}
+        triggerSelector="[data-cursor]"
+      />
 
       <div>
         {/* header: title */}
         <div className="mb-14">
           <h2 className="font-hero-1 text-4xl leading-none text-fg sm:text-5xl">
-            <GlitchInitial letter="W" intervalMs={5200} />ork
+            <GlitchInitial letter="W" intervalMs={5200} />
+            ork
           </h2>
         </div>
 
@@ -54,12 +63,27 @@ export function Projects() {
                               backgroundSize: "cover",
                               backgroundPosition: "center",
                             }
-                          : {
-                              background:
-                                TILE_GRADIENTS[i % TILE_GRADIENTS.length],
-                            }
+                          : project.video
+                            ? // a video with no poster covers the tile itself —
+                              // a gradient behind it would only flash on load
+                              undefined
+                            : {
+                                background:
+                                  TILE_GRADIENTS[i % TILE_GRADIENTS.length],
+                              }
                       }
-                    />
+                    >
+                      {/* the cover only moves while the pointer is on the
+                          card — the wall of tiles stays still otherwise */}
+                      {project.video && (
+                        <CoverVideo
+                          src={project.video}
+                          poster={project.image}
+                          trigger="hover"
+                          hoverSelector=".work-card"
+                        />
+                      )}
+                    </div>
                   </div>
                 </Link>
 

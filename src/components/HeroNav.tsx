@@ -16,7 +16,11 @@ export function HeroNav({ compact = false }: HeroNavProps) {
     <nav className="nav-intro fixed inset-x-0 top-0 z-[1300] flex items-start justify-between gap-4 p-4 text-sm">
       <div className="leading-tight">
         {/* wordmark doubles as the way back home from case study pages */}
-        <Link href="/" aria-label={`${site.name} — back to home`} className="block text-fg">
+        <Link
+          href="/"
+          aria-label={`${site.name}, back to home`}
+          className="block text-fg"
+        >
           &gt;{" "}
           <DecryptedText
             text={site.name}

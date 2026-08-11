@@ -2,6 +2,7 @@ import { AsciiHero } from "@/components/AsciiHero";
 import { About } from "@/components/About";
 import { Projects } from "@/components/Projects";
 import { Experience } from "@/components/Experience";
+import { Experiments } from "@/components/Experiments";
 import { Footer } from "@/components/Footer";
 import HorizontalLineLoader from "@/components/HorizontalLineLoader";
 import LayoutSkeleton from "@/components/LayoutSkeleton";
@@ -37,6 +38,10 @@ export default function Home() {
         <Projects />
         <SectionDivider />
         <Experience />
+        <SectionDivider />
+        {/* the components the site is built from, running live — last thing
+            before the footer */}
+        <Experiments />
       </main>
       <SectionDivider />
       <Footer />
