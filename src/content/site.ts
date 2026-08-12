@@ -101,6 +101,10 @@ export type CaseStudySection = {
 export type CaseStudy = {
   /* the line under the title, beneath the opening statement */
   subhead: string;
+  /* "split" pins each section's heading and copy in a left column while its
+     figures scroll past on the right. Without it, copy sits beside the heading
+     and figures break out to the full viewport width. */
+  layout?: "split";
   /* challenge / approach / solution / outcome */
   summary: { label: string; text: string }[];
   /* figures that close the Overview, before My role */
@@ -156,6 +160,7 @@ export const projects: Project[] = [
     story: {
       subhead:
         "One system. Four worlds. Two architectures. I adapted one AI video pipeline across four domains, and discovered that the hardest part was knowing when the original architecture no longer fit.",
+      layout: "split",
       summary: [
         {
           label: "Challenge",

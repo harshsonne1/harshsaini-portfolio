@@ -205,17 +205,23 @@ function PairRows({
 function Block({
   block,
   opensSection = false,
+  split = false,
 }: {
   block: CaseStudyBlock;
   /** first block of the section, so the section's hairline is right above it */
   opensSection?: boolean;
+  /** stacked in the sticky column, so it carries no grid placement of its own */
+  split?: boolean;
 }) {
+  const narrow = split ? "" : NARROW;
+  const wide = split ? "" : WIDE;
+
   switch (block.type) {
     case "p":
       return (
         <p
           data-reveal="up"
-          className={`text-lg leading-relaxed text-fg ${NARROW}`}
+          className={`text-lg leading-relaxed text-fg ${narrow}`}
         >
           {block.text}
         </p>
@@ -225,7 +231,7 @@ function Block({
       return (
         <p
           data-reveal="up"
-          className={`border-l border-border pl-5 text-xl leading-snug text-fg sm:text-2xl ${NARROW}`}
+          className={`border-l border-border pl-5 text-xl leading-snug text-fg sm:text-2xl ${narrow}`}
         >
           {block.text}
         </p>
@@ -233,7 +239,7 @@ function Block({
 
     case "stats":
       return (
-        <div data-reveal-group className={WIDE}>
+        <div data-reveal-group className={wide}>
           <BlockLabel>Key metrics</BlockLabel>
           <ul className="mt-6 grid grid-cols-2 gap-6 sm:grid-cols-4 lg:flex lg:justify-between">
             {block.items.map((stat, i) => (
@@ -259,14 +265,14 @@ function Block({
 
     case "pairs":
       return (
-        <dl data-reveal-group className={NARROW}>
+        <dl data-reveal-group className={narrow}>
           <PairRows items={block.items} dropFirstRule={opensSection} />
         </dl>
       );
 
     case "points":
       return (
-        <div data-reveal-group className={`flex flex-col gap-y-6 ${NARROW}`}>
+        <div data-reveal-group className={`flex flex-col gap-y-6 ${narrow}`}>
           {block.items.map((point, i) => (
             <div
               key={point.title}
@@ -304,7 +310,11 @@ function toRuns(blocks: CaseStudyBlock[]): Run[] {
   return runs;
 }
 
-function StorySection({
+// The split layout: heading and copy pinned in a left column while the
+// section's figures scroll past on the right. The pinned column is a grid item
+// with `self-start`, without which it would stretch to the row's full height
+// and have no room left to travel.
+function SplitSection({
   id,
   act,
   heading,
@@ -315,7 +325,83 @@ function StorySection({
   heading: string;
   blocks: CaseStudyBlock[];
 }) {
+  const copy = blocks.filter((b) => b.type !== "media");
+  const figures = blocks.flatMap((b) => (b.type === "media" ? b.items : []));
+  const shown = SHOW_EMPTY_MEDIA ? figures : figures.filter((f) => f.src);
+
+  return (
+    <section id={id} className={`scroll-mt-24 ${SECTION_PAD}`}>
+      <div className={COLUMN}>
+        <div className="relative">
+          {/* the hairline that opens every section, drawn left to right */}
+          <span
+            data-reveal="line"
+            className="hairline absolute inset-x-0 top-0 h-px"
+          />
+
+          <div className="flex flex-col gap-y-8 pt-6 lg:grid lg:grid-cols-12 lg:gap-x-8">
+            <div className="lg:sticky lg:top-24 lg:col-span-4 lg:col-start-1 lg:self-start">
+              {act && (
+                <div className="pb-10 text-xs uppercase tracking-[0.25em] text-muted">
+                  {act}
+                </div>
+              )}
+              <h2
+                data-reveal="up"
+                className="text-[2.25rem] leading-tight text-fg"
+              >
+                {heading}
+              </h2>
+              {copy.length > 0 && (
+                <div className="mt-6 flex flex-col gap-y-6">
+                  {copy.map((block, i) => (
+                    <Block key={i} block={block} opensSection={i === 0} split />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {shown.length > 0 && (
+              <div
+                className={`lg:col-span-8 lg:col-start-5 ${
+                  shown.length >= 4
+                    ? "grid grid-cols-2 gap-2"
+                    : "flex flex-col gap-2"
+                }`}
+              >
+                {shown.map((item) => (
+                  <Media key={item.title} item={item} />
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function StorySection({
+  id,
+  act,
+  heading,
+  blocks,
+  split = false,
+}: {
+  id: string;
+  act?: string;
+  heading: string;
+  blocks: CaseStudyBlock[];
+  split?: boolean;
+}) {
   const runs = toRuns(blocks);
+
+  // A section with no figures has nothing to pin the copy against, and the
+  // split would leave two thirds of the row empty — those keep the standard
+  // heading-beside-copy layout.
+  if (split && blocks.some((b) => b.type === "media")) {
+    return <SplitSection id={id} act={act} heading={heading} blocks={blocks} />;
+  }
 
   return (
     // scroll-mt clears the fixed nav when the rail jumps to this section
@@ -328,10 +414,12 @@ function StorySection({
         // four portrait clips read as a set rather than as four screens of
         // scrolling.
         const mediaLayout =
+          // gap-2 is the experiments bento's 8px, so a row of figures is set
+          // to the same rhythm as the wall on the home page
           items.length >= 4
-            ? "grid grid-cols-2 gap-4 lg:grid-cols-4"
+            ? "grid grid-cols-2 gap-2 lg:grid-cols-4"
             : items.length > 1
-              ? "grid gap-4 sm:grid-cols-2"
+              ? "grid gap-2 sm:grid-cols-2"
               : "flex flex-col gap-y-6";
 
         return run.media ? (
@@ -393,10 +481,12 @@ function StorySection({
 export function CaseStudyStory({ story }: { story: CaseStudy }) {
   // same list the rail is built from: [overview, my role, ...sections]
   const ids = storySectionIds(story);
+  const split = story.layout === "split";
 
   return (
     <div className="mt-12 sm:mt-16">
       <StorySection
+        split={split}
         id={ids[0]}
         heading="Overview"
         blocks={[
@@ -408,6 +498,7 @@ export function CaseStudyStory({ story }: { story: CaseStudy }) {
       />
       {/* the role figures close this section, so they run full-bleed under it */}
       <StorySection
+        split={split}
         id={ids[1]}
         heading="My role"
         blocks={[
@@ -421,6 +512,7 @@ export function CaseStudyStory({ story }: { story: CaseStudy }) {
       {story.sections.map((section, i) => (
         <StorySection
           key={ids[i + 2]}
+          split={split}
           id={ids[i + 2]}
           act={section.act}
           heading={section.heading}
