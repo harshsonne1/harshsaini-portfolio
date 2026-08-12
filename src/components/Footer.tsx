@@ -33,7 +33,7 @@ export function Footer() {
       className="relative flex min-h-[100svh] flex-col justify-between overflow-hidden p-4 pt-24"
     >
       {/* vertical binary on the outer edges — scrambles every 10s and on hover */}
-      <span className="absolute left-4 top-1/2 -translate-y-1/2 rotate-180 font-mono text-xs tracking-[0.3em] text-muted [writing-mode:vertical-rl]">
+      <span className="absolute left-4 top-1/2 -translate-y-1/2 rotate-180 font-mono text-[0.5625rem] tracking-[0.2em] text-muted sm:text-xs sm:tracking-[0.3em] [writing-mode:vertical-rl]">
         <DecryptedText
           text="01010101"
           characters="01"
@@ -43,7 +43,7 @@ export function Footer() {
           maxIterations={16}
         />
       </span>
-      <span className="absolute right-4 top-1/2 -translate-y-1/2 font-mono text-xs tracking-[0.3em] text-muted [writing-mode:vertical-rl]">
+      <span className="absolute right-4 top-1/2 -translate-y-1/2 font-mono text-[0.5625rem] tracking-[0.2em] text-muted sm:text-xs sm:tracking-[0.3em] [writing-mode:vertical-rl]">
         <DecryptedText
           text="01010101"
           characters="01"

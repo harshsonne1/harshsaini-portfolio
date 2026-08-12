@@ -49,16 +49,24 @@ export default function SectionRail({ items }: { items: RailItem[] }) {
         if (i === 0) firstTop = top;
         if (top <= line) next = i;
       });
-      // the back link and footer run past the last section — hold the last
-      // tick there rather than letting it fall back to the one before
+      // the back link runs past the last section — hold the last tick there
+      // rather than letting it fall back to the one before
       const atEnd =
         window.innerHeight + window.scrollY >=
         document.documentElement.scrollHeight - 4;
       setActive(atEnd ? items.length - 1 : next);
-      // the rail belongs to the story, not the header — it fades in once the
-      // title, meta row and cover have gone by and the first section is well
-      // into the viewport
-      setVisible(firstTop <= window.innerHeight * 0.8);
+
+      // The rail belongs to the story. It fades in once the title, meta row
+      // and cover have gone by, and back out the moment the footer arrives —
+      // there is nothing left to page through by then, and the rail would
+      // otherwise sit on top of it.
+      const footerTop =
+        document.querySelector("footer")?.getBoundingClientRect().top ??
+        Infinity;
+      setVisible(
+        firstTop <= window.innerHeight * 0.8 &&
+          footerTop > window.innerHeight * 0.98,
+      );
     };
 
     const onScroll = () => {

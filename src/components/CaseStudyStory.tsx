@@ -173,7 +173,16 @@ function BlockLabel({ children }: { children: React.ReactNode }) {
 }
 
 // label / text rows, used by `pairs` and by the front-matter lists
-function PairRows({ items }: { items: { label: string; text: string }[] }) {
+function PairRows({
+  items,
+  dropFirstRule = false,
+}: {
+  items: { label: string; text: string }[];
+  /** The section's own hairline sits directly above when a pairs block opens
+      a section, so the first row's rule reads as a second line 24px under the
+      first. Deeper in a section there is nothing above it and it stays. */
+  dropFirstRule?: boolean;
+}) {
   return (
     <>
       {items.map((pair, i) => (
@@ -181,7 +190,7 @@ function PairRows({ items }: { items: { label: string; text: string }[] }) {
           key={pair.label}
           data-reveal-item="up"
           style={{ "--reveal-delay": `${i * 90}ms` } as React.CSSProperties}
-          className="grid grid-cols-1 gap-1 border-t border-border py-5 sm:grid-cols-4 sm:gap-8"
+          className={`grid grid-cols-1 gap-1 border-t border-border py-5 sm:grid-cols-4 sm:gap-8 ${dropFirstRule ? "first:border-t-0 first:pt-0" : ""}`}
         >
           <dt className="text-xs uppercase tracking-wider text-muted">
             {pair.label}
@@ -193,7 +202,14 @@ function PairRows({ items }: { items: { label: string; text: string }[] }) {
   );
 }
 
-function Block({ block }: { block: CaseStudyBlock }) {
+function Block({
+  block,
+  opensSection = false,
+}: {
+  block: CaseStudyBlock;
+  /** first block of the section, so the section's hairline is right above it */
+  opensSection?: boolean;
+}) {
   switch (block.type) {
     case "p":
       return (
@@ -244,7 +260,7 @@ function Block({ block }: { block: CaseStudyBlock }) {
     case "pairs":
       return (
         <dl data-reveal-group className={NARROW}>
-          <PairRows items={block.items} />
+          <PairRows items={block.items} dropFirstRule={opensSection} />
         </dl>
       );
 
@@ -359,7 +375,11 @@ function StorySection({
                   </h2>
                 )}
                 {run.blocks.map((block, i) => (
-                  <Block key={i} block={block} />
+                  <Block
+                    key={i}
+                    block={block}
+                    opensSection={runIndex === 0 && i === 0}
+                  />
                 ))}
               </div>
             </div>
