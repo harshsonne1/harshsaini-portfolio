@@ -147,7 +147,7 @@ export const projects: Project[] = [
     description:
       "The shared memory layer behind ShopOS's AI agents, from a brand's website to structured context.",
     tags: ["Product Design", "AI Systems"],
-    link: "https://shopos.ai",
+    link: "https://shopos.ai/feature/brand-memory",
     image: "/cover-ShopOS.webp",
     statement: "Teaching AI what makes a brand, a brand.",
     industry: "AI, Commerce",
