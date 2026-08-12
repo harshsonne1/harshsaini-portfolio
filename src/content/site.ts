@@ -67,6 +67,14 @@ export type CaseStudyMedia = {
   note: string;
   /* drop the asset in /public and set this to replace the empty frame */
   src?: string;
+  /* Light-theme counterpart of `src`, for figures that are themselves a
+     screenshot of a themed UI. When set, `src` is the dark-theme one and the
+     page shows whichever matches the theme the reader is in. */
+  srcLight?: string;
+  /* the file's own pixel size. The figure is drawn at this ratio, so a
+     portrait diagram stays portrait and nothing is cropped to a 16:9 box. */
+  width?: number;
+  height?: number;
 };
 
 export type CaseStudyBlock =
@@ -95,8 +103,12 @@ export type CaseStudy = {
   subhead: string;
   /* challenge / approach / solution / outcome */
   summary: { label: string; text: string }[];
+  /* figures that close the Overview, before My role */
+  summaryMedia?: CaseStudyMedia[];
   /* owned / built / guided */
   role: { label: string; text: string }[];
+  /* figures that close the My role section, before the story opens */
+  roleMedia?: CaseStudyMedia[];
   sections: CaseStudySection[];
 };
 
@@ -578,6 +590,7 @@ export const projects: Project[] = [
     description:
       "One AI video pipeline adapted across four domains, and the moment reuse became the wrong abstraction.",
     tags: ["AI Systems", "Prompt Architecture"],
+    link: "https://shopos.ai/agents/monica",
     /* no still cover — the video is the cover, on the card and on the page */
     video: "/adaptive-intelligence.webm",
     statement: "When reuse becomes the wrong abstraction.",
@@ -604,6 +617,40 @@ export const projects: Project[] = [
           text: "All four pipelines shipped. The luxury reveal replaced a half-day to full-day manual step per product and became a sales instrument, used in the pitch for one closed enterprise deal and two SLG clients.",
         },
       ],
+      summaryMedia: [
+        {
+          kind: "output",
+          title: "Ethnicwear",
+          note: "Generated video output.",
+          src: "/case-studies/adaptive-intelligence/overview-1.webm",
+          width: 720,
+          height: 1280,
+        },
+        {
+          kind: "output",
+          title: "Apparel",
+          note: "Generated video output.",
+          src: "/case-studies/adaptive-intelligence/overview-2.webm",
+          width: 720,
+          height: 1280,
+        },
+        {
+          kind: "output",
+          title: "Luxury reveal",
+          note: "Generated video output.",
+          src: "/case-studies/adaptive-intelligence/overview-3.webm",
+          width: 720,
+          height: 1280,
+        },
+        {
+          kind: "output",
+          title: "Footwear",
+          note: "Generated video output.",
+          src: "/case-studies/adaptive-intelligence/overview-4.webm",
+          width: 720,
+          height: 1280,
+        },
+      ],
       role: [
         {
           label: "Owned",
@@ -616,6 +663,35 @@ export const projects: Project[] = [
         {
           label: "Guided",
           text: "Implementation and wiring in the workflow canvas.",
+        },
+      ],
+      roleMedia: [
+        {
+          kind: "ui",
+          title: "Spaces: the workflows, as an operator sees them",
+          note: "The library of pipelines each vertical runs from.",
+          src: "/case-studies/adaptive-intelligence/my-role-1-dark.webp",
+          srcLight: "/case-studies/adaptive-intelligence/my-role-1-light.webp",
+          width: 1440,
+          height: 786,
+        },
+        {
+          kind: "ui",
+          title: "Inside a workflow",
+          note: "The node graph an operator is handed, rather than the one it was authored in.",
+          src: "/case-studies/adaptive-intelligence/my-role-2-dark.webp",
+          srcLight: "/case-studies/adaptive-intelligence/my-role-2-light.webp",
+          width: 1440,
+          height: 787,
+        },
+        {
+          kind: "ui",
+          title: "A run, end to end",
+          note: "Inputs in, generated output back.",
+          src: "/case-studies/adaptive-intelligence/my-role-3-dark.webp",
+          srcLight: "/case-studies/adaptive-intelligence/my-role-3-light.webp",
+          width: 1440,
+          height: 757,
         },
       ],
       sections: [
@@ -646,6 +722,9 @@ export const projects: Project[] = [
                   kind: "system",
                   title: "The original Western fashion pipeline",
                   note: "The original node graph and one representative output: the system as it stood before adaptation.",
+                  src: "/case-studies/adaptive-intelligence/01-original-pipeline.webp",
+                  width: 1440,
+                  height: 742,
                 },
               ],
             },
@@ -678,6 +757,9 @@ export const projects: Project[] = [
                   kind: "visual",
                   title: "The mandatory beats",
                   note: "One product or output per vertical, annotated with its single mandatory beat.",
+                  src: "/case-studies/adaptive-intelligence/02-mandatory-beats.webp",
+                  width: 1440,
+                  height: 742,
                 },
               ],
             },
@@ -705,6 +787,9 @@ export const projects: Project[] = [
                   kind: "system",
                   title: "The reusable architecture and the genre switch",
                   note: "The eight-node, two-branch graph with the fixed structure separated from the domain payload, and the genre selector feeding the analyst.",
+                  src: "/case-studies/adaptive-intelligence/03-reusable-architecture.webp",
+                  width: 1440,
+                  height: 1440,
                 },
               ],
             },
@@ -732,6 +817,9 @@ export const projects: Project[] = [
                   kind: "output",
                   title: "Consistency across frames",
                   note: "Storyboard grid beside a final video frame, with the consistent wearer and garment called out.",
+                  src: "/case-studies/adaptive-intelligence/04-consistency-across-frames.webp",
+                  width: 1440,
+                  height: 1440,
                 },
               ],
             },
@@ -760,6 +848,9 @@ export const projects: Project[] = [
                   kind: "system",
                   title: "Two architectures",
                   note: "Narrative architecture → garments and consistency. Reasoning architecture → objects and world selection.",
+                  src: "/case-studies/adaptive-intelligence/05-two-architectures.webp",
+                  width: 1453,
+                  height: 2113,
                 },
               ],
             },
@@ -791,6 +882,9 @@ export const projects: Project[] = [
                   kind: "ui",
                   title: "Before / after input flow",
                   note: "Product + logo + scene reference → product + logo → the derived world and hero image.",
+                  src: "/case-studies/adaptive-intelligence/06-input-flow.webp",
+                  width: 1440,
+                  height: 1440,
                 },
               ],
             },
@@ -828,6 +922,9 @@ export const projects: Project[] = [
                   kind: "system",
                   title: "Four worlds, two architectures",
                   note: "The four pipelines side by side, grouped by the architecture each one runs on.",
+                  src: "/case-studies/adaptive-intelligence/07-four-worlds.webp",
+                  width: 1440,
+                  height: 952,
                 },
               ],
             },
@@ -872,7 +969,10 @@ export const projects: Project[] = [
                 {
                   kind: "output",
                   title: "A live client pitch",
-                  note: "Prospect product + logo → the generated luxury reveal. A real pitch output if one can be shown.",
+                  note: "Prospect product + logo → the generated luxury reveal.",
+                  src: "/case-studies/adaptive-intelligence/live-client-pitch.webm",
+                  width: 1440,
+                  height: 810,
                 },
               ],
             },

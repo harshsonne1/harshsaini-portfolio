@@ -484,6 +484,20 @@ body {
   }
 }
 
+/* A figure that is a screenshot of a themed UI ships in both themes; only the
+   one matching the reader's theme is shown. Swapped in CSS rather than in
+   React so the right one is there on first paint, and lazily loaded so the
+   other is never fetched. */
+.cs-media-light {
+  display: none;
+}
+:root[data-theme="light"] .cs-media-dark {
+  display: none;
+}
+:root[data-theme="light"] .cs-media-light {
+  display: block;
+}
+
 /* ---- Case study section rail ----
    Fixed ticks down the right edge, one per story section. It stays pure marks
    — no hover reveal, nothing to read — so it never competes with the copy;

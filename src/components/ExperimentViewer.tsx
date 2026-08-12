@@ -1,12 +1,18 @@
 "use client";
 
-// Full-size viewer for an experiment that is a standalone document.
+// Full-size viewer for an experiment that is a standalone document — or, when
+// the source is a video file, for the piece itself.
 //
 // The tile shows a scaled-down preview; this opens the real thing at real
 // size, with nothing scaled and nothing sandboxed, so every behaviour it has
 // works exactly as it does on its own: sliders, drag-and-drop, the file
 // picker, the render loop. It is first-party content out of /public, so the
 // sandbox that guards the preview would only break the file picker here.
+//
+// A video opens as a video rather than in a frame: no player chrome at all,
+// just the piece running full size on the backdrop. Muted for the same reason
+// it has no controls — with nothing to press, playback can never be left
+// blocked by an autoplay policy, and there is no way to unmute it either.
 //
 // Portalled to <body> on purpose: .exp-card carries a filter (and a transform
 // on hover), either of which makes it a containing block for fixed-position
@@ -28,6 +34,7 @@ export function ExperimentViewer({
   onClose,
 }: ExperimentViewerProps) {
   const frameRef = useRef<HTMLIFrameElement>(null);
+  const isVideo = /\.(webm|mp4|mov)(\?.*)?$/i.test(src);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -92,18 +99,44 @@ export function ExperimentViewer({
           <button
             type="button"
             onClick={onClose}
-            className="-mr-1 rounded px-2 py-1 text-xs uppercase tracking-wider text-muted transition-colors hover:text-fg focus-visible:outline focus-visible:outline-1 focus-visible:outline-current"
+            aria-label="Close"
+            className="-mr-1 rounded p-1.5 text-muted transition-colors hover:text-fg focus-visible:outline focus-visible:outline-1 focus-visible:outline-current"
           >
-            Close
+            <svg
+              viewBox="0 0 14 14"
+              fill="none"
+              aria-hidden="true"
+              className="h-3.5 w-3.5"
+            >
+              <path
+                d="M2.5 2.5l9 9M11.5 2.5l-9 9"
+                stroke="currentColor"
+                strokeWidth="1.3"
+                strokeLinecap="square"
+              />
+            </svg>
           </button>
         </div>
-        {/* no sandbox, no scrolling override — it behaves as it does standalone */}
-        <iframe
-          ref={frameRef}
-          src={src}
-          title={title}
-          className="w-full flex-1 border-0"
-        />
+        {isVideo ? (
+          <video
+            src={src}
+            autoPlay
+            loop
+            muted
+            playsInline
+            // min-h-0: without it a replaced element keeps its intrinsic
+            // height as a floor and grows straight out of the flex column
+            className="w-full min-h-0 flex-1 bg-black object-contain"
+          />
+        ) : (
+          /* no sandbox, no scrolling override — it behaves as it does standalone */
+          <iframe
+            ref={frameRef}
+            src={src}
+            title={title}
+            className="w-full flex-1 border-0"
+          />
+        )}
       </div>
     </div>,
     document.body,

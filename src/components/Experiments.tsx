@@ -196,10 +196,12 @@ export function Experiments() {
             }
           />
 
+          {/* opens as a video, with controls, rather than a frame */}
           <ExperimentCard
             title="Weather Whiz"
             description="A weather app, playing through its own forecast."
             aspect={ASPECT.weather}
+            href="/bento/weather-whiz.webm"
             component={<CoverVideo src="/bento/weather-whiz.webm" />}
           />
 

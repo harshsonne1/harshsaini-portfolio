@@ -12,6 +12,7 @@
 
 import Image from "next/image";
 import type { CaseStudy, CaseStudyBlock, CaseStudyMedia } from "@/content/site";
+import { CoverVideo } from "@/components/CoverVideo";
 import type { RailItem } from "@/components/SectionRail";
 
 // Empty image slots still render as labelled frames so the art direction is
@@ -87,18 +88,51 @@ export function storyRailItems(story: CaseStudy): RailItem[] {
   ];
 }
 
+const isVideo = (src: string) => /\.(webm|mp4|mov)$/i.test(src);
+
 function Media({ item }: { item: CaseStudyMedia }) {
   if (item.src) {
+    // The figure takes the file's own ratio, so a portrait diagram stays
+    // portrait and a square one stays square. Forcing 16:9 here cropped the
+    // ends off every diagram that wasn't already that shape.
+    const ratio = item.width && item.height ? item.width / item.height : 16 / 9;
+
     return (
       <figure data-reveal="up">
-        <div className="relative aspect-video w-full overflow-hidden">
-          <Image
-            src={item.src}
-            alt={item.title}
-            fill
-            sizes="100vw"
-            className="object-cover"
-          />
+        <div
+          className="relative w-full overflow-hidden"
+          style={{ aspectRatio: ratio }}
+        >
+          {isVideo(item.src) ? (
+            // plays while it is on screen and stops when it isn't, so a wall
+            // of clips never runs four decoders at once off-screen
+            <CoverVideo src={item.src} />
+          ) : (
+            <>
+              <Image
+                src={item.src}
+                alt={item.title}
+                fill
+                sizes="100vw"
+                // already sized and encoded for the page; the optimizer would
+                // only re-encode a 1440px webp into another one
+                unoptimized
+                className={`object-cover ${item.srcLight ? "cs-media-dark" : ""}`}
+              />
+              {/* the same screen in the other theme, swapped in CSS so there
+                  is no flash of the wrong one before hydration */}
+              {item.srcLight && (
+                <Image
+                  src={item.srcLight}
+                  alt={item.title}
+                  fill
+                  sizes="100vw"
+                  unoptimized
+                  className="cs-media-light object-cover"
+                />
+              )}
+            </>
+          )}
         </div>
         <figcaption className="mt-3 text-xs text-muted">
           {item.title}
@@ -270,20 +304,29 @@ function StorySection({
   return (
     // scroll-mt clears the fixed nav when the rail jumps to this section
     <section id={id} className={`scroll-mt-24 ${SECTION_PAD}`}>
-      {runs.map((run, runIndex) =>
-        run.media ? (
+      {runs.map((run, runIndex) => {
+        const items = run.media
+          ? run.blocks.flatMap((b) => (b.type === "media" ? b.items : []))
+          : [];
+        // One figure runs the full width; a set of them shares the row, so
+        // four portrait clips read as a set rather than as four screens of
+        // scrolling.
+        const mediaLayout =
+          items.length >= 4
+            ? "grid grid-cols-2 gap-4 lg:grid-cols-4"
+            : items.length > 1
+              ? "grid gap-4 sm:grid-cols-2"
+              : "flex flex-col gap-y-6";
+
+        return run.media ? (
           // full viewport width, in the footer's 16px gutters
           <div
             key={runIndex}
-            className="my-6 flex w-full flex-col gap-y-6 px-4 lg:my-8"
+            className={`my-6 w-full px-4 lg:my-8 ${mediaLayout}`}
           >
-            {run.blocks.flatMap((block) =>
-              block.type === "media"
-                ? block.items.map((item) => (
-                    <Media key={item.title} item={item} />
-                  ))
-                : [],
-            )}
+            {items.map((item) => (
+              <Media key={item.title} item={item} />
+            ))}
           </div>
         ) : (
           <div key={runIndex} className={COLUMN}>
@@ -321,8 +364,8 @@ function StorySection({
               </div>
             </div>
           </div>
-        ),
-      )}
+        );
+      })}
     </section>
   );
 }
@@ -336,12 +379,23 @@ export function CaseStudyStory({ story }: { story: CaseStudy }) {
       <StorySection
         id={ids[0]}
         heading="Overview"
-        blocks={[{ type: "pairs", items: story.summary }]}
+        blocks={[
+          { type: "pairs", items: story.summary },
+          ...(story.summaryMedia?.length
+            ? ([{ type: "media", items: story.summaryMedia }] as const)
+            : []),
+        ]}
       />
+      {/* the role figures close this section, so they run full-bleed under it */}
       <StorySection
         id={ids[1]}
         heading="My role"
-        blocks={[{ type: "pairs", items: story.role }]}
+        blocks={[
+          { type: "pairs", items: story.role },
+          ...(story.roleMedia?.length
+            ? ([{ type: "media", items: story.roleMedia }] as const)
+            : []),
+        ]}
       />
 
       {story.sections.map((section, i) => (
