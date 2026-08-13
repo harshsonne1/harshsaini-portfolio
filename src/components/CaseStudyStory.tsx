@@ -168,9 +168,8 @@ function Media({ item }: { item: CaseStudyMedia }) {
             </>
           )}
         </div>
-        <figcaption className="mt-3 text-xs text-muted">
-          {item.title}
-        </figcaption>
+        {/* no visible caption: the figures sit under copy that already names
+            them. The title still travels as the image's alt text. */}
       </figure>
     );
   }
