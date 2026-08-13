@@ -10,8 +10,14 @@
 //
 // Reveals ride the shared ScrollReveal observer — see ScrollReveal.tsx.
 
+import { Fragment } from "react";
 import Image from "next/image";
-import type { CaseStudy, CaseStudyBlock, CaseStudyMedia } from "@/content/site";
+import type {
+  CaseStudy,
+  CaseStudyBlock,
+  CaseStudyMedia,
+  PairItem,
+} from "@/content/site";
 import { CoverVideo } from "@/components/CoverVideo";
 import type { RailItem } from "@/components/SectionRail";
 
@@ -89,6 +95,32 @@ export function storyRailItems(story: CaseStudy): RailItem[] {
 }
 
 const isVideo = (src: string) => /\.(webm|mp4|mov)$/i.test(src);
+
+// Results (numbers, comparisons) break out of the copy column and run the full
+// width, under the figures, in every layout.
+const isResult = (b: CaseStudyBlock) =>
+  b.type === "stats" ||
+  b.type === "comparison" ||
+  (b.type === "points" && Boolean(b.numbered));
+
+// Copy is plain strings, but a sentence occasionally needs one phrase carried
+// harder than the rest. `**like this**` is the only markup allowed in it.
+function withEmphasis(text: string) {
+  return text.split(/\*\*(.+?)\*\*/g).flatMap((part, i) => {
+    const strong = i % 2 === 1;
+    // a newline in copy is a line break, not a new paragraph
+    return part.split("\n").flatMap((line, j) => {
+      const node = strong ? (
+        <strong key={`${i}-${j}`} className="font-medium text-fg">
+          {line}
+        </strong>
+      ) : (
+        <Fragment key={`${i}-${j}`}>{line}</Fragment>
+      );
+      return j === 0 ? [node] : [<br key={`br-${i}-${j}`} />, node];
+    });
+  });
+}
 
 function Media({ item }: { item: CaseStudyMedia }) {
   if (item.src) {
@@ -177,7 +209,7 @@ function PairRows({
   items,
   dropFirstRule = false,
 }: {
-  items: { label: string; text: string }[];
+  items: PairItem[];
   /** The section's own hairline sits directly above when a pairs block opens
       a section, so the first row's rule reads as a second line 24px under the
       first. Deeper in a section there is nothing above it and it stays. */
@@ -190,12 +222,62 @@ function PairRows({
           key={pair.label}
           data-reveal-item="up"
           style={{ "--reveal-delay": `${i * 90}ms` } as React.CSSProperties}
-          className={`grid grid-cols-1 gap-1 border-t border-border py-5 sm:grid-cols-4 sm:gap-8 ${dropFirstRule ? "first:border-t-0 first:pt-0" : ""}`}
+          className={`grid grid-cols-1 gap-1 border-t border-border py-5 last:border-b sm:grid-cols-4 sm:gap-8 ${dropFirstRule ? "first:border-t-0 first:pt-0" : ""}`}
         >
-          <dt className="text-xs uppercase tracking-wider text-muted">
-            {pair.label}
+          {/* the label rides the same 26px line box as the value beside it, so
+              the two first lines share a baseline instead of sitting 7px apart */}
+          <dt className="text-xs uppercase leading-[1.625rem] tracking-wider text-muted">
+            {pair.icon ? (
+              // the brand's own mark stands in for its name; each ships as a
+              // self-contained badge, so it reads on either theme
+              <Image
+                src={pair.icon}
+                alt={pair.label}
+                width={44}
+                height={44}
+                unoptimized
+                className="block h-11 w-11"
+              />
+            ) : (
+              pair.label
+            )}
           </dt>
-          <dd className="leading-relaxed text-fg sm:col-span-3">{pair.text}</dd>
+          <dd className="flex items-start gap-4 leading-relaxed text-fg sm:col-span-3">
+            <span className="flex-1">
+              {pair.items ? (
+                // a set of results reads as a list, not as one run-on sentence
+                <ul className="flex flex-col gap-1">
+                  {pair.items.map((line) => (
+                    <li key={line}>{line}</li>
+                  ))}
+                </ul>
+              ) : (
+                pair.text
+              )}
+            </span>
+            {pair.href && (
+              <a
+                href={pair.href}
+                target="_blank"
+                rel="noreferrer"
+                aria-label={`Visit ${pair.label}`}
+                className="mt-1 shrink-0 text-muted transition-colors hover:text-fg focus-visible:outline focus-visible:outline-1 focus-visible:outline-current"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-7 w-7"
+                >
+                  <path d="M17 7l-10 10" />
+                  <path d="M8 7l9 0l0 9" />
+                </svg>
+              </a>
+            )}
+          </dd>
         </div>
       ))}
     </>
@@ -223,7 +305,7 @@ function Block({
           data-reveal="up"
           className={`text-lg leading-relaxed text-fg ${narrow}`}
         >
-          {block.text}
+          {withEmphasis(block.text)}
         </p>
       );
 
@@ -231,35 +313,42 @@ function Block({
       return (
         <p
           data-reveal="up"
-          className={`border-l border-border pl-5 text-xl leading-snug text-fg sm:text-2xl ${narrow}`}
+          className={`text-xl leading-snug text-fg sm:text-2xl ${narrow}`}
         >
-          {block.text}
+          {withEmphasis(block.text)}
         </p>
       );
 
     case "stats":
       return (
         <div data-reveal-group className={wide}>
-          <BlockLabel>Key metrics</BlockLabel>
-          <ul className="mt-6 grid grid-cols-2 gap-6 sm:grid-cols-4 lg:flex lg:justify-between">
+          <BlockLabel>{block.label ?? "Key metrics"}</BlockLabel>
+
+          {/* value over label. No column gap, padding instead, so the rules
+              meet and read as one line across the row. */}
+          <div
+            className={`mt-10 grid gap-y-8 ${
+              split ? "sm:grid-cols-2" : "sm:grid-cols-3"
+            }`}
+          >
             {block.items.map((stat, i) => (
-              <li
+              <div
                 key={stat.label}
                 data-reveal-item="up"
                 style={
                   { "--reveal-delay": `${i * 90}ms` } as React.CSSProperties
                 }
-                className="flex flex-col lg:flex-1"
+                className="flex flex-col pr-8"
               >
                 <span className="font-hero-1 text-3xl leading-none text-fg sm:text-4xl">
                   {stat.value}
                 </span>
-                <span className="mt-2 max-w-[16rem] text-sm text-muted">
+                <span className="mt-4 border-t border-border pt-4 text-sm text-muted">
                   {stat.label}
                 </span>
-              </li>
+              </div>
             ))}
-          </ul>
+          </div>
         </div>
       );
 
@@ -270,9 +359,130 @@ function Block({
         </dl>
       );
 
+    case "comparison":
+      return (
+        <div data-reveal-group className={wide}>
+          {block.label && <BlockLabel>{block.label}</BlockLabel>}
+
+          {/* two columns and an arrow gutter, so every row lines up under its
+              heading and the arrow column stays the same width throughout */}
+          <div className="mt-6 grid grid-cols-[1fr_auto_1fr] items-end gap-x-4 sm:gap-x-10">
+            <h3 className="text-2xl leading-tight text-fg sm:text-3xl md:text-4xl">
+              {block.headings[0]}
+            </h3>
+            <span aria-hidden="true" className="w-4 sm:w-5" />
+            <h3 className="text-2xl leading-tight text-fg sm:text-3xl md:text-4xl">
+              {block.headings[1]}
+            </h3>
+          </div>
+          <div className="hairline mt-6 h-px w-full" />
+
+          {block.rows.map((row, i) => (
+            <div
+              key={row.before}
+              data-reveal-item="up"
+              style={
+                { "--reveal-delay": `${i * 110}ms` } as React.CSSProperties
+              }
+              className="grid grid-cols-[1fr_auto_1fr] items-center gap-x-4 py-5 sm:gap-x-10 md:py-7"
+            >
+              <p className="text-sm leading-snug text-muted sm:text-base md:text-lg">
+                {row.before}
+              </p>
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+                className="size-4 shrink-0 text-muted sm:size-5 md:size-6"
+              >
+                <path d="M5 12h14" />
+                <path d="m12 5 7 7-7 7" />
+              </svg>
+              <p className="text-sm font-medium leading-snug text-fg sm:text-base md:text-lg">
+                {row.after}
+              </p>
+            </div>
+          ))}
+        </div>
+      );
+
+    case "inputs":
+      return (
+        <div data-reveal-group className={narrow}>
+          {/* the actual inputs, at thumbnail size: the point is how few there
+              are, not what they look like */}
+          <div className="flex flex-wrap items-center gap-3">
+            {block.items.map((item, i) => (
+              <Fragment key={item.src}>
+                {i === block.items.length - 1 && block.items.length > 1 && (
+                  <span aria-hidden="true" className="px-1 text-lg text-muted">
+                    +
+                  </span>
+                )}
+                <span
+                  data-reveal-item="up"
+                  style={
+                    { "--reveal-delay": `${i * 90}ms` } as React.CSSProperties
+                  }
+                  className="block h-12 w-12 overflow-hidden rounded-xl bg-surface"
+                >
+                  <Image
+                    src={item.src}
+                    alt={item.alt}
+                    width={48}
+                    height={48}
+                    unoptimized
+                    className={`h-full w-full ${
+                      item.fit === "contain" ? "object-contain" : "object-cover"
+                    }`}
+                  />
+                </span>
+              </Fragment>
+            ))}
+          </div>
+          {block.label && (
+            <p className="mt-3 text-sm text-muted">{block.label}</p>
+          )}
+        </div>
+      );
+
     case "points":
+      // numbered: a ruled band of 01/02/03 columns, run at full width
+      if (block.numbered)
+        return (
+          <div data-reveal-group className={wide}>
+            <span data-reveal="line" className="hairline block h-px w-full" />
+            <div className="mt-10 grid gap-x-8 gap-y-12 sm:grid-cols-3 lg:mt-14">
+              {block.items.map((point, i) => (
+                <div
+                  key={point.title}
+                  data-reveal-item="up"
+                  style={
+                    { "--reveal-delay": `${i * 110}ms` } as React.CSSProperties
+                  }
+                >
+                  <span className="text-sm text-muted">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <h3 className="mt-6 text-xl leading-snug text-fg">
+                    {point.title}
+                  </h3>
+                  <p className="mt-4 leading-relaxed text-muted">
+                    {point.text}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+
       return (
         <div data-reveal-group className={`flex flex-col gap-y-6 ${narrow}`}>
+          {block.label && <BlockLabel>{block.label}</BlockLabel>}
           {block.items.map((point, i) => (
             <div
               key={point.title}
@@ -325,7 +535,10 @@ function SplitSection({
   heading: string;
   blocks: CaseStudyBlock[];
 }) {
-  const copy = blocks.filter((b) => b.type !== "media");
+  // Stats break out of the pinned column and run the full width beneath the
+  // figures, where a row of numbers has the room to be read as a row.
+  const copy = blocks.filter((b) => b.type !== "media" && !isResult(b));
+  const results = blocks.filter(isResult);
   const figures = blocks.flatMap((b) => (b.type === "media" ? b.items : []));
   const shown = SHOW_EMPTY_MEDIA ? figures : figures.filter((f) => f.src);
 
@@ -342,7 +555,7 @@ function SplitSection({
           <div className="flex flex-col gap-y-8 pt-6 lg:grid lg:grid-cols-12 lg:gap-x-8">
             <div className="lg:sticky lg:top-24 lg:col-span-4 lg:col-start-1 lg:self-start">
               {act && (
-                <div className="pb-10 text-xs uppercase tracking-[0.25em] text-muted">
+                <div className="pb-10 text-sm font-medium uppercase tracking-[-0.02em] text-muted">
                   {act}
                 </div>
               )}
@@ -375,8 +588,84 @@ function SplitSection({
               </div>
             )}
           </div>
+
+          {results.length > 0 && (
+            <div className="mt-10 flex flex-col gap-y-12 lg:mt-14">
+              {results.map((block, i) => (
+                <Block key={i} block={block} />
+              ))}
+            </div>
+          )}
         </div>
       </div>
+    </section>
+  );
+}
+
+// The stacked layout: copy at the top, figures full width beneath it, results
+// last. For a section whose figure is the proof of its claim and needs the room
+// to make it, rather than sitting in a column beside the copy.
+function StackedSection({
+  id,
+  act,
+  heading,
+  blocks,
+}: {
+  id: string;
+  act?: string;
+  heading: string;
+  blocks: CaseStudyBlock[];
+}) {
+  const copy = blocks.filter((b) => b.type !== "media" && !isResult(b));
+  const results = blocks.filter(isResult);
+  const figures = blocks.flatMap((b) => (b.type === "media" ? b.items : []));
+  const shown = SHOW_EMPTY_MEDIA ? figures : figures.filter((f) => f.src);
+
+  return (
+    <section id={id} className={`scroll-mt-24 ${SECTION_PAD}`}>
+      <div className={COLUMN}>
+        <div className="relative">
+          <span
+            data-reveal="line"
+            className="hairline absolute inset-x-0 top-0 h-px"
+          />
+          {act && (
+            <div className="pb-10 pt-6 text-sm font-medium uppercase tracking-[-0.02em] text-muted">
+              {act}
+            </div>
+          )}
+          <h2
+            data-reveal="up"
+            className={`max-w-3xl text-[2.25rem] leading-tight text-fg ${act ? "" : "pt-6"}`}
+          >
+            {heading}
+          </h2>
+          {copy.length > 0 && (
+            <div className="mt-6 flex max-w-2xl flex-col gap-y-6">
+              {copy.map((block, i) => (
+                <Block key={i} block={block} split />
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* the figure runs the full viewport, in the footer's gutters */}
+      {shown.length > 0 && (
+        <div className="mt-10 flex w-full flex-col gap-2 px-4 lg:mt-14">
+          {shown.map((item) => (
+            <Media key={item.title} item={item} />
+          ))}
+        </div>
+      )}
+
+      {results.length > 0 && (
+        <div className={`${COLUMN} mt-12 flex flex-col gap-y-14 lg:mt-16`}>
+          {results.map((block, i) => (
+            <Block key={i} block={block} />
+          ))}
+        </div>
+      )}
     </section>
   );
 }
@@ -387,14 +676,26 @@ function StorySection({
   heading,
   blocks,
   split = false,
+  layout,
 }: {
   id: string;
   act?: string;
   heading: string;
   blocks: CaseStudyBlock[];
   split?: boolean;
+  layout?: "stacked";
 }) {
-  const runs = toRuns(blocks);
+  // Results land under the figures, never above them: a number means more once
+  // the thing it measures has been seen.
+  const results = blocks.filter(isResult);
+  const runs = toRuns(blocks.filter((b) => !isResult(b)));
+
+  // A section can ask for the stacked treatment even inside a split story.
+  if (layout === "stacked") {
+    return (
+      <StackedSection id={id} act={act} heading={heading} blocks={blocks} />
+    );
+  }
 
   // A section with no figures has nothing to pin the copy against, and the
   // split would leave two thirds of the row empty — those keep the standard
@@ -444,7 +745,7 @@ function StorySection({
               )}
 
               {runIndex === 0 && act && (
-                <div className="pb-10 pt-6 text-xs uppercase tracking-[0.25em] text-muted sm:pb-14">
+                <div className="pb-10 pt-6 text-sm font-medium uppercase tracking-[-0.02em] text-muted sm:pb-14">
                   {act}
                 </div>
               )}
@@ -474,6 +775,14 @@ function StorySection({
           </div>
         );
       })}
+
+      {results.length > 0 && (
+        <div className={`${COLUMN} mt-10 flex flex-col gap-y-14 lg:mt-14`}>
+          {results.map((block, i) => (
+            <Block key={i} block={block} />
+          ))}
+        </div>
+      )}
     </section>
   );
 }
@@ -513,6 +822,7 @@ export function CaseStudyStory({ story }: { story: CaseStudy }) {
         <StorySection
           key={ids[i + 2]}
           split={split}
+          layout={section.layout}
           id={ids[i + 2]}
           act={section.act}
           heading={section.heading}

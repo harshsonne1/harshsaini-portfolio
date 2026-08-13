@@ -25,6 +25,7 @@ import AsciiArt from "./AsciiArt";
 import { CoverVideo } from "./CoverVideo";
 import { DotLoader } from "./DotLoader";
 import GlitchInitial from "./GlitchInitial";
+import { ShaderBackground } from "./ShaderBackground";
 import { ExperimentCard } from "./ExperimentCard";
 
 // measured from the files themselves — if you swap an asset, remeasure
@@ -37,7 +38,10 @@ const ASPECT = {
   // tile has to be exactly 16:9 or it sits letterboxed inside its own tile
   agents: 1600 / 900,
   luxury: 1112 / 834,
-  airplane: 236 / 290,
+  // The shader fills whatever box it is given, so it is free to be the wide
+  // one. Raising its share also raises the row's sum, which pulls the whole
+  // row shorter — the planet beside it stops towering.
+  shader: 2.2,
   golden: 960 / 594,
   acdc: 214 / 299,
   bobMarley: 1468 / 1028,
@@ -173,17 +177,16 @@ export function Experiments() {
           />
         </div>
 
-        {/* Σ 4.08 */}
+        {/* Σ 5.46 — the flattest row: a wide gradient band */}
         <div className="exp-row">
           <ExperimentCard
-            title="Airplane Window"
-            description="Hello world, at altitude."
-            aspect={ASPECT.airplane}
+            title="Shader Waves"
+            description="A WebGL wave field: one canvas, one fragment shader, no dependencies."
+            aspect={ASPECT.shader}
             component={
-              <PhotoTile
-                src="/bento/airplane-window.webp"
-                alt="Illustration of an airplane window reading Hello World"
-              />
+              <div className="absolute inset-0">
+                <ShaderBackground />
+              </div>
             }
           />
 

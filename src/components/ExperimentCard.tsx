@@ -104,13 +104,18 @@ export function ExperimentCard({
           caption left to explain it */}
       {href && (
         <span aria-hidden="true" className="exp-open">
-          <svg viewBox="0 0 12 12" fill="none" className="h-full w-full">
-            <path
-              d="M3.5 8.5 8.5 3.5M8.5 3.5H4.5M8.5 3.5v4"
-              stroke="currentColor"
-              strokeWidth="1.2"
-              strokeLinecap="square"
-            />
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+            className="h-full w-full"
+          >
+            <path d="M17 7l-10 10" />
+            <path d="M8 7l9 0l0 9" />
           </svg>
         </span>
       )}
