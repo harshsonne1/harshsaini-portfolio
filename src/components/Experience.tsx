@@ -18,7 +18,8 @@ export function Experience() {
       className="relative scroll-mt-20 px-4 py-20 sm:py-28"
     >
       <h2 className="mb-12 font-hero-1 text-4xl leading-none text-fg sm:mb-16 sm:text-5xl">
-        <GlitchInitial letter="E" intervalMs={5900} />xperience
+        <GlitchInitial letter="E" intervalMs={5900} />
+        xperience
       </h2>
 
       <div>
@@ -30,9 +31,11 @@ export function Experience() {
               <div
                 data-reveal-item="up"
                 style={
-                  { "--reveal-delay": `${DATES_DELAY}ms` } as React.CSSProperties
+                  {
+                    "--reveal-delay": `${DATES_DELAY}ms`,
+                  } as React.CSSProperties
                 }
-                className="text-xs uppercase tracking-wider text-muted md:col-span-2"
+                className="font-label text-contrast md:col-span-2"
               >
                 {job.period}
               </div>

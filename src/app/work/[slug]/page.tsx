@@ -41,7 +41,7 @@ function Meta({
 }) {
   return (
     <div>
-      <div className="text-xs uppercase tracking-wider text-muted">{label}</div>
+      <div className="text-sm text-muted">{label}</div>
       <div className="mt-2 text-sm text-fg">{children}</div>
     </div>
   );
@@ -64,9 +64,9 @@ export default async function CaseStudy({ params }: Params) {
 
       {/* main is unpadded: text blocks carry the 1400px container themselves so
           images can run the full viewport in the footer's gutters */}
-      <main className="w-full pt-28 sm:pt-36">
+      <main className="w-full pt-20 sm:pt-24">
         {/* header — wordmark left, opening statement right */}
-        <div className="title-intro mx-auto grid w-full max-w-[1400px] grid-cols-1 gap-y-10 px-4 md:grid-cols-2 md:gap-x-12">
+        <div className="title-intro mx-auto grid w-full grid-cols-1 gap-y-10 page-gutter md:grid-cols-2 md:gap-x-12">
           {/* every word's initial takes the Monoska glitch, offset per word so
               they don't scramble in sync. Each word is one inline-block so the
               line can only break at the spaces between words — the glitch
@@ -99,32 +99,37 @@ export default async function CaseStudy({ params }: Params) {
           )}
         </div>
 
-        {/* meta row — 4 cols with the same gap as the 2-col header above, which
-            lands Scope exactly on the statement's left edge (both at W/2 + 24) */}
-        <div className="title-intro mx-auto mt-16 grid w-full max-w-[1400px] grid-cols-2 gap-x-8 gap-y-8 px-4 sm:mt-24 md:grid-cols-4 md:gap-x-12">
+        {/* Meta row, on the header's own two-column split: Year under the
+            wordmark, the other three under the statement. Four even columns
+            spread them across the full width and broke that alignment. */}
+        <div className="title-intro mx-auto mt-10 grid w-full grid-cols-1 gap-x-8 gap-y-8 page-gutter md:grid-cols-2 md:gap-x-12 lg:mt-14">
           <Meta label="Year">{project.year}</Meta>
-          <Meta label="Industry">{project.industry}</Meta>
-          <Meta label="Scope">{project.scope}</Meta>
-          <Meta label="Website">
-            {project.link ? (
-              <span className="-ml-3 inline-block text-sm">
-                <BracketLink
-                  label="Visit"
-                  href={project.link}
-                  bracketsMode="none"
-                />
-              </span>
-            ) : (
-              <span className="text-muted">Not public</span>
-            )}
-          </Meta>
+          <div className="grid grid-cols-1 gap-x-8 gap-y-8 sm:grid-cols-3 md:gap-x-12">
+            <Meta label="Industry">{project.industry}</Meta>
+            <Meta label="Scope">{project.scope}</Meta>
+            <Meta label="Website">
+              {project.link ? (
+                <span className="-ml-3 inline-block text-sm">
+                  {/* literal brackets: the drawn corner ones need a padded
+                      box, which this cell's line of text doesn't give them */}
+                  <BracketLink
+                    label="[ Visit ]"
+                    href={project.link}
+                    bracketsMode="none"
+                  />
+                </span>
+              ) : (
+                <span className="text-muted">Not public</span>
+              )}
+            </Meta>
+          </div>
         </div>
 
         {/* cover — full viewport width, in the footer's gutters. When the
             project carries a video, it plays here as soon as the cover comes
             into view, over the still it uses as its poster. */}
         {(project.image || project.video) && (
-          <div className="mt-14 w-full px-4 sm:mt-20">
+          <div className="mt-10 w-full page-gutter lg:mt-12">
             <div
               className="hero-reveal relative aspect-video w-full overflow-hidden"
               style={
@@ -151,9 +156,7 @@ export default async function CaseStudy({ params }: Params) {
           <div className="mx-auto mt-20 max-w-3xl px-4 sm:mt-28">
             {project.body?.map((section) => (
               <section key={section.heading} className="mb-14 last:mb-0">
-                <h2 className="text-xs uppercase tracking-wider text-muted">
-                  {section.heading}
-                </h2>
+                <h2 className="font-label text-contrast">{section.heading}</h2>
                 <p className="mt-4 text-lg leading-relaxed text-fg sm:text-xl">
                   {section.text}
                 </p>
@@ -165,7 +168,7 @@ export default async function CaseStudy({ params }: Params) {
         {/* back to the work grid — the story's last section already carries a
             deep bottom pad, so it only needs the extra lead-in without one */}
         <div
-          className={`mx-auto w-full max-w-[1400px] px-4 ${project.story ? "" : "mt-24 sm:mt-32"}`}
+          className={`mx-auto w-full page-gutter ${project.story ? "" : "mt-24 sm:mt-32"}`}
         >
           <Link href="/#projects" className="-ml-3 inline-block text-sm">
             <BracketLink label="Back to work" bracketsMode="none" />
@@ -173,7 +176,7 @@ export default async function CaseStudy({ params }: Params) {
         </div>
       </main>
 
-      <div className="mt-24 px-4">
+      <div className="mt-24 page-gutter">
         <div data-reveal="line" className="hairline h-px w-full" />
       </div>
       <Footer />

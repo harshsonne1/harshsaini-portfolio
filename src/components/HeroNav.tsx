@@ -31,7 +31,9 @@ export function HeroNav({ compact = false }: HeroNavProps) {
             encryptedClassName="text-muted"
           />
         </Link>
-        <div className="text-muted">{site.role}</div>
+        {/* indented past the "> " so the role hangs off the name, not the
+            caret, the way the reference sets it */}
+        <div className="ml-2.5 text-muted">{site.role}</div>
       </div>
 
       {!compact && (

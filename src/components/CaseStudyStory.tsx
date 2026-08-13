@@ -16,9 +16,11 @@ import type {
   CaseStudy,
   CaseStudyBlock,
   CaseStudyMedia,
+  CaseStudySection,
   PairItem,
 } from "@/content/site";
 import { CoverVideo } from "@/components/CoverVideo";
+import { StickyActRun, type ActRunSection } from "@/components/StickyActRun";
 import type { RailItem } from "@/components/SectionRail";
 
 // Empty image slots still render as labelled frames so the art direction is
@@ -34,7 +36,7 @@ const SECTION_PAD =
 
 // the reading column — capped and centred. Figures deliberately skip this and
 // run the full viewport in the footer's 16px gutters instead.
-const COLUMN = "mx-auto w-full max-w-[1400px] px-4";
+const COLUMN = "mx-auto w-full section-gutter";
 
 // one 12-col grid per run; 24px stack on mobile, 32px between grid rows
 const SECTION_GRID =
@@ -84,7 +86,7 @@ export function storyRailItems(story: CaseStudy): RailItem[] {
   const ids = storySectionIds(story);
 
   return [
-    { id: ids[0], label: "Overview" },
+    { id: ids[0], label: story.overview?.heading ?? "Overview" },
     { id: ids[1], label: "My role" },
     ...story.sections.flatMap((section, i) =>
       section.railSkip
@@ -190,16 +192,22 @@ function Media({ item }: { item: CaseStudyMedia }) {
 }
 
 // label + underline, the reference's "Achievement" / "Key metrics" marker
-function BlockLabel({ children }: { children: React.ReactNode }) {
+function BlockLabel({
+  children,
+  rule = true,
+}: {
+  children: React.ReactNode;
+  rule?: boolean;
+}) {
   return (
-    <div className="relative pb-3">
-      <h3 className="text-xs uppercase tracking-wider text-muted">
-        {children}
-      </h3>
-      <span
-        data-reveal="line"
-        className="hairline absolute inset-x-0 bottom-0 h-px"
-      />
+    <div className={`relative ${rule ? "pb-3" : ""}`}>
+      <h4 className="font-label text-contrast">{children}</h4>
+      {rule && (
+        <span
+          data-reveal="line"
+          className="hairline absolute inset-x-0 bottom-0 h-px"
+        />
+      )}
     </div>
   );
 }
@@ -226,7 +234,7 @@ function PairRows({
         >
           {/* the label rides the same 26px line box as the value beside it, so
               the two first lines share a baseline instead of sitting 7px apart */}
-          <dt className="text-xs uppercase leading-[1.625rem] tracking-wider text-muted">
+          <dt className="font-label text-contrast">
             {pair.icon ? (
               // the brand's own mark stands in for its name; each ships as a
               // self-contained badge, so it reads on either theme
@@ -242,7 +250,7 @@ function PairRows({
               pair.label
             )}
           </dt>
-          <dd className="flex items-start gap-4 leading-relaxed text-fg sm:col-span-3">
+          <dd className="font-body-sm flex items-start gap-4 text-fg sm:col-span-3">
             <span className="flex-1">
               {pair.items ? (
                 // a set of results reads as a list, not as one run-on sentence
@@ -288,23 +296,23 @@ function Block({
   block,
   opensSection = false,
   split = false,
+  place,
 }: {
   block: CaseStudyBlock;
   /** first block of the section, so the section's hairline is right above it */
   opensSection?: boolean;
   /** stacked in the sticky column, so it carries no grid placement of its own */
   split?: boolean;
+  /** overrides the copy band, so a section can divide 4/8 instead of 6/6 */
+  place?: string;
 }) {
-  const narrow = split ? "" : NARROW;
+  const narrow = split ? "" : (place ?? NARROW);
   const wide = split ? "" : WIDE;
 
   switch (block.type) {
     case "p":
       return (
-        <p
-          data-reveal="up"
-          className={`text-lg leading-relaxed text-fg ${narrow}`}
-        >
+        <p data-reveal="up" className={`font-body-sm text-fg ${narrow}`}>
           {withEmphasis(block.text)}
         </p>
       );
@@ -357,6 +365,53 @@ function Block({
         <dl data-reveal-group className={narrow}>
           <PairRows items={block.items} dropFirstRule={opensSection} />
         </dl>
+      );
+
+    case "notes":
+      return (
+        <div data-reveal-group className={narrow}>
+          {block.groups.map((group, g) => (
+            <div
+              // a group without a marker has no heading to key on
+              key={group.heading ?? g}
+              data-reveal-item="up"
+              style={{ "--reveal-delay": `${g * 90}ms` } as React.CSSProperties}
+              className="mt-8 first:mt-0"
+            >
+              {group.heading && (
+                <h4 className="font-label text-contrast">{group.heading}</h4>
+              )}
+              {group.text && (
+                <p
+                  className={`mt-1 text-fg ${
+                    group.lead ? "font-body-xl" : "font-body-sm"
+                  }`}
+                >
+                  {withEmphasis(group.text)}
+                </p>
+              )}
+              {group.items && (
+                <div className="mt-4 flex flex-col gap-5">
+                  {group.items.map((item) => (
+                    <div key={item.title}>
+                      {/* nested under the group's own label, so a level down
+                          and set in sentence case rather than caps */}
+                      <h5
+                        data-case="normal"
+                        className="font-label text-contrast"
+                      >
+                        {item.title}
+                      </h5>
+                      <p className="font-body-sm text-fg">
+                        {withEmphasis(item.text)}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       );
 
     case "comparison":
@@ -471,9 +526,7 @@ function Block({
                   <h3 className="mt-6 text-xl leading-snug text-fg">
                     {point.title}
                   </h3>
-                  <p className="mt-4 leading-relaxed text-muted">
-                    {point.text}
-                  </p>
+                  <p className="font-body-sm mt-4 text-muted">{point.text}</p>
                 </div>
               ))}
             </div>
@@ -490,7 +543,7 @@ function Block({
               style={{ "--reveal-delay": `${i * 90}ms` } as React.CSSProperties}
             >
               <h3 className="text-lg leading-snug text-fg">{point.title}</h3>
-              <p className="mt-2 leading-relaxed text-muted">{point.text}</p>
+              <p className="font-body-sm mt-2 text-muted">{point.text}</p>
             </div>
           ))}
         </div>
@@ -553,7 +606,7 @@ function SplitSection({
           />
 
           <div className="flex flex-col gap-y-8 pt-6 lg:grid lg:grid-cols-12 lg:gap-x-8">
-            <div className="lg:sticky lg:top-24 lg:col-span-4 lg:col-start-1 lg:self-start">
+            <div className="lg:sticky lg:top-24 lg:col-span-6 lg:col-start-1 lg:self-start">
               {act && (
                 <div className="pb-10 text-sm font-medium uppercase tracking-[-0.02em] text-muted">
                   {act}
@@ -576,7 +629,7 @@ function SplitSection({
 
             {shown.length > 0 && (
               <div
-                className={`lg:col-span-8 lg:col-start-5 ${
+                className={`lg:col-span-6 lg:col-start-7 ${
                   shown.length >= 4
                     ? "grid grid-cols-2 gap-2"
                     : "flex flex-col gap-2"
@@ -652,7 +705,7 @@ function StackedSection({
 
       {/* the figure runs the full viewport, in the footer's gutters */}
       {shown.length > 0 && (
-        <div className="mt-10 flex w-full flex-col gap-2 px-4 lg:mt-14">
+        <div className="mt-10 flex w-full flex-col gap-2 section-gutter lg:mt-14">
           {shown.map((item) => (
             <Media key={item.title} item={item} />
           ))}
@@ -677,6 +730,7 @@ function StorySection({
   blocks,
   split = false,
   layout,
+  columns = "half",
 }: {
   id: string;
   act?: string;
@@ -684,11 +738,19 @@ function StorySection({
   blocks: CaseStudyBlock[];
   split?: boolean;
   layout?: "stacked";
+  /** "wide" divides 4/8 instead of the page's 6/6 spine, which the header
+      sets and every section follows */
+  columns?: "half" | "wide";
 }) {
   // Results land under the figures, never above them: a number means more once
   // the thing it measures has been seen.
   const results = blocks.filter(isResult);
   const runs = toRuns(blocks.filter((b) => !isResult(b)));
+  const wide = columns === "wide";
+  const headingBand = wide
+    ? "lg:col-span-4 lg:col-start-1"
+    : "lg:col-span-6 lg:col-start-1";
+  const copyBand = wide ? "lg:col-span-8 lg:col-start-5" : undefined;
 
   // A section can ask for the stacked treatment even inside a split story.
   if (layout === "stacked") {
@@ -727,7 +789,7 @@ function StorySection({
           // full viewport width, in the footer's 16px gutters
           <div
             key={runIndex}
-            className={`my-6 w-full px-4 lg:my-8 ${mediaLayout}`}
+            className={`my-6 w-full section-gutter lg:my-8 ${mediaLayout}`}
           >
             {items.map((item) => (
               <Media key={item.title} item={item} />
@@ -758,7 +820,7 @@ function StorySection({
                 {runIndex === 0 && (
                   <h2
                     data-reveal="up"
-                    className="text-[2.25rem] leading-tight text-fg lg:col-span-6 lg:col-start-1"
+                    className={`text-[2.25rem] leading-tight text-fg ${headingBand}`}
                   >
                     {heading}
                   </h2>
@@ -767,6 +829,7 @@ function StorySection({
                   <Block
                     key={i}
                     block={block}
+                    place={copyBand}
                     opensSection={runIndex === 0 && i === 0}
                   />
                 ))}
@@ -787,6 +850,71 @@ function StorySection({
   );
 }
 
+// Split the story's sections into runs that share a pinned panel and singles
+// that render on their own. A section joins a run when the story is split, it
+// has figures, and it hasn't asked for another layout.
+type SectionGroup =
+  | { run: ActRunSection[]; section?: undefined }
+  | { run?: undefined; section: CaseStudySection & { id: string } };
+
+function groupSections(
+  story: CaseStudy,
+  ids: string[],
+  split: boolean,
+): SectionGroup[] {
+  const groups: SectionGroup[] = [];
+  let act: string | undefined;
+
+  story.sections.forEach((section, i) => {
+    const id = ids[i + 2];
+    if (section.act) act = section.act;
+
+    const joins =
+      split &&
+      !section.layout &&
+      section.blocks.some((b) => b.type === "media");
+    if (!joins) {
+      groups.push({ section: { ...section, id } });
+      return;
+    }
+
+    const figures = section.blocks.flatMap((b) =>
+      b.type === "media" ? b.items : [],
+    );
+    const copy = section.blocks.filter(
+      (b) => b.type !== "media" && !isResult(b),
+    );
+
+    const entry: ActRunSection = {
+      id,
+      // carried down, so an act label stays put across every section in it
+      act,
+      heading: section.heading,
+      copy: copy.map((block, bi) => <Block key={bi} block={block} split />),
+      figures: (
+        <div
+          className={
+            figures.length >= 4
+              ? "grid grid-cols-2 gap-2"
+              : "flex flex-col gap-2"
+          }
+        >
+          {figures.map((item) => (
+            <Media key={item.title} item={item} />
+          ))}
+        </div>
+      ),
+      className: "pb-16 lg:pb-28",
+    };
+
+    const last = groups[groups.length - 1];
+    if (last?.run) last.run.push(entry);
+    else groups.push({ run: [entry] });
+  });
+
+  return groups;
+}
+
 export function CaseStudyStory({ story }: { story: CaseStudy }) {
   // same list the rail is built from: [overview, my role, ...sections]
   const ids = storySectionIds(story);
@@ -794,20 +922,34 @@ export function CaseStudyStory({ story }: { story: CaseStudy }) {
 
   return (
     <div className="mt-12 sm:mt-16">
+      {/* The opening section. A composed one keeps the standard layout on
+          purpose — its heading belongs on the left with the whole run of copy
+          beside it, which the pinned split cannot do. */}
+      {story.overview ? (
+        <StorySection
+          id={ids[0]}
+          heading={story.overview.heading}
+          blocks={story.overview.blocks}
+        />
+      ) : (
+        <StorySection
+          split={split}
+          id={ids[0]}
+          heading="Overview"
+          blocks={[
+            { type: "pairs", items: story.summary ?? [] },
+            ...(story.summaryMedia?.length
+              ? ([{ type: "media", items: story.summaryMedia }] as const)
+              : []),
+          ]}
+        />
+      )}
+      {/* Stacked, not split: the three Spaces screens are the section's proof
+          and are read across, so they run the full width under the copy rather
+          than sitting shrunk in a column beside it. */}
       <StorySection
         split={split}
-        id={ids[0]}
-        heading="Overview"
-        blocks={[
-          { type: "pairs", items: story.summary },
-          ...(story.summaryMedia?.length
-            ? ([{ type: "media", items: story.summaryMedia }] as const)
-            : []),
-        ]}
-      />
-      {/* the role figures close this section, so they run full-bleed under it */}
-      <StorySection
-        split={split}
+        layout="stacked"
         id={ids[1]}
         heading="My role"
         blocks={[
@@ -818,17 +960,27 @@ export function CaseStudyStory({ story }: { story: CaseStudy }) {
         ]}
       />
 
-      {story.sections.map((section, i) => (
-        <StorySection
-          key={ids[i + 2]}
-          split={split}
-          layout={section.layout}
-          id={ids[i + 2]}
-          act={section.act}
-          heading={section.heading}
-          blocks={section.blocks}
-        />
-      ))}
+      {/* Consecutive split sections that carry figures share one pinned panel:
+          the copy holds its place and swaps as you cross into the next, rather
+          than each section pinning and scrolling away on its own. Anything else
+          — stacked sections, sections with no figures — renders on its own. */}
+      {groupSections(story, ids, split).map((group, g) =>
+        group.run ? (
+          <div key={`run-${g}`} className={SECTION_PAD}>
+            <StickyActRun sections={group.run} />
+          </div>
+        ) : (
+          <StorySection
+            key={group.section.id}
+            split={split}
+            layout={group.section.layout}
+            id={group.section.id}
+            act={group.section.act}
+            heading={group.section.heading}
+            blocks={group.section.blocks}
+          />
+        ),
+      )}
     </div>
   );
 }

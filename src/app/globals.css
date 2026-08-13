@@ -53,6 +53,64 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* ---- Type scale ----------------------------------------------------------
+   Named roles rather than utility strings repeated across components, so a
+   change to "what a label looks like" lands in one place. Add a role here
+   before reaching for a one-off size in a component.
+
+   .font-label   the small-caps marker: Owned, Project Goal, Key metrics
+   .font-body-xl the lead line of a section, 24px
+   .font-body-sm body copy, 14px
+   [data-case="normal"] on .font-label: sentence case, for nested titles
+   .text-contrast the label colour, a step back from the foreground          */
+.font-label {
+  font-size: 0.75rem;
+  /* the body's line box, so a label and the value beside it share a baseline */
+  line-height: 1.625rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.font-body-xl {
+  font-size: 1.5rem;
+  line-height: 1.35;
+}
+.font-body-sm {
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+/* the same marker in sentence case, for a title nested under a label. An
+   attribute rather than a second class, so it always beats the base role. */
+.font-label[data-case="normal"] {
+  text-transform: none;
+  letter-spacing: normal;
+}
+.text-contrast {
+  color: var(--color-muted);
+}
+
+/* The case study page's gutters.
+
+   .page-gutter    the hero's edge: title, meta row, cover. Also the right edge
+                   everywhere, so a section's figures stop exactly where the
+                   cover above them does.
+   .section-gutter the story below the hero, indented equally on both sides.
+                   Phones keep the hero's edge; there is no room to indent
+                   40px of a 390px screen. */
+.page-gutter {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+.section-gutter {
+  padding-left: 1.5rem;
+  padding-right: 1.5rem;
+}
+@media (min-width: 640px) {
+  .section-gutter {
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
+  }
+}
+
 /* ---- Page background: gradient + animated noise, one layer for the whole
    page (hero + sections) so there's no seam. Follows the theme. ---- */
 .page-bg {

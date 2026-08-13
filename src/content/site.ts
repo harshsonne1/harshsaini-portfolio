@@ -103,6 +103,19 @@ export type CaseStudyBlock =
       type: "pairs";
       items: PairItem[];
     }
+  /* A tight run of headed groups. Weight separates a heading from its copy,
+     not colour or rules, so the whole column reads as one voice. */
+  | {
+      type: "notes";
+      groups: {
+        /* omit for a group that is just copy, with no marker above it */
+        heading?: string;
+        text?: string;
+        /* sets the copy at font-body-xl, for the line that carries the section */
+        lead?: boolean;
+        items?: { title: string; text: string }[];
+      }[];
+    }
   /* a before / after table: one row per thing that changed */
   | {
       type: "comparison";
@@ -145,13 +158,17 @@ export type CaseStudySection = {
 export type CaseStudy = {
   /* the line under the title, beneath the opening statement */
   subhead: string;
+  /* Replaces the summary-driven Overview with a composed section in the same
+     slot — first after the hero — built from blocks instead of label/value
+     rows. Set with a big heading on the left and the run of copy on the right. */
+  overview?: { heading: string; blocks: CaseStudyBlock[] };
   /* "split" pins each section's heading and copy in a left column while its
      figures scroll past on the right. Without it, copy sits beside the heading
      and figures break out to the full viewport width. */
   layout?: "split";
   /* challenge / approach / solution / impact. A row is either a sentence or,
      where the point is a set of results, a short list. */
-  summary: PairItem[];
+  summary?: PairItem[];
   /* figures that close the Overview, before My role */
   summaryMedia?: CaseStudyMedia[];
   /* owned / built / guided */
@@ -206,63 +223,82 @@ export const projects: Project[] = [
       subhead:
         "One system. Four worlds. Two architectures. I adapted one AI video pipeline across four domains, and discovered that the hardest part was knowing when the original architecture no longer fit.",
       layout: "split",
-      summary: [
-        {
-          label: "Challenge",
-          text: "Scale one AI video system across 4 distinct domains without rebuilding each workflow.",
-        },
-        {
-          label: "Approach",
-          text: "Keep the core architecture reusable while adapting domain knowledge + mandatory beats for each vertical.",
-        },
-        {
-          label: "Solution",
-          text: "Built 2 architectures: source-of-truth for consistency, reasoning for world selection.",
-        },
-        {
-          label: "Impact",
-          items: [
-            "4 pipelines shipped",
-            "½–1 day manual effort removed per luxury product",
-            "Product + logo replaced the need for a scene reference",
-            "Became a live sales tool, supporting 1 enterprise + 2 SLG deals",
-          ],
-        },
-      ],
-      summaryMedia: [
-        {
-          kind: "output",
-          title: "Ethnicwear",
-          note: "Generated video output.",
-          src: "/case-studies/adaptive-intelligence/overview-1.webm",
-          width: 720,
-          height: 1280,
-        },
-        {
-          kind: "output",
-          title: "Apparel",
-          note: "Generated video output.",
-          src: "/case-studies/adaptive-intelligence/overview-2.webm",
-          width: 720,
-          height: 1280,
-        },
-        {
-          kind: "output",
-          title: "Luxury reveal",
-          note: "Generated video output.",
-          src: "/case-studies/adaptive-intelligence/overview-3.webm",
-          width: 720,
-          height: 1280,
-        },
-        {
-          kind: "output",
-          title: "Footwear",
-          note: "Generated video output.",
-          src: "/case-studies/adaptive-intelligence/overview-4.webm",
-          width: 720,
-          height: 1280,
-        },
-      ],
+      overview: {
+        heading: "Challenge",
+        blocks: [
+          {
+            type: "notes",
+            groups: [
+              {
+                text: "The AI video pipeline worked for Western fashion. Expanding into **four new domains** made blind reuse unreliable and rebuilding impractical.",
+              },
+              {
+                heading: "Project Goal",
+                lead: true,
+                text: "Make one AI system adaptable across domains without losing accuracy or consistency.",
+              },
+              {
+                heading: "Key Decisions",
+                items: [
+                  {
+                    title: "Swappable knowledge",
+                    text: "Keep the workflow fixed. Change the domain knowledge.",
+                  },
+                  {
+                    title: "Single source of truth",
+                    text: "Keep product and garment details consistent downstream.",
+                  },
+                  {
+                    title: "Two architectures",
+                    text: "Source of truth for fashion. Reasoning for luxury.",
+                  },
+                  {
+                    title: "Remove the bottleneck",
+                    text: "Replace scene references with **product + logo**.",
+                  },
+                ],
+              },
+            ],
+          },
+          {
+            type: "media",
+            items: [
+              {
+                kind: "output",
+                title: "Ethnicwear",
+                note: "Generated video output.",
+                src: "/case-studies/adaptive-intelligence/overview-1.webm",
+                width: 720,
+                height: 1280,
+              },
+              {
+                kind: "output",
+                title: "Apparel",
+                note: "Generated video output.",
+                src: "/case-studies/adaptive-intelligence/overview-2.webm",
+                width: 720,
+                height: 1280,
+              },
+              {
+                kind: "output",
+                title: "Luxury reveal",
+                note: "Generated video output.",
+                src: "/case-studies/adaptive-intelligence/overview-3.webm",
+                width: 720,
+                height: 1280,
+              },
+              {
+                kind: "output",
+                title: "Footwear",
+                note: "Generated video output.",
+                src: "/case-studies/adaptive-intelligence/overview-4.webm",
+                width: 720,
+                height: 1280,
+              },
+            ],
+          },
+        ],
+      },
       role: [
         {
           label: "Owned",
