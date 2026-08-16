@@ -44,7 +44,9 @@ export function About() {
                 href="https://shopos.ai"
                 target="_blank"
                 rel="noreferrer"
-                className="underline decoration-1 underline-offset-4 transition-colors hover:text-accent"
+                // the case studies' figure colour, so an accent means the same
+                // thing wherever it appears
+                className="underline decoration-1 underline-offset-4 transition-colors hover:text-[var(--color-stat)]"
               >
                 ShopOS
               </a>

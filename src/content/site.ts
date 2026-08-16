@@ -346,6 +346,30 @@ export const projects: Project[] = [
           width: 1440,
           height: 807,
         },
+        {
+          kind: "ui",
+          title: "A luxury reveal, set up and generated",
+          note: "The inputs an operator gives it, and the output it returns.",
+          src: "/case-studies/adaptive-intelligence/my-role-reveal.webp",
+          width: 1440,
+          height: 807,
+        },
+        {
+          kind: "ui",
+          title: "The same reveal, as a workflow",
+          note: "The steps behind the form, open beside the inputs that drive them.",
+          src: "/case-studies/adaptive-intelligence/my-role-workflow.webp",
+          width: 1440,
+          height: 807,
+        },
+        {
+          kind: "system",
+          title: "The workflow in full",
+          note: "Product and logo in, through positioning and prompt, to the generated reveal.",
+          src: "/case-studies/adaptive-intelligence/my-role-graph.webp",
+          width: 1440,
+          height: 872,
+        },
       ],
       sections: [
         {

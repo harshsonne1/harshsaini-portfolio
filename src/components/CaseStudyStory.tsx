@@ -902,17 +902,21 @@ function StorySection({
         const items = run.media
           ? run.blocks.flatMap((b) => (b.type === "media" ? b.items : []))
           : [];
-        // One figure runs the full width; a set of them shares the row, so
-        // four portrait clips read as a set rather than as four screens of
-        // scrolling.
-        const mediaLayout =
-          // gap-2 is the experiments bento's 8px, so a row of figures is set
-          // to the same rhythm as the wall on the home page
-          items.length >= 4
+        // Landscape figures run one after another at full width — a wide
+        // screenshot loses its detail the moment it shares a row. Only tall
+        // figures pack across, where a set of clips reads as a set and
+        // stacking them would each be a screen of scrolling on its own.
+        // gap-2 is the experiments bento's 8px, matching the home page wall.
+        const packs =
+          items.length > 1 &&
+          items.every(
+            (i) => !i.width || !i.height || i.width / i.height < 1.2,
+          );
+        const mediaLayout = !packs
+          ? "flex flex-col gap-y-6"
+          : items.length >= 4
             ? "grid grid-cols-2 gap-2 lg:grid-cols-4"
-            : items.length > 1
-              ? "grid gap-2 sm:grid-cols-2"
-              : "flex flex-col gap-y-6";
+            : "grid gap-2 sm:grid-cols-2";
 
         return run.media ? (
           // Full viewport width, in the footer's 16px gutters. A trailing run
