@@ -97,12 +97,15 @@ export type CaseStudyBlock =
       type: "stats";
       /* heading above the row; defaults to "Key metrics" */
       label?: string;
-      /* sets the figures in --color-stat rather than the foreground, for a row
-         meant to be caught while scanning */
-      accent?: boolean;
-      /* `note` adds a second, quieter line under the label — for a number that
-         needs naming as well as measuring ("2 / Inputs / Product + logo") */
-      items: { value: string; label: string; note?: string }[];
+      items: { value: string; label: string }[];
+    }
+  /* Results as statements rather than a row of figures: one line each, ruled
+     down the left in --color-stat. For an outcome that reads better as a
+     sentence than as a number over a caption. */
+  | {
+      type: "impact";
+      label?: string;
+      items: string[];
     }
   | {
       type: "pairs";
@@ -172,7 +175,13 @@ export type CaseStudy = {
   /* Replaces the summary-driven Overview with a composed section in the same
      slot — first after the hero — built from blocks instead of label/value
      rows. Set with a big heading on the left and the run of copy on the right. */
-  overview?: { heading: string; blocks: CaseStudyBlock[] };
+  overview?: {
+    heading: string;
+    /* what the right-edge rail calls this stop. The heading is a full sentence
+       when it needs to be; the rail needs a word. */
+    railLabel?: string;
+    blocks: CaseStudyBlock[];
+  };
   /* "split" pins each section's heading and copy in a left column while its
      figures scroll past on the right. Without it, copy sits beside the heading
      and figures break out to the full viewport width. */
@@ -186,9 +195,9 @@ export type CaseStudy = {
   role?: PairItem[];
   /* one paragraph in place of the owned / built / guided rows */
   roleText?: string;
-  /* the run of numbers under that paragraph — the at-a-glance read for someone
+  /* the outcome under that paragraph — the at-a-glance read for someone
      scanning the page rather than reading it */
-  roleStats?: { value: string; label: string; note?: string }[];
+  roleImpact?: string[];
   /* figures that close the My role section, before the story opens */
   roleMedia?: CaseStudyMedia[];
   sections: CaseStudySection[];
@@ -241,15 +250,12 @@ export const projects: Project[] = [
         "We already had a tool that could turn a product image into a video. But as we worked across different products, markets, and creative needs, creating and adapting each video still took time and effort.\nI worked on making the process more flexible, so teams could create, iterate, and generate more product content with less manual work.",
       layout: "split",
       overview: {
-        heading: "Challenge",
+        heading: "The first version worked. Then we needed it to do more.",
+        railLabel: "Challenge",
         blocks: [
           {
             type: "notes",
             groups: [
-              {
-                lead: true,
-                text: "The first version worked. Then we needed it to do more.",
-              },
               {
                 items: [
                   { text: "The original tool was built around a simple idea:" },
@@ -318,39 +324,20 @@ export const projects: Project[] = [
         ],
       },
       roleText:
-        "I worked on this workflow end to end — figuring out how each step should work, what the AI needed to understand about a product, and how to catch a bad result before it went out. I wrote the logic and prompts behind it, made the product calls along the way, and built it with the team.",
-      roleStats: [
-        { value: "~10 min", label: "Product upload → pitch-ready reveal" },
-        { value: "4", label: "Workflows shipped" },
-        { value: "2", label: "Inputs to generate", note: "Product + logo" },
+        "I owned the workflow end to end, shaping how the experience worked, what the AI needed to understand, and how the final output could be improved. I defined the prompts and logic, made key product decisions, and worked with the team to build it. The result was a more flexible way to create and iterate on product videos, with the luxury workflow generating pitch-ready reveals in around 10 minutes and supporting pitches for one enterprise and two SLG clients.",
+      roleImpact: [
+        "~10 min from product upload to a pitch-ready reveal",
+        "4 workflows shipped across different product types",
+        "2 inputs to generate — a product image and a brand logo",
       ],
       roleMedia: [
         {
           kind: "ui",
           title: "Spaces: the workflows, as an operator sees them",
-          note: "The library of pipelines each vertical runs from.",
-          src: "/case-studies/adaptive-intelligence/my-role-1-dark.webp",
-          srcLight: "/case-studies/adaptive-intelligence/my-role-1-light.webp",
+          note: "The library of workflows each vertical runs from.",
+          src: "/case-studies/adaptive-intelligence/my-role-spaces.webp",
           width: 1440,
-          height: 786,
-        },
-        {
-          kind: "ui",
-          title: "Inside a workflow",
-          note: "The node graph an operator is handed, rather than the one it was authored in.",
-          src: "/case-studies/adaptive-intelligence/my-role-2-dark.webp",
-          srcLight: "/case-studies/adaptive-intelligence/my-role-2-light.webp",
-          width: 1440,
-          height: 787,
-        },
-        {
-          kind: "ui",
-          title: "A run, end to end",
-          note: "Inputs in, generated output back.",
-          src: "/case-studies/adaptive-intelligence/my-role-3-dark.webp",
-          srcLight: "/case-studies/adaptive-intelligence/my-role-3-light.webp",
-          width: 1440,
-          height: 757,
+          height: 807,
         },
       ],
       sections: [

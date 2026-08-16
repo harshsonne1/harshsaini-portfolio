@@ -28,11 +28,10 @@ import type { RailItem } from "@/components/SectionRail";
 // has no `src` yet.
 const SHOW_EMPTY_MEDIA = true;
 
-// vertical rhythm, on the reference's fluid scale: 86px top and bottom at a
-// 1440 design width, opening to 200px at the foot of a section on desktop
-// (all clamped so they hold up either side of that width)
-const SECTION_PAD =
-  "pt-[clamp(3rem,6vw,6rem)] pb-[clamp(3rem,6vw,6rem)] lg:pb-[clamp(5rem,13.9vw,12.5rem)]";
+// vertical rhythm: the same fluid value top and bottom — 86px at a 1440 design
+// width — so the rule that opens a section sits an equal distance from the
+// content either side of it.
+const SECTION_PAD = "py-[clamp(3rem,6vw,6rem)]";
 
 // the reading column — capped and centred. Figures deliberately skip this and
 // run the full viewport in the footer's 16px gutters instead.
@@ -101,7 +100,10 @@ export function storyRailItems(story: CaseStudy): RailItem[] {
   const ids = storySectionIds(story);
 
   return [
-    { id: ids[0], label: story.overview?.heading ?? "Overview" },
+    {
+      id: ids[0],
+      label: story.overview?.railLabel ?? story.overview?.heading ?? "Overview",
+    },
     { id: ids[1], label: "My role" },
     ...story.sections.flatMap((section, i) =>
       section.railSkip
@@ -366,33 +368,43 @@ function Block({
                 }
                 className="flex flex-col pr-8"
               >
-                <span
-                  className={`font-hero-1 leading-none ${
-                    block.accent
-                      ? "text-4xl text-[var(--color-stat)] sm:text-5xl"
-                      : "text-3xl text-fg sm:text-4xl"
-                  }`}
-                >
+                <span className="font-hero-1 text-3xl leading-none text-fg sm:text-4xl">
                   {stat.value}
                 </span>
-                {/* the accent row carries its own weight — no rule needed to
-                    separate the figure from what it measures */}
-                <span
-                  className={`mt-4 text-sm text-muted ${
-                    block.accent ? "" : "border-t border-border pt-4"
-                  }`}
-                >
+                <span className="mt-4 border-t border-border pt-4 text-sm text-muted">
                   {stat.label}
                 </span>
-                {/* the quieter second line: what the number is made of */}
-                {stat.note && (
-                  <span className="mt-1 text-sm text-muted/70">
-                    {stat.note}
-                  </span>
-                )}
               </div>
             ))}
           </div>
+        </div>
+      );
+
+    case "impact":
+      return (
+        <div data-reveal-group className={narrow}>
+          {block.label && <BlockLabel>{block.label}</BlockLabel>}
+          {/* one rule down the whole set, in the figure colour — the lines are
+              read together, so they share a single mark rather than each
+              carrying its own */}
+          <ul
+            className={`flex flex-col gap-6 border-l-2 border-[var(--color-stat)] pl-6 ${
+              block.label ? "mt-8" : ""
+            }`}
+          >
+            {block.items.map((item, i) => (
+              <li
+                key={i}
+                data-reveal-item="up"
+                style={
+                  { "--reveal-delay": `${i * 90}ms` } as React.CSSProperties
+                }
+                className="text-sm font-medium leading-snug text-fg"
+              >
+                {withEmphasis(item)}
+              </li>
+            ))}
+          </ul>
         </div>
       );
 
@@ -405,14 +417,20 @@ function Block({
 
     case "notes":
       return (
-        <div data-reveal-group className={narrow}>
+        // One gap scale down the column instead of per-element margins: 24px
+        // between groups, 16px between a group's own parts, 20px between the
+        // paragraphs inside one. A group that opens with a marker takes a
+        // wider gap above it, since the marker starts a new thought.
+        <div data-reveal-group className={`flex flex-col gap-6 ${narrow}`}>
           {block.groups.map((group, g) => (
             <div
               // a group without a marker has no heading to key on
               key={group.heading ?? g}
               data-reveal-item="up"
               style={{ "--reveal-delay": `${g * 90}ms` } as React.CSSProperties}
-              className="mt-8 first:mt-0"
+              className={`flex flex-col gap-4 ${
+                group.heading && g > 0 ? "mt-4" : ""
+              }`}
             >
               {group.heading && (
                 <h4 className="font-label text-contrast">{group.heading}</h4>
@@ -421,8 +439,8 @@ function Block({
                 <p
                   className={
                     group.lead
-                      ? "mt-1 font-body-xl text-fg"
-                      : "mt-1 leading-relaxed text-muted"
+                      ? "font-body-xl text-fg"
+                      : "leading-relaxed text-muted"
                   }
                 >
                   {withEmphasis(group.text)}
@@ -432,7 +450,7 @@ function Block({
               {/* a listing rather than an argument. `**bold**` inside a bullet
                   still resolves to the foreground, as it does in any copy. */}
               {group.bullets && (
-                <ul className="mt-4 flex list-disc flex-col gap-3 pl-5 marker:text-muted">
+                <ul className="flex list-disc flex-col gap-3 pl-5 marker:text-muted">
                   {group.bullets.map((bullet, b) => (
                     <li key={b} className="leading-relaxed text-muted">
                       {withEmphasis(bullet)}
@@ -441,7 +459,7 @@ function Block({
                 </ul>
               )}
               {group.items && (
-                <div className="mt-4 flex flex-col gap-5">
+                <div className="flex flex-col gap-5">
                   {group.items.map((item, i) => (
                     <div key={item.title ?? i}>
                       {/* nested under the group's own label, so a level down
@@ -775,7 +793,6 @@ function StorySection({
   split = false,
   layout,
   columns = "half",
-  resultsFirst = false,
 }: {
   id: string;
   act?: string;
@@ -786,12 +803,9 @@ function StorySection({
   /** "wide" divides 4/8 instead of the page's 6/6 spine, which the header
       sets and every section follows */
   columns?: "half" | "wide";
-  /** numbers directly under the copy rather than after the figures — for a
-      summary row that is meant to be scanned before anything is read */
-  resultsFirst?: boolean;
 }) {
   // Results land under the figures, never above them: a number means more once
-  // the thing it measures has been seen. `resultsFirst` opts out.
+  // the thing it measures has been seen.
   const results = blocks.filter(isResult);
   const runs = toRuns(blocks.filter((b) => !isResult(b)));
   const wide = columns === "wide";
@@ -844,10 +858,14 @@ function StorySection({
               : "flex flex-col gap-y-6";
 
         return run.media ? (
-          // full viewport width, in the footer's 16px gutters
+          // Full viewport width, in the footer's 16px gutters. A trailing run
+          // takes no bottom margin — the section's own padding closes it, and
+          // stacking both left a gap twice the size of the one under the rule.
           <div
             key={runIndex}
-            className={`my-10 w-full section-gutter lg:my-16 ${mediaLayout}`}
+            className={`mt-10 w-full section-gutter lg:mt-16 ${
+              runIndex === runs.length - 1 ? "" : "mb-10 lg:mb-16"
+            } ${mediaLayout}`}
           >
             {items.map((item) => (
               <Media key={item.title} item={item} />
@@ -882,16 +900,12 @@ function StorySection({
                   />
                 ))}
               </div>
-
-              {resultsFirst && runIndex === 0 && resultsRun}
             </div>
           </div>
         );
       })}
 
-      {!resultsFirst && resultsRun && (
-        <div className={COLUMN}>{resultsRun}</div>
-      )}
+      {resultsRun && <div className={COLUMN}>{resultsRun}</div>}
     </section>
   );
 }
@@ -997,21 +1011,18 @@ export function CaseStudyStory({ story }: { story: CaseStudy }) {
         split={false}
         id={ids[1]}
         heading="My role"
-        // the numbers are the scannable summary of the section, so they sit
-        // under the copy rather than after the three screens
-        resultsFirst
         blocks={[
           // one paragraph across the column, or the owned / built / guided rows
           ...(story.roleText
             ? ([{ type: "p", text: story.roleText }] as const)
             : ([{ type: "pairs", items: story.role ?? [] }] as const)),
-          ...(story.roleStats?.length
+          // the outcome sits with the copy, not after the screens below it
+          ...(story.roleImpact?.length
             ? ([
                 {
-                  type: "stats",
+                  type: "impact",
                   label: "The impact",
-                  accent: true,
-                  items: story.roleStats,
+                  items: story.roleImpact,
                 },
               ] as const)
             : []),
