@@ -6,6 +6,9 @@ type BracketLinkProps = {
   label: string;
   href?: string;
   arrow?: boolean;
+  /* a chevron ahead of the label, for a link that goes back rather than out.
+     It slides toward the direction it points on hover. */
+  back?: boolean;
   /* "always": brackets faint at rest, brighten on hover (CTA style).
      "hover": brackets hidden at rest, appear on hover.
      "none": no corner brackets — just the arrow + text-slide effect. */
@@ -17,6 +20,7 @@ export function BracketLink({
   label,
   href,
   arrow = false,
+  back = false,
   bracketsMode = "always",
   className = "",
 }: BracketLinkProps) {
@@ -50,6 +54,20 @@ export function BracketLink({
             className={`${cornerBase} ${cornerOpacity} bottom-1.5 right-1.5 border-b border-r group-hover:bottom-0 group-hover:right-0`}
           />
         </>
+      )}
+      {back && (
+        <svg
+          aria-hidden="true"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.75"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="h-[1em] w-[1em] shrink-0 transition-transform duration-300 ease-out group-hover:-translate-x-1"
+        >
+          <path d="M15 18 L9 12 L15 6" />
+        </svg>
       )}
       {arrow && (
         <span aria-hidden="true" className="text-current">

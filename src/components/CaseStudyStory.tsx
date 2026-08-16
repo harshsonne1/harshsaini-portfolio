@@ -20,6 +20,7 @@ import type {
   PairItem,
 } from "@/content/site";
 import { CoverVideo } from "@/components/CoverVideo";
+import { PipelineDiagram } from "@/components/PipelineDiagram";
 import { StickyActRun, type ActRunSection } from "@/components/StickyActRun";
 import type { RailItem } from "@/components/SectionRail";
 
@@ -100,10 +101,7 @@ export function storyRailItems(story: CaseStudy): RailItem[] {
   const ids = storySectionIds(story);
 
   return [
-    {
-      id: ids[0],
-      label: story.overview?.railLabel ?? story.overview?.heading ?? "Overview",
-    },
+    { id: ids[0], label: story.overview?.heading ?? "Overview" },
     { id: ids[1], label: "My role" },
     ...story.sections.flatMap((section, i) =>
       section.railSkip
@@ -195,7 +193,7 @@ function MediaInputs({ groups }: { groups: NonNullable<CaseStudyMedia["inputs"]>
 }
 
 function Media({ item }: { item: CaseStudyMedia }) {
-  if (item.src) {
+  if (item.src || item.figure) {
     // The figure takes the file's own ratio, so a portrait diagram stays
     // portrait and a square one stays square. Forcing 16:9 here cropped the
     // ends off every diagram that wasn't already that shape.
@@ -207,7 +205,9 @@ function Media({ item }: { item: CaseStudyMedia }) {
           className="relative w-full overflow-hidden"
           style={{ aspectRatio: ratio }}
         >
-          {isVideo(item.src) ? (
+          {item.figure === "pipeline" ? (
+            <PipelineDiagram />
+          ) : !item.src ? null : isVideo(item.src) ? (
             // plays while it is on screen and stops when it isn't, so a wall
             // of clips never runs four decoders at once off-screen
             <CoverVideo src={item.src} />
@@ -384,8 +384,10 @@ function Block({
 
   switch (block.type) {
     case "p":
+      // Body copy sits back from the foreground, the same as the notes column,
+      // so the `**bold**` runs inside it are the beats that carry a section.
       return (
-        <p data-reveal="up" className={`font-body-sm text-fg ${narrow}`}>
+        <p data-reveal="up" className={`leading-relaxed text-muted ${narrow}`}>
           {withEmphasis(block.text)}
         </p>
       );
@@ -456,7 +458,11 @@ function Block({
                 style={
                   { "--reveal-delay": `${i * 90}ms` } as React.CSSProperties
                 }
-                className="text-sm font-medium leading-snug text-fg"
+                className={
+                  block.lead
+                    ? "font-body-xl text-fg"
+                    : "text-sm font-medium leading-snug text-fg"
+                }
               >
                 {withEmphasis(item)}
               </li>
@@ -590,6 +596,33 @@ function Block({
             </div>
           ))}
         </div>
+      );
+
+    case "steps":
+      return (
+        <ol data-reveal-group className={`flex flex-col ${narrow}`}>
+          {block.items.map((step, i) => (
+            <li
+              key={step.label}
+              data-reveal-item="up"
+              style={{ "--reveal-delay": `${i * 90}ms` } as React.CSSProperties}
+            >
+              {/* the hand-off, drawn between one decision and the next */}
+              {i > 0 && (
+                <span
+                  aria-hidden="true"
+                  className="block py-3 text-sm leading-none text-muted"
+                >
+                  ↓
+                </span>
+              )}
+              <span className="block font-medium text-fg">{step.label}</span>
+              <span className="mt-1 block leading-relaxed text-muted">
+                {withEmphasis(step.text)}
+              </span>
+            </li>
+          ))}
+        </ol>
       );
 
     case "inputs":
@@ -730,7 +763,7 @@ function SplitSection({
           <div className="flex flex-col gap-y-8 lg:grid lg:grid-cols-12 lg:gap-x-8">
             <div className="lg:sticky lg:top-24 lg:col-span-6 lg:col-start-1 lg:self-start">
               {act && (
-                <div className="pb-10 text-sm font-medium uppercase tracking-[-0.02em] text-muted">
+                <div className="pb-4 text-sm font-medium uppercase tracking-[-0.02em] text-muted">
                   {act}
                 </div>
               )}
@@ -802,7 +835,7 @@ function StackedSection({
       <div className={COLUMN}>
         <div className="relative">
           {act && (
-            <div className="pb-10 text-sm font-medium uppercase tracking-[-0.02em] text-muted">
+            <div className="pb-4 text-sm font-medium uppercase tracking-[-0.02em] text-muted">
               {act}
             </div>
           )}
@@ -936,7 +969,7 @@ function StorySection({
           <div key={runIndex} className={COLUMN}>
             <div className="relative">
               {runIndex === 0 && act && (
-                <div className="pb-10 text-sm font-medium uppercase tracking-[-0.02em] text-muted sm:pb-14">
+                <div className="pb-4 text-sm font-medium uppercase tracking-[-0.02em] text-muted">
                   {act}
                 </div>
               )}
@@ -1073,9 +1106,12 @@ export function CaseStudyStory({ story }: { story: CaseStudy }) {
         id={ids[1]}
         heading="My role"
         blocks={[
-          // one paragraph across the column, or the owned / built / guided rows
+          // prose, a paragraph per line, or the owned / built / guided rows
           ...(story.roleText
-            ? ([{ type: "p", text: story.roleText }] as const)
+            ? story.roleText
+                .split("\n")
+                .filter((line) => line.trim())
+                .map((text) => ({ type: "p", text }) as const)
             : ([{ type: "pairs", items: story.role ?? [] }] as const)),
           // the outcome sits with the copy, not after the screens below it
           ...(story.roleImpact?.length

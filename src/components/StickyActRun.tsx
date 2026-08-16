@@ -79,7 +79,7 @@ export function StickyActRun({ sections }: { sections: ActRunSection[] }) {
             }`}
           >
             {section.act && (
-              <div className="pb-10 text-sm font-medium uppercase tracking-[-0.02em] text-muted">
+              <div className="pb-4 text-sm font-medium uppercase tracking-[-0.02em] text-muted">
                 {section.act}
               </div>
             )}

@@ -182,7 +182,7 @@ export default async function CaseStudy({ params }: Params) {
           className={`mx-auto w-full page-gutter ${project.story ? "" : "mt-24 sm:mt-32"}`}
         >
           <Link href="/#projects" className="-ml-3 inline-block text-sm">
-            <BracketLink label="Back to work" bracketsMode="none" />
+            <BracketLink label="Back to work" back bracketsMode="none" />
           </Link>
         </div>
       </main>

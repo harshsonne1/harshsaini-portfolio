@@ -67,6 +67,9 @@ export type CaseStudyMedia = {
   note: string;
   /* drop the asset in /public and set this to replace the empty frame */
   src?: string;
+  /* a drawn figure rather than a file — rendered by its own component, and
+     takes the slot `src` would have */
+  figure?: "pipeline";
   /* Light-theme counterpart of `src`, for figures that are themselves a
      screenshot of a themed UI. When set, `src` is the dark-theme one and the
      page shows whichever matches the theme the reader is in. */
@@ -112,6 +115,9 @@ export type CaseStudyBlock =
   | {
       type: "impact";
       label?: string;
+      /* sets the lines at font-body-xl — for a single statement carrying a
+         section, rather than a run of results being scanned */
+      lead?: boolean;
       items: string[];
     }
   | {
@@ -142,6 +148,13 @@ export type CaseStudyBlock =
       label?: string;
       headings: [string, string];
       rows: { before: string; after: string }[];
+    }
+  /* An ordered run of decisions, each one feeding the next. Set as a vertical
+     sequence with the hand-off drawn between them, so the order is the point
+     rather than a detail of how it is written. */
+  | {
+      type: "steps";
+      items: { label: string; text: string }[];
     }
   /* the literal inputs a step takes, shown as small thumbnails */
   | {
@@ -182,13 +195,7 @@ export type CaseStudy = {
   /* Replaces the summary-driven Overview with a composed section in the same
      slot — first after the hero — built from blocks instead of label/value
      rows. Set with a big heading on the left and the run of copy on the right. */
-  overview?: {
-    heading: string;
-    /* what the right-edge rail calls this stop. The heading is a full sentence
-       when it needs to be; the rail needs a word. */
-    railLabel?: string;
-    blocks: CaseStudyBlock[];
-  };
+  overview?: { heading: string; blocks: CaseStudyBlock[] };
   /* "split" pins each section's heading and copy in a left column while its
      figures scroll past on the right. Without it, copy sits beside the heading
      and figures break out to the full viewport width. */
@@ -200,7 +207,8 @@ export type CaseStudy = {
   summaryMedia?: CaseStudyMedia[];
   /* owned / built / guided */
   role?: PairItem[];
-  /* one paragraph in place of the owned / built / guided rows */
+  /* prose in place of the owned / built / guided rows. A newline opens a new
+     paragraph, as it does in the header's subhead. */
   roleText?: string;
   /* the outcome under that paragraph — the at-a-glance read for someone
      scanning the page rather than reading it */
@@ -250,42 +258,35 @@ export const projects: Project[] = [
     video: "/adaptive-intelligence.webm",
     statement: "Making one video was easy. Making the next hundred wasn't.",
     industry: "AI, Fashion, Commerce",
-    scope: "Product Design, AI Systems, Prompt Architecture",
+    scope: "Product Design, AI Systems, Creative Automation",
     story: {
       /* a newline opens a new paragraph in the header's subhead */
       subhead:
-        "We already had a tool that could turn a product image into a video. But as we worked across different products, markets, and creative needs, creating and adapting each video still took time and effort.\nI worked on making the process more flexible, so teams could create, iterate, and generate more product content with less manual work.",
+        "We had a tool that could turn a product image into a video. But as we expanded across products, markets, and creative needs, the same workflow became harder to scale.\nThe challenge was no longer generating a video. It was making the system adapt to what it was creating.",
       layout: "split",
       overview: {
-        heading: "The first version worked. Then we needed it to do more.",
-        railLabel: "Challenge",
+        heading: "The Challenge",
         blocks: [
           {
             type: "notes",
             groups: [
               {
-                items: [
-                  { text: "The original tool was built around a simple idea:" },
-                  { text: "**Upload a product → generate a video.**" },
-                  {
-                    text: "That worked well for Western fashion but real client work quickly became more complicated. Different products and markets needed different ways of understanding the product, telling the story, and presenting it.",
-                  },
-                ],
-              },
-              {
-                bullets: [
-                  "Indian fashion needed a better understanding of **fabric, embroidery, construction, detailing, styling, and movement**.",
-                  "Merchandise needed to understand **prints, materials, and surfaces**.",
-                  "Luxury products needed a completely different approach to creating their visual world.",
-                ],
+                lead: true,
+                text: "The workflow worked. Until we asked it to scale.",
               },
               {
                 items: [
                   {
-                    text: "We could rebuild the workflow for every new requirement. But that would mean more manual work every time.",
+                    text: "The workflow could turn a product into a video.",
                   },
                   {
-                    text: "**The challenge was making one workflow flexible enough to handle very different products without starting from scratch.**",
+                    text: "But as we expanded across products, brands, and use cases, the same workflow started to break down.",
+                  },
+                  {
+                    text: "A sneaker, a luxury bag, and a graphic tee needed very different creative direction.",
+                  },
+                  {
+                    text: "**The challenge wasn't generating more videos. It was making the system adapt.**",
                   },
                 ],
               },
@@ -331,7 +332,9 @@ export const projects: Project[] = [
         ],
       },
       roleText:
-        "I owned the workflow end to end, shaping how the experience worked, what the AI needed to understand, and how the final output could be improved. I defined the prompts and logic, made key product decisions, and worked with the team to build it. The result was a more flexible way to create and iterate on product videos, with the luxury workflow generating pitch-ready reveals in around 10 minutes and supporting pitches for one enterprise and two SLG clients.",
+        "I owned the workflow end to end, from defining how the experience worked to shaping what the AI needed to understand before generating an output.\n" +
+        "I defined the prompts, decision logic, and key product interactions, then worked closely with the team to build and iterate on the system.\n" +
+        "My focus was turning a generation workflow into an adaptable creative system.",
       roleImpact: [
         "~10 min from product upload to a pitch-ready reveal",
         "4 workflows shipped across different product types",
@@ -374,11 +377,21 @@ export const projects: Project[] = [
       sections: [
         {
           act: "I. THE PROBLEM",
-          heading: "Making one prompt do everything wasn't enough.",
+          heading: "One workflow was making too many decisions at once.",
           blocks: [
             {
               type: "p",
-              text: "Brands needed more product videos, but generating a good 15–30 second video took time and effort. The original tool could turn a product image into a video, but gave us little control over the result.",
+              text: "The original workflow looked simple: **Product + prompt → video**",
+            },
+            {
+              type: "p",
+              text: "But the prompt was doing too much. It had to understand the product, decide the visual direction, construct the scene, and generate the final video.",
+            },
+            { type: "p", text: "That worked for a few products." },
+            { type: "p", text: "It became unpredictable at scale." },
+            {
+              type: "p",
+              text: "We needed to separate the creative decisions instead of asking one prompt to make them all.",
             },
             {
               type: "media",
@@ -387,9 +400,9 @@ export const projects: Project[] = [
                   kind: "system",
                   title: "The original pipeline",
                   note: "The inputs it took and the six steps it ran, as the system stood before adaptation.",
-                  src: "/case-studies/adaptive-intelligence/01-original-pipeline.webp",
-                  width: 690,
-                  height: 386,
+                  figure: "pipeline",
+                  width: 1200,
+                  height: 800,
                 },
               ],
             },
@@ -397,11 +410,36 @@ export const projects: Project[] = [
         },
         {
           act: "II. WHAT I CHANGED",
-          heading: "I broke generation into simple steps.",
+          heading: "I broke generation into a sequence of decisions.",
           blocks: [
             {
               type: "p",
-              text: "The workflow first understood the product, then built the story, created the visual direction, and generated the video. This gave us more control and made it easier to adapt the process for different products.",
+              text: "Instead of going directly from product to video, I designed a pipeline that progressively built the creative direction.",
+            },
+            {
+              type: "steps",
+              items: [
+                {
+                  label: "Product understanding",
+                  text: "What is the product? What makes it distinctive?",
+                },
+                {
+                  label: "Story",
+                  text: "What should the viewer notice?",
+                },
+                {
+                  label: "World",
+                  text: "What visual environment fits the product?",
+                },
+                {
+                  label: "Generation",
+                  text: "How should that world become a video?",
+                },
+              ],
+            },
+            {
+              type: "p",
+              text: "This gave the system more context at each step. The AI wasn't just generating the video. It was helping decide what the video should be.",
             },
             {
               type: "media",
@@ -420,11 +458,42 @@ export const projects: Project[] = [
         },
         {
           act: "III. MAKING IT WORK",
-          heading: "Different products needed different knowledge.",
+          heading: "Different products needed different intelligence.",
           blocks: [
             {
               type: "p",
-              text: "Fashion needed details like **fabric, embroidery, construction and movement**. Merchandise needed **print and material** understanding. Luxury products needed the system to decide the right visual setting.",
+              text: "The same creative logic couldn't work across every product.",
+            },
+            {
+              type: "p",
+              text: "Fashion needed the system to understand fabric, fit, construction, and movement.",
+            },
+            {
+              type: "p",
+              text: "Merchandise needed to understand graphics, surfaces, and print placement.",
+            },
+            {
+              type: "p",
+              text: "Luxury products needed a different sense of material, composition, and visual restraint.",
+            },
+            {
+              type: "p",
+              text: "So I explored **four product-specific pipelines**, each designed around what the AI needed to understand.",
+            },
+            {
+              type: "p",
+              text: "**The workflows were different. The underlying principle stayed the same:**",
+            },
+            {
+              type: "impact",
+              lead: true,
+              items: [
+                "Give the system the right context before asking it to create.",
+              ],
+            },
+            {
+              type: "p",
+              text: "This made the workflow more flexible without making the user manage every creative decision.",
             },
             {
               type: "media",
@@ -451,11 +520,31 @@ export const projects: Project[] = [
         },
         {
           act: "IV. THE BIGGEST SIMPLIFICATION",
-          heading: "Logo was enough.",
+          heading: "We removed the scene reference.",
           blocks: [
             {
               type: "p",
-              text: "We removed the need for a manually selected scene reference. The system could now create the visual direction itself.",
+              text: "The workflow initially required: **Product + logo + scene reference**",
+            },
+            {
+              type: "p",
+              text: "The scene reference gave the AI a starting point for the visual world. But it also put a creative decision back on the user.",
+            },
+            {
+              type: "p",
+              text: "So I asked: **What if the system could decide the world itself?**",
+            },
+            {
+              type: "p",
+              text: "Now: **Product + logo → visual world → final reveal**",
+            },
+            {
+              type: "p",
+              text: "The system could derive the creative direction from the product and brand context.",
+            },
+            {
+              type: "p",
+              text: "We moved creative direction from the user into the system. That was the shift from a workflow to an adaptive system.",
             },
             {
               type: "media",
@@ -474,12 +563,32 @@ export const projects: Project[] = [
         },
         {
           act: "V. THE OUTCOME",
-          heading: "It became useful beyond production.",
+          heading: "It stopped being just a production workflow.",
           layout: "stacked",
           blocks: [
             {
               type: "p",
-              text: "Teams could create more assets, iterate faster, and prepare brand-specific reveals during sales pitches.",
+              text: "The luxury workflow showed what the system could do beyond asset creation.",
+            },
+            {
+              type: "p",
+              text: "A Product Manager or salesperson could upload a prospect's product and logo and generate a brand-specific reveal during a pitch.",
+            },
+            {
+              type: "p",
+              text: "**Product + logo → branded world → pitch-ready reveal**",
+            },
+            {
+              type: "p",
+              text: "What previously required production work could now happen in around **10 minutes**.",
+            },
+            {
+              type: "p",
+              text: "The workflow supported pitches that contributed to **1 enterprise deal** and **2 SLG clients**.",
+            },
+            {
+              type: "p",
+              text: "More importantly, the system had moved from helping teams **make videos** to helping them **sell the product itself.**",
             },
             {
               type: "media",
@@ -524,16 +633,21 @@ export const projects: Project[] = [
         },
         {
           act: "VI. WHAT I LEARNED",
-          heading: "AI works better when you give it the right structure.",
+          heading:
+            "The hardest part wasn't automating the workflow. It was deciding what to automate.",
           layout: "stacked",
           blocks: [
             {
               type: "p",
-              text: "Breaking generation into smaller steps made the system easier to control, improve, and adapt.",
+              text: "At first, we were trying to make generation faster. But as the system became more capable, the more important question became where creative decisions should happen — with the user or inside the system.",
+            },
+            {
+              type: "p",
+              text: "Moving those decisions into the workflow made it more adaptable, while reducing the work users had to do.",
             },
             {
               type: "pull",
-              text: "The goal isn't to make AI do everything. It's to know where AI should decide and where the product should guide it.",
+              text: "Good AI products don't just automate execution. They know when to take the decision away from the user.",
             },
           ],
         },
