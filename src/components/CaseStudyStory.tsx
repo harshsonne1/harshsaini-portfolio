@@ -141,6 +141,59 @@ function withEmphasis(text: string) {
   });
 }
 
+// What a generated figure was made from, sat in its top-left corner. Groups
+// are joined by a "+", each captioned, so the inputs are read against the
+// result rather than as a separate step above it.
+function MediaInputs({ groups }: { groups: NonNullable<CaseStudyMedia["inputs"]> }) {
+  return (
+    // Sized down hard on phones: at full size the panel covered half the frame
+    // and sat on the subject. It is a caption on the output, not a second
+    // figure, so it gives way to the video at small widths.
+    <div className="pointer-events-none absolute left-2 top-2 flex items-start gap-x-2 rounded-xl border border-white/10 bg-black/55 p-2 backdrop-blur-md sm:left-4 sm:top-4 sm:gap-x-4 sm:rounded-2xl sm:p-4">
+      {groups.map((group, g) => (
+        <Fragment key={group.label}>
+          {g > 0 && (
+            // matched to the thumbnail row's height, so the "+" sits level
+            // with the images rather than with the group's full height
+            <span
+              aria-hidden="true"
+              className="flex h-7 items-center text-sm leading-none text-white/50 sm:h-12 sm:text-lg"
+            >
+              +
+            </span>
+          )}
+          <div className="flex flex-col items-center gap-1.5 sm:gap-2">
+            <div className="flex items-center gap-1 sm:gap-2">
+              {group.items.map((input) => (
+                <span
+                  key={input.src}
+                  className="block h-7 w-7 overflow-hidden rounded-md bg-white/10 sm:h-12 sm:w-12 sm:rounded-lg"
+                >
+                  <Image
+                    src={input.src}
+                    alt={input.alt}
+                    width={48}
+                    height={48}
+                    unoptimized
+                    className={`h-full w-full ${
+                      input.fit === "contain" ? "object-contain" : "object-cover"
+                    }`}
+                  />
+                </span>
+              ))}
+            </div>
+            {/* the panel sits over video, so its type is fixed light rather
+                than themed — it reads against the footage, not the page */}
+            <span className="whitespace-nowrap text-center text-[0.5rem] uppercase leading-none tracking-[0.06em] text-white/70 sm:text-[0.625rem] sm:tracking-[0.12em]">
+              {group.label}
+            </span>
+          </div>
+        </Fragment>
+      ))}
+    </div>
+  );
+}
+
 function Media({ item }: { item: CaseStudyMedia }) {
   if (item.src) {
     // The figure takes the file's own ratio, so a portrait diagram stays
@@ -183,6 +236,10 @@ function Media({ item }: { item: CaseStudyMedia }) {
                 />
               )}
             </>
+          )}
+
+          {item.inputs && item.inputs.length > 0 && (
+            <MediaInputs groups={item.inputs} />
           )}
         </div>
         {/* no visible caption: the figures sit under copy that already names

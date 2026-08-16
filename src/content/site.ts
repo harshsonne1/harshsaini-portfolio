@@ -75,6 +75,13 @@ export type CaseStudyMedia = {
      portrait diagram stays portrait and nothing is cropped to a 16:9 box. */
   width?: number;
   height?: number;
+  /* What this output was generated from, shown as a small panel in the
+     figure's top-left corner. One entry per named group, joined by a "+", so
+     the inputs are read against the result rather than above it. */
+  inputs?: {
+    label: string;
+    items: { src: string; alt: string; fit?: "cover" | "contain" }[];
+  }[];
 };
 
 /* One label/value row. The label is normally set as small caps, but a row
@@ -275,10 +282,10 @@ export const projects: Project[] = [
               {
                 items: [
                   {
-                    text: "We could keep rebuilding the workflow for every new use case. But that would only create more work.",
+                    text: "We could rebuild the workflow for every new requirement. But that would mean more manual work every time.",
                   },
                   {
-                    text: "**The goal was to make the existing workflow flexible enough to handle more.**",
+                    text: "**The challenge was making one workflow flexible enough to handle very different products without starting from scratch.**",
                   },
                 ],
               },
@@ -355,10 +362,10 @@ export const projects: Project[] = [
                 {
                   kind: "system",
                   title: "The original pipeline",
-                  note: "The original node graph and one representative output: the system as it stood before adaptation.",
+                  note: "The inputs it took and the six steps it ran, as the system stood before adaptation.",
                   src: "/case-studies/adaptive-intelligence/01-original-pipeline.webp",
-                  width: 1440,
-                  height: 742,
+                  width: 690,
+                  height: 386,
                 },
               ],
             },
@@ -451,24 +458,6 @@ export const projects: Project[] = [
               text: "Teams could create more assets, iterate faster, and prepare brand-specific reveals during sales pitches.",
             },
             {
-              type: "inputs",
-              items: [
-                {
-                  src: "/case-studies/adaptive-intelligence/input-tshirt-front.jpg",
-                  alt: "Product photograph, front",
-                },
-                {
-                  src: "/case-studies/adaptive-intelligence/input-tshirt-back.jpg",
-                  alt: "Product photograph, back",
-                },
-                {
-                  src: "/case-studies/adaptive-intelligence/input-brand-logo.webp",
-                  alt: "Brand logo",
-                  fit: "contain",
-                },
-              ],
-            },
-            {
               type: "media",
               items: [
                 {
@@ -479,6 +468,31 @@ export const projects: Project[] = [
                   src: "/case-studies/adaptive-intelligence/live-client-pitch.webm",
                   width: 1440,
                   height: 810,
+                  inputs: [
+                    {
+                      label: "Input images",
+                      items: [
+                        {
+                          src: "/case-studies/adaptive-intelligence/input-tshirt-front.jpg",
+                          alt: "Product photograph, front",
+                        },
+                        {
+                          src: "/case-studies/adaptive-intelligence/input-tshirt-back.jpg",
+                          alt: "Product photograph, back",
+                        },
+                      ],
+                    },
+                    {
+                      label: "Logo",
+                      items: [
+                        {
+                          src: "/case-studies/adaptive-intelligence/input-brand-logo.webp",
+                          alt: "Brand logo",
+                          fit: "contain",
+                        },
+                      ],
+                    },
+                  ],
                 },
               ],
             },
