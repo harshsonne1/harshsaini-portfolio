@@ -97,7 +97,12 @@ export type CaseStudyBlock =
       type: "stats";
       /* heading above the row; defaults to "Key metrics" */
       label?: string;
-      items: { value: string; label: string }[];
+      /* sets the figures in --color-stat rather than the foreground, for a row
+         meant to be caught while scanning */
+      accent?: boolean;
+      /* `note` adds a second, quieter line under the label — for a number that
+         needs naming as well as measuring ("2 / Inputs / Product + logo") */
+      items: { value: string; label: string; note?: string }[];
     }
   | {
       type: "pairs";
@@ -113,7 +118,12 @@ export type CaseStudyBlock =
         text?: string;
         /* sets the copy at font-body-xl, for the line that carries the section */
         lead?: boolean;
-        items?: { title: string; text: string }[];
+        /* `title` is the small marker above a line — omit it for a run of
+           plain statements that need no naming */
+        items?: { title?: string; text: string }[];
+        /* a bulleted run, for the cases a paragraph is listing rather than
+           arguing. `**bold**` works here as it does anywhere else. */
+        bullets?: string[];
       }[];
     }
   /* a before / after table: one row per thing that changed */
@@ -156,7 +166,8 @@ export type CaseStudySection = {
 };
 
 export type CaseStudy = {
-  /* the line under the title, beneath the opening statement */
+  /* the copy under the title, beneath the opening statement. A newline opens a
+     new paragraph, so a lead line can stand apart from the copy under it. */
   subhead: string;
   /* Replaces the summary-driven Overview with a composed section in the same
      slot — first after the hero — built from blocks instead of label/value
@@ -172,7 +183,12 @@ export type CaseStudy = {
   /* figures that close the Overview, before My role */
   summaryMedia?: CaseStudyMedia[];
   /* owned / built / guided */
-  role: PairItem[];
+  role?: PairItem[];
+  /* one paragraph in place of the owned / built / guided rows */
+  roleText?: string;
+  /* the run of numbers under that paragraph — the at-a-glance read for someone
+     scanning the page rather than reading it */
+  roleStats?: { value: string; label: string; note?: string }[];
   /* figures that close the My role section, before the story opens */
   roleMedia?: CaseStudyMedia[];
   sections: CaseStudySection[];
@@ -211,17 +227,18 @@ export const projects: Project[] = [
     title: "Adaptive Intelligence",
     year: "2026",
     description:
-      "One AI video pipeline adapted across four domains, and the moment reuse became the wrong abstraction.",
+      "Making AI video generation easier to control, by breaking generation into simple steps.",
     tags: ["AI Systems", "Prompt Architecture"],
     link: "https://shopos.ai/agents/monica",
     /* no still cover — the video is the cover, on the card and on the page */
     video: "/adaptive-intelligence.webm",
-    statement: "When reuse becomes the wrong abstraction.",
+    statement: "Making one video was easy. Making the next hundred wasn't.",
     industry: "AI, Fashion, Commerce",
     scope: "Product Design, AI Systems, Prompt Architecture",
     story: {
+      /* a newline opens a new paragraph in the header's subhead */
       subhead:
-        "One system. Four worlds. Two architectures. I adapted one AI video pipeline across four domains, and discovered that the hardest part was knowing when the original architecture no longer fit.",
+        "We already had a tool that could turn a product image into a video. But as we worked across different products, markets, and creative needs, creating and adapting each video still took time and effort.\nI worked on making the process more flexible, so teams could create, iterate, and generate more product content with less manual work.",
       layout: "split",
       overview: {
         heading: "Challenge",
@@ -230,31 +247,32 @@ export const projects: Project[] = [
             type: "notes",
             groups: [
               {
-                text: "The AI video pipeline worked for Western fashion. Expanding into **four new domains** made blind reuse unreliable and rebuilding impractical.",
-              },
-              {
-                heading: "Project Goal",
                 lead: true,
-                text: "Make one AI system adaptable across domains without losing accuracy or consistency.",
+                text: "The first version worked. Then we needed it to do more.",
               },
               {
-                heading: "Key Decisions",
+                items: [
+                  { text: "The original tool was built around a simple idea:" },
+                  { text: "**Upload a product → generate a video.**" },
+                  {
+                    text: "That worked well for Western fashion but real client work quickly became more complicated. Different products and markets needed different ways of understanding the product, telling the story, and presenting it.",
+                  },
+                ],
+              },
+              {
+                bullets: [
+                  "Indian fashion needed a better understanding of **fabric, embroidery, construction, detailing, styling, and movement**.",
+                  "Merchandise needed to understand **prints, materials, and surfaces**.",
+                  "Luxury products needed a completely different approach to creating their visual world.",
+                ],
+              },
+              {
                 items: [
                   {
-                    title: "Swappable knowledge",
-                    text: "Keep the workflow fixed. Change the domain knowledge.",
+                    text: "We could keep rebuilding the workflow for every new use case. But that would only create more work.",
                   },
                   {
-                    title: "Single source of truth",
-                    text: "Keep product and garment details consistent downstream.",
-                  },
-                  {
-                    title: "Two architectures",
-                    text: "Source of truth for fashion. Reasoning for luxury.",
-                  },
-                  {
-                    title: "Remove the bottleneck",
-                    text: "Replace scene references with **product + logo**.",
+                    text: "**The goal was to make the existing workflow flexible enough to handle more.**",
                   },
                 ],
               },
@@ -299,19 +317,12 @@ export const projects: Project[] = [
           },
         ],
       },
-      role: [
-        {
-          label: "Owned",
-          text: "Pipeline architecture, genre and category taxonomies, domain judgment calls, error detection and QA across the workflows.",
-        },
-        {
-          label: "Co-created",
-          text: "System prompts, with AI assistance under my direction and specification.",
-        },
-        {
-          label: "Guided",
-          text: "Implementation and wiring in the workflow canvas.",
-        },
+      roleText:
+        "I worked on this workflow end to end — figuring out how each step should work, what the AI needed to understand about a product, and how to catch a bad result before it went out. I wrote the logic and prompts behind it, made the product calls along the way, and built it with the team.",
+      roleStats: [
+        { value: "~10 min", label: "Product upload → pitch-ready reveal" },
+        { value: "4", label: "Workflows shipped" },
+        { value: "2", label: "Inputs to generate", note: "Product + logo" },
       ],
       roleMedia: [
         {
@@ -344,27 +355,19 @@ export const projects: Project[] = [
       ],
       sections: [
         {
-          act: "I. THE PORT",
-          heading: "A pipeline that only knew one kind of clothes.",
+          act: "I. THE PROBLEM",
+          heading: "Making one prompt do everything wasn't enough.",
           blocks: [
             {
               type: "p",
-              text: "The original system understood Western garments well. But when applied to Indian ethnicwear, it missed details like dupattas, chikankari, and cultural contexts such as sangeet and mehendi.",
-            },
-            {
-              type: "pull",
-              text: "Nothing failed. The output was fluent and wrong.",
-            },
-            {
-              type: "p",
-              text: "That led to the first design principle: localisation wasn't a translation problem. It was a beat problem.",
+              text: "Brands needed more product videos, but generating a good 15–30 second video took time and effort. The original tool could turn a product image into a video, but gave us little control over the result.",
             },
             {
               type: "media",
               items: [
                 {
                   kind: "system",
-                  title: "The original Western fashion pipeline",
+                  title: "The original pipeline",
                   note: "The original node graph and one representative output: the system as it stood before adaptation.",
                   src: "/case-studies/adaptive-intelligence/01-original-pipeline.webp",
                   width: 1440,
@@ -375,64 +378,20 @@ export const projects: Project[] = [
           ],
         },
         {
-          heading: "Every vertical had one moment the output could not miss.",
-          blocks: [
-            {
-              type: "pairs",
-              items: [
-                {
-                  label: "Ishin Fashions",
-                  text: "The dupatta: Its drape, fall and embellishment.",
-                  icon: "/case-studies/adaptive-intelligence/brand-ishin.svg",
-                  href: "https://ishinfashions.com/pages/about-ishin",
-                },
-                {
-                  label: "6th Street",
-                  text: "Footwear cohesion: The outfit must read as one purchase.",
-                  icon: "/case-studies/adaptive-intelligence/brand-6th-street.svg",
-                  href: "https://en-bh.aivi.com/about",
-                },
-                {
-                  label: "Bento House",
-                  text: "Logo fidelity: The brand mark is the product.",
-                  icon: "/case-studies/adaptive-intelligence/brand-bento-house.svg",
-                  href: "https://bento.house/",
-                },
-              ],
-            },
-            {
-              type: "media",
-              items: [
-                {
-                  kind: "visual",
-                  title: "The mandatory beats",
-                  note: "One product or output per vertical, annotated with its single mandatory beat.",
-                  src: "/case-studies/adaptive-intelligence/02-mandatory-beats.webp",
-                  width: 1440,
-                  height: 742,
-                },
-              ],
-            },
-          ],
-        },
-        {
-          heading: "Eight nodes, two branches, one video.",
+          act: "II. WHAT I CHANGED",
+          heading: "I broke generation into simple steps.",
           blocks: [
             {
               type: "p",
-              text: "The underlying graph stayed fixed, while domain knowledge became swappable. Genre worked as a runtime switch, injecting specialist knowledge without changing the workflow.",
-            },
-            {
-              type: "pull",
-              text: "The architecture stayed the same. The system became different for each domain.",
+              text: "The workflow first understood the product, then built the story, created the visual direction, and generated the video. This gave us more control and made it easier to adapt the process for different products.",
             },
             {
               type: "media",
               items: [
                 {
                   kind: "system",
-                  title: "The reusable architecture and the genre switch",
-                  note: "The eight-node, two-branch graph with the fixed structure separated from the domain payload, and the genre selector feeding the analyst.",
+                  title: "The workflow, broken into steps",
+                  note: "The graph with the fixed structure separated from the domain payload.",
                   src: "/case-studies/adaptive-intelligence/03-reusable-architecture.webp",
                   width: 1440,
                   height: 1440,
@@ -442,135 +401,28 @@ export const projects: Project[] = [
           ],
         },
         {
-          heading: "Consistency needs a source of truth.",
+          act: "III. MAKING IT WORK",
+          heading: "Different products needed different knowledge.",
           blocks: [
             {
               type: "p",
-              text: "A storyboard and video needed to stay consistent, so the forensic analyst became the **single source of truth**.",
-            },
-            {
-              type: "p",
-              text: "Domain logic adapted too: sport used purposeful movement, while conditional rules handled details like dupattas without inventing them.",
+              text: "Fashion needed details like **fabric, embroidery, construction and movement**. Merchandise needed **print and material** understanding. Luxury products needed the system to decide the right visual setting.",
             },
             {
               type: "media",
               items: [
                 {
-                  kind: "output",
-                  title: "Consistency across frames",
-                  note: "Storyboard grid beside a final video frame, with the consistent wearer and garment called out.",
-                  src: "/case-studies/adaptive-intelligence/04-consistency-across-frames.webp",
+                  kind: "visual",
+                  title: "What each product type could not miss",
+                  note: "One product or output per vertical, annotated with the detail its knowledge had to carry.",
+                  src: "/case-studies/adaptive-intelligence/02-mandatory-beats.webp",
                   width: 1440,
-                  height: 1440,
+                  height: 742,
                 },
-              ],
-            },
-          ],
-        },
-        {
-          act: "II. THE FORK",
-          heading: "A watch does not walk anywhere.",
-          blocks: [
-            {
-              type: "p",
-              text: "The fashion pipeline solved for consistency: keeping one person and garment identical across frames.",
-            },
-            {
-              type: "p",
-              text: "Luxury products had a different problem: deciding what world the object belongs in.",
-            },
-            {
-              type: "p",
-              text: "That led to two architectures:",
-            },
-            {
-              type: "pairs",
-              items: [
-                { label: "Consistency", text: "Source of truth" },
-                { label: "World selection", text: "Reasoning" },
-              ],
-            },
-            {
-              type: "media",
-              items: [
                 {
                   kind: "system",
-                  title: "Two architectures",
-                  note: "Narrative architecture → garments and consistency. Reasoning architecture → objects and world selection.",
-                  src: "/case-studies/adaptive-intelligence/05-two-architectures.webp",
-                  width: 1453,
-                  height: 2113,
-                },
-              ],
-            },
-          ],
-        },
-        {
-          heading: "Delete the input that required taste.",
-          blocks: [
-            {
-              type: "p",
-              text: "The original workflow needed **product + logo + scene reference**. The scene reference was the bottleneck, taking **half a day to a full day** to prepare.",
-            },
-            {
-              type: "p",
-              text: "I reduced it to **product + logo** and let the system derive the world.",
-            },
-            {
-              type: "p",
-              text: "A decision layer selected from authored scene libraries, balancing creative range with repeatability. Its output then guided image and video generation.",
-            },
-            {
-              type: "media",
-              items: [
-                {
-                  kind: "ui",
-                  title: "Before / after input flow",
-                  note: "Product + logo + scene reference → product + logo → the derived world and hero image.",
-                  src: "/case-studies/adaptive-intelligence/06-input-flow.webp",
-                  width: 1440,
-                  height: 1440,
-                },
-              ],
-            },
-          ],
-        },
-        {
-          act: "III. 4 WORLDS. 2 ARCHITECTURES",
-          heading: "Four pipelines, and where each one bent.",
-          blocks: [
-            {
-              type: "p",
-              text: "Four pipelines. Four different adaptations.",
-            },
-            {
-              type: "pairs",
-              items: [
-                {
-                  label: "I.",
-                  text: "Indian Ethnicwear: Reusable narrative + Specialist Genre Knowledge.",
-                },
-                {
-                  label: "II.",
-                  text: "Gulf Footwear: Brand, casting and genre systems.",
-                },
-                {
-                  label: "III.",
-                  text: "Merchandise: Static output with print and Substrate logic.",
-                },
-                {
-                  label: "IV.",
-                  text: "Luxury Objects: Reasoning led world selection and reveals.",
-                },
-              ],
-            },
-            {
-              type: "media",
-              items: [
-                {
-                  kind: "system",
-                  title: "Four worlds, two architectures",
-                  note: "The four pipelines side by side, grouped by the architecture each one runs on.",
+                  title: "The workflows side by side",
+                  note: "Each pipeline and the knowledge it runs on.",
                   src: "/case-studies/adaptive-intelligence/07-four-worlds.webp",
                   width: 1440,
                   height: 952,
@@ -580,13 +432,36 @@ export const projects: Project[] = [
           ],
         },
         {
-          act: "IV. WHAT IT CHANGED",
-          heading: "The output became the interface.",
+          act: "IV. THE BIGGEST SIMPLIFICATION",
+          heading: "Product + logo was enough.",
+          blocks: [
+            {
+              type: "p",
+              text: "We removed the need for a manually selected scene reference. The system could now create the visual direction itself.",
+            },
+            {
+              type: "media",
+              items: [
+                {
+                  kind: "ui",
+                  title: "Before / after input flow",
+                  note: "Product + logo + scene reference → product + logo → the derived visual direction and hero image.",
+                  src: "/case-studies/adaptive-intelligence/06-input-flow.webp",
+                  width: 1440,
+                  height: 1440,
+                },
+              ],
+            },
+          ],
+        },
+        {
+          act: "V. THE OUTCOME",
+          heading: "It became useful beyond production.",
           layout: "stacked",
           blocks: [
             {
               type: "p",
-              text: "The luxury reveal turned a production workflow into a **live sales tool**.\nProduct + logo → brand-specific reveal.",
+              text: "Teams could create more assets, iterate faster, and prepare brand-specific reveals during sales pitches.",
             },
             {
               type: "inputs",
@@ -607,40 +482,13 @@ export const projects: Project[] = [
               ],
             },
             {
-              type: "comparison",
-              label: "The impact",
-              headings: ["Before", "With the workflow"],
-              rows: [
-                {
-                  before: "12–24 hrs of manual production per product",
-                  after: "~10 min to a pitch-ready reveal",
-                },
-                {
-                  before: "Product + logo + a sourced scene reference",
-                  after: "Product + logo",
-                },
-                {
-                  before: "A generic demo, built once and reused",
-                  after: "The prospect's own brand, generated in the pitch",
-                },
-              ],
-            },
-            {
-              type: "stats",
-              items: [
-                { value: "2 inputs", label: "Product + logo" },
-                { value: "4 pipelines", label: "Shipped" },
-                { value: "1 + 2", label: "Enterprise + SLG deals pitched" },
-              ],
-            },
-            {
               type: "media",
               items: [
                 {
                   kind: "output",
                   title:
-                    "A personalised reveal generated live during a client pitch",
-                  note: "Prospect product + logo → the generated luxury reveal.",
+                    "A brand-specific reveal, prepared during a client pitch",
+                  note: "Prospect product + logo → the generated reveal.",
                   src: "/case-studies/adaptive-intelligence/live-client-pitch.webm",
                   width: 1440,
                   height: 810,
@@ -650,48 +498,17 @@ export const projects: Project[] = [
           ],
         },
         {
-          act: "V. WHAT I LEARNED",
-          heading: "AI systems can be wrong without looking broken.",
+          act: "VI. WHAT I LEARNED",
+          heading: "AI works better when you give it the right structure.",
           layout: "stacked",
           blocks: [
             {
               type: "p",
-              text: "One prompt declared 12 categories while the library contained 14. Nothing failed, but the contradiction survived.",
+              text: "Breaking generation into smaller steps made the system easier to control, improve, and adapt.",
             },
             {
               type: "pull",
-              text: "QA needs to test system agreement, not just whether the workflow runs.",
-            },
-            {
-              type: "points",
-              numbered: true,
-              items: [
-                {
-                  title: "Production needs quality gates.",
-                  text: "The evaluator was disabled for live pitches. Production needs stronger checks.",
-                },
-                {
-                  title: "Design for the operator.",
-                  text: "Node names reflected the builder's mental model, not the operator's.",
-                },
-                {
-                  title: "Test what is merely working.",
-                  text: "Test storyboard references and long prompts.",
-                },
-              ],
-            },
-          ],
-        },
-        {
-          heading: "Reuse until the shape of the problem changes. Then stop.",
-          blocks: [
-            {
-              type: "p",
-              text: "Four pipelines. Two architectures. One principle.",
-            },
-            {
-              type: "pull",
-              text: "The job is not to make one system handle everything. It is to know where the system should bend, and where it should break.",
+              text: "The goal isn't to make AI do everything. It's to know where AI should decide and where the product should guide it.",
             },
           ],
         },

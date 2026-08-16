@@ -28,15 +28,30 @@ import type { RailItem } from "@/components/SectionRail";
 // has no `src` yet.
 const SHOW_EMPTY_MEDIA = true;
 
-// vertical rhythm, matching the reference's fluid scale: 56px top and bottom,
-// opening to 200px at the foot of a section on desktop (both at a 1440 design
-// width, and both clamped so they hold up either side of it)
+// vertical rhythm, on the reference's fluid scale: 86px top and bottom at a
+// 1440 design width, opening to 200px at the foot of a section on desktop
+// (all clamped so they hold up either side of that width)
 const SECTION_PAD =
-  "pt-[clamp(2rem,3.9vw,3.5rem)] pb-[clamp(2rem,3.9vw,3.5rem)] lg:pb-[clamp(3.5rem,13.9vw,12.5rem)]";
+  "pt-[clamp(3rem,6vw,6rem)] pb-[clamp(3rem,6vw,6rem)] lg:pb-[clamp(5rem,13.9vw,12.5rem)]";
 
 // the reading column — capped and centred. Figures deliberately skip this and
 // run the full viewport in the footer's 16px gutters instead.
 const COLUMN = "mx-auto w-full section-gutter";
+
+// The rule that opens a section. It sits on the section's top edge so the
+// section's top padding falls below it: the line reads as the break between two
+// sections rather than as an underline on the heading. Indented to the reading
+// column's gutters, and drawn left to right by the shared reveal observer.
+function SectionRule() {
+  return (
+    <div
+      aria-hidden
+      className={`${COLUMN} pointer-events-none absolute inset-x-0 top-0`}
+    >
+      <span data-reveal="line" className="hairline block h-px w-full" />
+    </div>
+  );
+}
 
 // one 12-col grid per run; 24px stack on mobile, 32px between grid rows
 const SECTION_GRID =
@@ -335,7 +350,11 @@ function Block({
               meet and read as one line across the row. */}
           <div
             className={`mt-10 grid gap-y-8 ${
-              split ? "sm:grid-cols-2" : "sm:grid-cols-3"
+              split
+                ? "sm:grid-cols-2"
+                : block.items.length >= 4
+                  ? "sm:grid-cols-2 lg:grid-cols-4"
+                  : "sm:grid-cols-3"
             }`}
           >
             {block.items.map((stat, i) => (
@@ -347,12 +366,30 @@ function Block({
                 }
                 className="flex flex-col pr-8"
               >
-                <span className="font-hero-1 text-3xl leading-none text-fg sm:text-4xl">
+                <span
+                  className={`font-hero-1 leading-none ${
+                    block.accent
+                      ? "text-4xl text-[var(--color-stat)] sm:text-5xl"
+                      : "text-3xl text-fg sm:text-4xl"
+                  }`}
+                >
                   {stat.value}
                 </span>
-                <span className="mt-4 border-t border-border pt-4 text-sm text-muted">
+                {/* the accent row carries its own weight — no rule needed to
+                    separate the figure from what it measures */}
+                <span
+                  className={`mt-4 text-sm text-muted ${
+                    block.accent ? "" : "border-t border-border pt-4"
+                  }`}
+                >
                   {stat.label}
                 </span>
+                {/* the quieter second line: what the number is made of */}
+                {stat.note && (
+                  <span className="mt-1 text-sm text-muted/70">
+                    {stat.note}
+                  </span>
+                )}
               </div>
             ))}
           </div>
@@ -382,26 +419,42 @@ function Block({
               )}
               {group.text && (
                 <p
-                  className={`mt-1 text-fg ${
-                    group.lead ? "font-body-xl" : "font-body-sm"
-                  }`}
+                  className={
+                    group.lead
+                      ? "mt-1 font-body-xl text-fg"
+                      : "mt-1 leading-relaxed text-muted"
+                  }
                 >
                   {withEmphasis(group.text)}
                 </p>
               )}
+
+              {/* a listing rather than an argument. `**bold**` inside a bullet
+                  still resolves to the foreground, as it does in any copy. */}
+              {group.bullets && (
+                <ul className="mt-4 flex list-disc flex-col gap-3 pl-5 marker:text-muted">
+                  {group.bullets.map((bullet, b) => (
+                    <li key={b} className="leading-relaxed text-muted">
+                      {withEmphasis(bullet)}
+                    </li>
+                  ))}
+                </ul>
+              )}
               {group.items && (
                 <div className="mt-4 flex flex-col gap-5">
-                  {group.items.map((item) => (
-                    <div key={item.title}>
+                  {group.items.map((item, i) => (
+                    <div key={item.title ?? i}>
                       {/* nested under the group's own label, so a level down
                           and set in sentence case rather than caps */}
-                      <h5
-                        data-case="normal"
-                        className="font-label text-contrast"
-                      >
-                        {item.title}
-                      </h5>
-                      <p className="font-body-sm text-fg">
+                      {item.title && (
+                        <h5
+                          data-case="normal"
+                          className="font-label text-contrast"
+                        >
+                          {item.title}
+                        </h5>
+                      )}
+                      <p className="leading-relaxed text-muted">
                         {withEmphasis(item.text)}
                       </p>
                     </div>
@@ -595,16 +648,11 @@ function SplitSection({
   const shown = SHOW_EMPTY_MEDIA ? figures : figures.filter((f) => f.src);
 
   return (
-    <section id={id} className={`scroll-mt-24 ${SECTION_PAD}`}>
+    <section id={id} className={`relative scroll-mt-24 ${SECTION_PAD}`}>
+      <SectionRule />
       <div className={COLUMN}>
         <div className="relative">
-          {/* the hairline that opens every section, drawn left to right */}
-          <span
-            data-reveal="line"
-            className="hairline absolute inset-x-0 top-0 h-px"
-          />
-
-          <div className="flex flex-col gap-y-8 pt-6 lg:grid lg:grid-cols-12 lg:gap-x-8">
+          <div className="flex flex-col gap-y-8 lg:grid lg:grid-cols-12 lg:gap-x-8">
             <div className="lg:sticky lg:top-24 lg:col-span-6 lg:col-start-1 lg:self-start">
               {act && (
                 <div className="pb-10 text-sm font-medium uppercase tracking-[-0.02em] text-muted">
@@ -674,21 +722,18 @@ function StackedSection({
   const shown = SHOW_EMPTY_MEDIA ? figures : figures.filter((f) => f.src);
 
   return (
-    <section id={id} className={`scroll-mt-24 ${SECTION_PAD}`}>
+    <section id={id} className={`relative scroll-mt-24 ${SECTION_PAD}`}>
+      <SectionRule />
       <div className={COLUMN}>
         <div className="relative">
-          <span
-            data-reveal="line"
-            className="hairline absolute inset-x-0 top-0 h-px"
-          />
           {act && (
-            <div className="pb-10 pt-6 text-sm font-medium uppercase tracking-[-0.02em] text-muted">
+            <div className="pb-10 text-sm font-medium uppercase tracking-[-0.02em] text-muted">
               {act}
             </div>
           )}
           <h2
             data-reveal="up"
-            className={`max-w-3xl text-[2.25rem] leading-tight text-fg ${act ? "" : "pt-6"}`}
+            className="max-w-3xl text-[2.25rem] leading-tight text-fg"
           >
             {heading}
           </h2>
@@ -730,6 +775,7 @@ function StorySection({
   split = false,
   layout,
   columns = "half",
+  resultsFirst = false,
 }: {
   id: string;
   act?: string;
@@ -740,9 +786,12 @@ function StorySection({
   /** "wide" divides 4/8 instead of the page's 6/6 spine, which the header
       sets and every section follows */
   columns?: "half" | "wide";
+  /** numbers directly under the copy rather than after the figures — for a
+      summary row that is meant to be scanned before anything is read */
+  resultsFirst?: boolean;
 }) {
   // Results land under the figures, never above them: a number means more once
-  // the thing it measures has been seen.
+  // the thing it measures has been seen. `resultsFirst` opts out.
   const results = blocks.filter(isResult);
   const runs = toRuns(blocks.filter((b) => !isResult(b)));
   const wide = columns === "wide";
@@ -750,6 +799,15 @@ function StorySection({
     ? "lg:col-span-4 lg:col-start-1"
     : "lg:col-span-6 lg:col-start-1";
   const copyBand = wide ? "lg:col-span-8 lg:col-start-5" : undefined;
+
+  const resultsRun =
+    results.length > 0 ? (
+      <div className="mt-10 flex flex-col gap-y-14 lg:mt-14">
+        {results.map((block, i) => (
+          <Block key={i} block={block} />
+        ))}
+      </div>
+    ) : null;
 
   // A section can ask for the stacked treatment even inside a split story.
   if (layout === "stacked") {
@@ -767,7 +825,8 @@ function StorySection({
 
   return (
     // scroll-mt clears the fixed nav when the rail jumps to this section
-    <section id={id} className={`scroll-mt-24 ${SECTION_PAD}`}>
+    <section id={id} className={`relative scroll-mt-24 ${SECTION_PAD}`}>
+      <SectionRule />
       {runs.map((run, runIndex) => {
         const items = run.media
           ? run.blocks.flatMap((b) => (b.type === "media" ? b.items : []))
@@ -788,7 +847,7 @@ function StorySection({
           // full viewport width, in the footer's 16px gutters
           <div
             key={runIndex}
-            className={`my-6 w-full section-gutter lg:my-8 ${mediaLayout}`}
+            className={`my-10 w-full section-gutter lg:my-16 ${mediaLayout}`}
           >
             {items.map((item) => (
               <Media key={item.title} item={item} />
@@ -797,23 +856,13 @@ function StorySection({
         ) : (
           <div key={runIndex} className={COLUMN}>
             <div className="relative">
-              {/* the hairline that opens every section, drawn left to right */}
-              {runIndex === 0 && (
-                <span
-                  data-reveal="line"
-                  className="hairline absolute inset-x-0 top-0 h-px"
-                />
-              )}
-
               {runIndex === 0 && act && (
-                <div className="pb-10 pt-6 text-sm font-medium uppercase tracking-[-0.02em] text-muted sm:pb-14">
+                <div className="pb-10 text-sm font-medium uppercase tracking-[-0.02em] text-muted sm:pb-14">
                   {act}
                 </div>
               )}
 
-              <div
-                className={`${SECTION_GRID} ${runIndex === 0 && !act ? "pt-6" : ""}`}
-              >
+              <div className={SECTION_GRID}>
                 {/* body sans, not the display face: these headings sit in the
                     reading column beside the copy, not over it */}
                 {runIndex === 0 && (
@@ -833,17 +882,15 @@ function StorySection({
                   />
                 ))}
               </div>
+
+              {resultsFirst && runIndex === 0 && resultsRun}
             </div>
           </div>
         );
       })}
 
-      {results.length > 0 && (
-        <div className={`${COLUMN} mt-10 flex flex-col gap-y-14 lg:mt-14`}>
-          {results.map((block, i) => (
-            <Block key={i} block={block} />
-          ))}
-        </div>
+      {!resultsFirst && resultsRun && (
+        <div className={COLUMN}>{resultsRun}</div>
       )}
     </section>
   );
@@ -943,16 +990,31 @@ export function CaseStudyStory({ story }: { story: CaseStudy }) {
           ]}
         />
       )}
-      {/* Stacked, not split: the three Spaces screens are the section's proof
-          and are read across, so they run the full width under the copy rather
-          than sitting shrunk in a column beside it. */}
+      {/* Heading left, copy in the right band — and never the pinned split, so
+          the three Spaces screens still run the full width beneath rather than
+          sitting shrunk in a column beside the copy. */}
       <StorySection
-        split={split}
-        layout="stacked"
+        split={false}
         id={ids[1]}
         heading="My role"
+        // the numbers are the scannable summary of the section, so they sit
+        // under the copy rather than after the three screens
+        resultsFirst
         blocks={[
-          { type: "pairs", items: story.role },
+          // one paragraph across the column, or the owned / built / guided rows
+          ...(story.roleText
+            ? ([{ type: "p", text: story.roleText }] as const)
+            : ([{ type: "pairs", items: story.role ?? [] }] as const)),
+          ...(story.roleStats?.length
+            ? ([
+                {
+                  type: "stats",
+                  label: "The impact",
+                  accent: true,
+                  items: story.roleStats,
+                },
+              ] as const)
+            : []),
           ...(story.roleMedia?.length
             ? ([{ type: "media", items: story.roleMedia }] as const)
             : []),

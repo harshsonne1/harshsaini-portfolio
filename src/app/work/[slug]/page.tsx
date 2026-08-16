@@ -87,13 +87,24 @@ export default async function CaseStudy({ params }: Params) {
           </h1>
           {project.statement && (
             <div>
-              <p className="text-xl leading-snug text-fg sm:text-2xl md:text-3xl">
+              {/* the opening statement, set to 48px on desktop so it carries
+                  the header beside the wordmark rather than reading as a deck */}
+              <p className="text-3xl leading-snug text-fg sm:text-4xl md:text-5xl">
                 {project.statement}
               </p>
               {project.story && (
-                <p className="mt-6 leading-relaxed text-muted">
-                  {project.story.subhead}
-                </p>
+                // a newline in the subhead opens a new paragraph, so the lead
+                // line can stand on its own above the copy
+                <div className="mt-6 flex flex-col gap-y-4">
+                  {project.story.subhead
+                    .split("\n")
+                    .filter((line) => line.trim())
+                    .map((line, i) => (
+                      <p key={i} className="leading-relaxed text-muted">
+                        {line}
+                      </p>
+                    ))}
+                </div>
               )}
             </div>
           )}

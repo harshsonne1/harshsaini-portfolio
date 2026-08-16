@@ -8,6 +8,8 @@
   --color-muted: #9a9aa3;
   --color-accent: #6366f1;
   --color-accent-fg: #ffffff;
+  /* the figure colour on a stat row — the number, never its label */
+  --color-stat: #00ff04;
   --font-sans:
     ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica,
     Arial, sans-serif;
@@ -24,6 +26,9 @@
   --color-muted: #56565e;
   --color-accent: #4f46e5;
   --color-accent-fg: #ffffff;
+  /* #00ff04 sits at ~1.1:1 on the light background — same hue, taken down far
+     enough to read */
+  --color-stat: #007a02;
 }
 
 /* page-load shimmer stroke color — dark by default, muted grey in light mode */
@@ -60,7 +65,7 @@ body {
 
    .font-label   the small-caps marker: Owned, Project Goal, Key metrics
    .font-body-xl the lead line of a section, 24px
-   .font-body-sm body copy, 14px
+   .font-body-sm body copy, 16px
    [data-case="normal"] on .font-label: sentence case, for nested titles
    .text-contrast the label colour, a step back from the foreground          */
 .font-label {
@@ -75,7 +80,7 @@ body {
   line-height: 1.35;
 }
 .font-body-sm {
-  font-size: 0.875rem;
+  font-size: 1rem;
   line-height: 1.6;
 }
 /* the same marker in sentence case, for a title nested under a label. An
