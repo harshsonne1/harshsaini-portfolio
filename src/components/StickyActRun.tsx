@@ -101,7 +101,7 @@ export function StickyActRun({ sections }: { sections: ActRunSection[] }) {
             {/* below lg the copy travels with its own figures */}
             <div className="lg:hidden">
               {section.act && (
-                <div className="pb-10 pt-6 text-sm font-medium uppercase tracking-[-0.02em] text-muted">
+                <div className="pb-4 text-sm font-medium uppercase tracking-[-0.02em] text-muted">
                   {section.act}
                 </div>
               )}
@@ -110,7 +110,9 @@ export function StickyActRun({ sections }: { sections: ActRunSection[] }) {
               </h2>
               <div className="mt-6 flex flex-col gap-y-6">{section.copy}</div>
             </div>
-            <div className="mt-8 lg:mt-0">{section.figures}</div>
+            {/* on the same rhythm as a full-width figure run, so a figure sits
+                the same distance from its copy wherever it is set */}
+            <div className="mt-10 lg:mt-0">{section.figures}</div>
           </section>
         ))}
       </div>

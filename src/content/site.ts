@@ -69,7 +69,7 @@ export type CaseStudyMedia = {
   src?: string;
   /* a drawn figure rather than a file — rendered by its own component, and
      takes the slot `src` would have */
-  figure?: "pipeline";
+  figure?: "pipeline" | "pipelines" | "context" | "input-flow";
   /* Light-theme counterpart of `src`, for figures that are themselves a
      screenshot of a themed UI. When set, `src` is the dark-theme one and the
      page shows whichever matches the theme the reader is in. */
@@ -446,11 +446,11 @@ export const projects: Project[] = [
               items: [
                 {
                   kind: "system",
-                  title: "The workflow, broken into steps",
-                  note: "The graph with the fixed structure separated from the domain payload.",
-                  src: "/case-studies/adaptive-intelligence/03-reusable-architecture.webp",
-                  width: 1440,
-                  height: 1440,
+                  title: "Four pipelines, one principle",
+                  note: "What each product type needs the system to understand before the same create step runs.",
+                  figure: "pipelines",
+                  width: 1200,
+                  height: 800,
                 },
               ],
             },
@@ -499,20 +499,12 @@ export const projects: Project[] = [
               type: "media",
               items: [
                 {
-                  kind: "visual",
-                  title: "What each product type could not miss",
-                  note: "One product or output per vertical, annotated with the detail its knowledge had to carry.",
-                  src: "/case-studies/adaptive-intelligence/02-mandatory-beats.webp",
-                  width: 1440,
-                  height: 742,
-                },
-                {
                   kind: "system",
-                  title: "The workflows side by side",
-                  note: "Each pipeline and the knowledge it runs on.",
-                  src: "/case-studies/adaptive-intelligence/07-four-worlds.webp",
-                  width: 1440,
-                  height: 952,
+                  title: "Different products, different intelligence",
+                  note: "The context each product type needs, and the one create step all four drop into.",
+                  figure: "context",
+                  width: 1200,
+                  height: 800,
                 },
               ],
             },
@@ -553,9 +545,9 @@ export const projects: Project[] = [
                   kind: "ui",
                   title: "Before / after input flow",
                   note: "Product + logo + scene reference → product + logo → the derived visual direction and hero image.",
-                  src: "/case-studies/adaptive-intelligence/06-input-flow.webp",
-                  width: 1440,
-                  height: 1440,
+                  figure: "input-flow",
+                  width: 1200,
+                  height: 800,
                 },
               ],
             },

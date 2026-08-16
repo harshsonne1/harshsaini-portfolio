@@ -21,6 +21,9 @@ import type {
 } from "@/content/site";
 import { CoverVideo } from "@/components/CoverVideo";
 import { PipelineDiagram } from "@/components/PipelineDiagram";
+import { PipelinesDiagram } from "@/components/PipelinesDiagram";
+import { ContextDiagram } from "@/components/ContextDiagram";
+import { InputFlowDiagram } from "@/components/InputFlowDiagram";
 import { StickyActRun, type ActRunSection } from "@/components/StickyActRun";
 import type { RailItem } from "@/components/SectionRail";
 
@@ -207,6 +210,12 @@ function Media({ item }: { item: CaseStudyMedia }) {
         >
           {item.figure === "pipeline" ? (
             <PipelineDiagram />
+          ) : item.figure === "pipelines" ? (
+            <PipelinesDiagram />
+          ) : item.figure === "context" ? (
+            <ContextDiagram />
+          ) : item.figure === "input-flow" ? (
+            <InputFlowDiagram />
           ) : !item.src ? null : isVideo(item.src) ? (
             // plays while it is on screen and stops when it isn't, so a wall
             // of clips never runs four decoders at once off-screen
@@ -1058,7 +1067,7 @@ function groupSections(
           ))}
         </div>
       ),
-      className: "pb-16 lg:pb-28",
+      className: "pb-8 lg:pb-14",
     };
 
     const last = groups[groups.length - 1];
