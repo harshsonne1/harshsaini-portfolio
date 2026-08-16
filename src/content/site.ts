@@ -427,7 +427,7 @@ export const projects: Project[] = [
         },
         {
           act: "IV. THE BIGGEST SIMPLIFICATION",
-          heading: "Product + logo was enough.",
+          heading: "Logo was enough.",
           blocks: [
             {
               type: "p",
