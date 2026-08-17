@@ -162,6 +162,12 @@ body {
   font-family: var(--font-monoska), ui-monospace, monospace;
   font-weight: normal;
 }
+/* the code printed above a barcode mark — set in the system mono so it reads as
+   a stamped serial rather than as copy */
+.cs-barcode-code {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+    monospace;
+}
 /* hero CMYK bloom canvas — blend/opacity follow the theme (was inline React
    state; moved here so AsciiHero's render is theme-independent) */
 .hero-glow {

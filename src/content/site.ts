@@ -85,6 +85,10 @@ export type CaseStudyMedia = {
     label: string;
     items: { src: string; alt: string; fit?: "cover" | "contain" }[];
   }[];
+  /* Show those inputs as the bare thumbnails in the bottom-left corner —
+     no panel behind them and no group label. For frames whose single input
+     needs no caption to be understood. */
+  inputsBare?: boolean;
 };
 
 /* One label/value row. The label is normally set as small caps, but a row
@@ -185,6 +189,11 @@ export type CaseStudySection = {
      contents — it holds at 10–12 stops so the marks stay countable at a
      glance. Never set this on a section that opens an act. */
   railSkip?: boolean;
+  /* Prints a barcode mark in the empty half of a stacked section, with this
+     string set above the bars as its serial. A stacked section's copy is capped
+     well short of the column, so on a closing beat that space carries a mark
+     instead of nothing. Ignored by every other layout. */
+  barcode?: string;
   blocks: CaseStudyBlock[];
 };
 
@@ -293,6 +302,21 @@ export const projects: Project[] = [
                 src: "/case-studies/adaptive-intelligence/overview-1.webm",
                 width: 720,
                 height: 1280,
+                /* each clip carries the product it was generated from, so the
+                   four frames read as four different briefs rather than four
+                   variations of one */
+                inputsBare: true,
+                inputs: [
+                  {
+                    label: "Input image",
+                    items: [
+                      {
+                        src: "/case-studies/adaptive-intelligence/input-ethnicwear.webp",
+                        alt: "Ethnicwear set product photograph",
+                      },
+                    ],
+                  },
+                ],
               },
               {
                 kind: "output",
@@ -301,6 +325,18 @@ export const projects: Project[] = [
                 src: "/case-studies/adaptive-intelligence/overview-2.webm",
                 width: 720,
                 height: 1280,
+                inputsBare: true,
+                inputs: [
+                  {
+                    label: "Input image",
+                    items: [
+                      {
+                        src: "/case-studies/adaptive-intelligence/input-apparel.webp",
+                        alt: "Black dress product photograph",
+                      },
+                    ],
+                  },
+                ],
               },
               {
                 kind: "output",
@@ -309,6 +345,18 @@ export const projects: Project[] = [
                 src: "/case-studies/adaptive-intelligence/overview-3.webm",
                 width: 720,
                 height: 1280,
+                inputsBare: true,
+                inputs: [
+                  {
+                    label: "Input image",
+                    items: [
+                      {
+                        src: "/case-studies/adaptive-intelligence/input-watch.webp",
+                        alt: "Chronograph watch product photograph",
+                      },
+                    ],
+                  },
+                ],
               },
               {
                 kind: "output",
@@ -317,6 +365,18 @@ export const projects: Project[] = [
                 src: "/case-studies/adaptive-intelligence/overview-4.webm",
                 width: 720,
                 height: 1280,
+                inputsBare: true,
+                inputs: [
+                  {
+                    label: "Input image",
+                    items: [
+                      {
+                        src: "/case-studies/adaptive-intelligence/input-sneaker.webp",
+                        alt: "Running shoe product photograph",
+                      },
+                    ],
+                  },
+                ],
               },
             ],
           },
@@ -639,6 +699,7 @@ export const projects: Project[] = [
           heading:
             "The more we worked on it, the more I realised AI didn't need to do everything.",
           layout: "stacked",
+          barcode: "640509-040147",
           blocks: [
             {
               type: "p",

@@ -19,6 +19,7 @@ import type {
   CaseStudySection,
   PairItem,
 } from "@/content/site";
+import { BarcodeMark } from "@/components/Barcode";
 import { CoverVideo } from "@/components/CoverVideo";
 import { PipelineDiagram } from "@/components/PipelineDiagram";
 import { ContextDiagram } from "@/components/ContextDiagram";
@@ -144,15 +145,32 @@ function withEmphasis(text: string) {
 // What a generated figure was made from, sat in its top-left corner. Groups
 // are joined by a "+", each captioned, so the inputs are read against the
 // result rather than as a separate step above it.
-function MediaInputs({ groups }: { groups: NonNullable<CaseStudyMedia["inputs"]> }) {
+function MediaInputs({
+  groups,
+  bare = false,
+}: {
+  groups: NonNullable<CaseStudyMedia["inputs"]>;
+  bare?: boolean;
+}) {
   return (
     // Sized down hard on phones: at full size the panel covered half the frame
     // and sat on the subject. It is a caption on the output, not a second
     // figure, so it gives way to the video at small widths.
-    <div className="pointer-events-none absolute left-2 top-2 flex items-start gap-x-2 rounded-xl border border-white/10 bg-black/55 p-2 backdrop-blur-md sm:left-4 sm:top-4 sm:gap-x-4 sm:rounded-2xl sm:p-4">
+    <div
+      className={`absolute flex gap-x-2 sm:gap-x-4 ${
+        bare
+          ? // Bare: the thumbnail alone, in the bottom corner. Where a frame has
+            // one input and no caption to carry, the panel and its label were
+            // chrome around a picture that already reads as the product. It
+            // takes the pointer — in bare mode the box is the thumbnail's own
+            // size, so hovering it is hovering the image.
+            "pointer-events-auto bottom-2 left-2 items-end sm:bottom-4 sm:left-4"
+          : "pointer-events-none left-2 top-2 items-start rounded-xl border border-white/10 bg-black/55 p-2 backdrop-blur-md sm:left-4 sm:top-4 sm:rounded-2xl sm:p-4"
+      }`}
+    >
       {groups.map((group, g) => (
         <Fragment key={group.label}>
-          {g > 0 && (
+          {g > 0 && !bare && (
             // matched to the thumbnail row's height, so the "+" sits level
             // with the images rather than with the group's full height
             <span
@@ -167,7 +185,14 @@ function MediaInputs({ groups }: { groups: NonNullable<CaseStudyMedia["inputs"]>
               {group.items.map((input) => (
                 <span
                   key={input.src}
-                  className="block h-7 w-7 overflow-hidden rounded-md bg-white/10 sm:h-12 sm:w-12 sm:rounded-lg"
+                  className={`block h-7 w-7 overflow-hidden rounded-md sm:h-12 sm:w-12 sm:rounded-lg ${
+                    // held back to 60% so the thumbnail sits under the footage
+                    // it annotates rather than competing with it, and comes up
+                    // to full strength when a reader goes to look at it
+                    bare
+                      ? "opacity-60 transition-opacity duration-300 hover:opacity-100"
+                      : "bg-white/10"
+                  }`}
                 >
                   <Image
                     src={input.src}
@@ -184,9 +209,11 @@ function MediaInputs({ groups }: { groups: NonNullable<CaseStudyMedia["inputs"]>
             </div>
             {/* the panel sits over video, so its type is fixed light rather
                 than themed — it reads against the footage, not the page */}
-            <span className="whitespace-nowrap text-center text-[0.5rem] uppercase leading-none tracking-[0.06em] text-white/70 sm:text-[0.625rem] sm:tracking-[0.12em]">
-              {group.label}
-            </span>
+            {!bare && (
+              <span className="whitespace-nowrap text-center text-[0.5rem] uppercase leading-none tracking-[0.06em] text-white/70 sm:text-[0.625rem] sm:tracking-[0.12em]">
+                {group.label}
+              </span>
+            )}
           </div>
         </Fragment>
       ))}
@@ -245,7 +272,7 @@ function Media({ item }: { item: CaseStudyMedia }) {
           )}
 
           {item.inputs && item.inputs.length > 0 && (
-            <MediaInputs groups={item.inputs} />
+            <MediaInputs groups={item.inputs} bare={item.inputsBare} />
           )}
         </div>
         {/* no visible caption: the figures sit under copy that already names
@@ -832,11 +859,13 @@ function StackedSection({
   act,
   heading,
   blocks,
+  barcode,
 }: {
   id: string;
   act?: string;
   heading: string;
   blocks: CaseStudyBlock[];
+  barcode?: string;
 }) {
   const copy = blocks.filter((b) => b.type !== "media" && !isResult(b));
   const results = blocks.filter(isResult);
@@ -864,6 +893,20 @@ function StackedSection({
               {copy.map((block, i) => (
                 <Block key={i} block={block} split />
               ))}
+            </div>
+          )}
+
+          {/* A stacked section's copy is capped at max-w-2xl, so the right of
+              the row is empty by design. On a closing beat it carries the site
+              mark, sat on the baseline of the copy beside it the way it would be
+              printed in the margin of a spec sheet. Below lg the copy has the
+              full width and there is no margin to put it in. */}
+          {barcode && (
+            <div
+              data-reveal="up"
+              className="pointer-events-none absolute bottom-0 right-0 hidden lg:block"
+            >
+              <BarcodeMark code={barcode} className="text-fg opacity-50" />
             </div>
           )}
         </div>
@@ -896,6 +939,7 @@ function StorySection({
   blocks,
   split = false,
   layout,
+  barcode,
   columns = "half",
 }: {
   id: string;
@@ -904,6 +948,7 @@ function StorySection({
   blocks: CaseStudyBlock[];
   split?: boolean;
   layout?: "stacked";
+  barcode?: string;
   /** "wide" divides 4/8 instead of the page's 6/6 spine, which the header
       sets and every section follows */
   columns?: "half" | "wide";
@@ -930,7 +975,13 @@ function StorySection({
   // A section can ask for the stacked treatment even inside a split story.
   if (layout === "stacked") {
     return (
-      <StackedSection id={id} act={act} heading={heading} blocks={blocks} />
+      <StackedSection
+        id={id}
+        act={act}
+        heading={heading}
+        blocks={blocks}
+        barcode={barcode}
+      />
     );
   }
 
@@ -1172,6 +1223,7 @@ export function CaseStudyStory({ story }: { story: CaseStudy }) {
             key={group.section.id}
             split={split}
             layout={group.section.layout}
+            barcode={group.section.barcode}
             id={group.section.id}
             act={group.section.act}
             heading={group.section.heading}
