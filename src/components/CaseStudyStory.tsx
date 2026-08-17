@@ -21,7 +21,6 @@ import type {
 } from "@/content/site";
 import { CoverVideo } from "@/components/CoverVideo";
 import { PipelineDiagram } from "@/components/PipelineDiagram";
-import { PipelinesDiagram } from "@/components/PipelinesDiagram";
 import { ContextDiagram } from "@/components/ContextDiagram";
 import { InputFlowDiagram } from "@/components/InputFlowDiagram";
 import { StickyActRun, type ActRunSection } from "@/components/StickyActRun";
@@ -210,8 +209,6 @@ function Media({ item }: { item: CaseStudyMedia }) {
         >
           {item.figure === "pipeline" ? (
             <PipelineDiagram />
-          ) : item.figure === "pipelines" ? (
-            <PipelinesDiagram />
           ) : item.figure === "context" ? (
             <ContextDiagram />
           ) : item.figure === "input-flow" ? (
@@ -468,9 +465,9 @@ function Block({
                   { "--reveal-delay": `${i * 90}ms` } as React.CSSProperties
                 }
                 className={
-                  block.lead
-                    ? "font-body-xl text-fg"
-                    : "text-sm font-medium leading-snug text-fg"
+                  block.compact
+                    ? "text-sm font-medium leading-snug text-fg"
+                    : "text-xl font-medium leading-snug text-fg"
                 }
               >
                 {withEmphasis(item)}
@@ -564,11 +561,11 @@ function Block({
           {/* two columns and an arrow gutter, so every row lines up under its
               heading and the arrow column stays the same width throughout */}
           <div className="mt-6 grid grid-cols-[1fr_auto_1fr] items-end gap-x-4 sm:gap-x-10">
-            <h3 className="text-2xl leading-tight text-fg sm:text-3xl md:text-4xl">
+            <h3 className="text-2xl leading-[1.1] text-fg sm:text-3xl md:text-4xl">
               {block.headings[0]}
             </h3>
             <span aria-hidden="true" className="w-4 sm:w-5" />
-            <h3 className="text-2xl leading-tight text-fg sm:text-3xl md:text-4xl">
+            <h3 className="text-2xl leading-[1.1] text-fg sm:text-3xl md:text-4xl">
               {block.headings[1]}
             </h3>
           </div>
@@ -607,31 +604,39 @@ function Block({
         </div>
       );
 
-    case "steps":
+    case "table":
       return (
-        <ol data-reveal-group className={`flex flex-col ${narrow}`}>
-          {block.items.map((step, i) => (
-            <li
-              key={step.label}
-              data-reveal-item="up"
-              style={{ "--reveal-delay": `${i * 90}ms` } as React.CSSProperties}
-            >
-              {/* the hand-off, drawn between one decision and the next */}
-              {i > 0 && (
-                <span
-                  aria-hidden="true"
-                  className="block py-3 text-sm leading-none text-muted"
-                >
-                  ↓
-                </span>
-              )}
-              <span className="block font-medium text-fg">{step.label}</span>
-              <span className="mt-1 block leading-relaxed text-muted">
-                {withEmphasis(step.text)}
-              </span>
-            </li>
-          ))}
-        </ol>
+        // scrolls inside its own box, so a long cell can never push the page
+        // sideways on a phone
+        <div data-reveal="up" className={`w-full overflow-x-auto ${narrow}`}>
+          <table className="w-full min-w-[22rem] border-collapse text-left">
+            <thead>
+              <tr className="border-b border-border">
+                {block.headings.map((h) => (
+                  <th
+                    key={h}
+                    scope="col"
+                    className="py-3 pr-6 font-medium text-fg last:pr-0"
+                  >
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {block.rows.map(([a, b]) => (
+                <tr key={a} className="border-b border-border last:border-0">
+                  <td className="py-3 pr-6 leading-relaxed text-muted">
+                    {withEmphasis(a)}
+                  </td>
+                  <td className="py-3 leading-relaxed text-muted">
+                    {withEmphasis(b)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       );
 
     case "inputs":
@@ -778,7 +783,7 @@ function SplitSection({
               )}
               <h2
                 data-reveal="up"
-                className="text-[2.25rem] leading-tight text-fg"
+                className="text-[2.25rem] leading-[1.1] text-fg"
               >
                 {heading}
               </h2>
@@ -850,7 +855,7 @@ function StackedSection({
           )}
           <h2
             data-reveal="up"
-            className="max-w-3xl text-[2.25rem] leading-tight text-fg"
+            className="max-w-3xl text-[2.25rem] leading-[1.1] text-fg"
           >
             {heading}
           </h2>
@@ -989,7 +994,7 @@ function StorySection({
                 {runIndex === 0 && (
                   <h2
                     data-reveal="up"
-                    className={`text-[2.25rem] leading-tight text-fg ${headingBand}`}
+                    className={`text-[2.25rem] leading-[1.1] text-fg ${headingBand}`}
                   >
                     {heading}
                   </h2>
@@ -1014,8 +1019,12 @@ function StorySection({
 }
 
 // Split the story's sections into runs that share a pinned panel and singles
-// that render on their own. A section joins a run when the story is split, it
-// has figures, and it hasn't asked for another layout.
+// that render on their own. A section joins a run when the story is split and
+// it hasn't asked for another layout — a beat carrying no figure of its own
+// joins too, and simply leaves the column empty while it is read. Dropping it
+// out instead ended the run at that beat and opened a fresh one at the next
+// figure, which reprinted the act label and made the pinned panel let go and
+// re-catch in the middle of an act.
 type SectionGroup =
   | { run: ActRunSection[]; section?: undefined }
   | { run?: undefined; section: CaseStudySection & { id: string } };
@@ -1035,28 +1044,20 @@ function groupSections(
     const figures = section.blocks.flatMap((b) =>
       b.type === "media" ? b.items : [],
     );
-    // A beat with no figure yet still joins the run and takes a placeholder
-    // frame. Dropping it out instead cut the pinned panel in two and left the
-    // figure column blank beside it. A beat that ends in numbers still renders
-    // on its own — a run has no full-width band to put them in.
+    // Numbers need the full-width band under a section, which a run has not
+    // got, so a beat that ends in them still renders on its own.
     const joins =
       split &&
       !section.layout &&
       (figures.length > 0 || !section.blocks.some(isResult));
     if (!joins) {
-      groups.push({ section: { ...section, id } });
+      // Copy-only sections run full width. Set beside a figure column they
+      // have nothing to fill it with, and their copy reads as a caption on
+      // the next section's image.
+      const layout = section.layout ?? (split ? "stacked" : undefined);
+      groups.push({ section: { ...section, id, layout } });
       return;
     }
-
-    const shown: CaseStudyMedia[] = figures.length
-      ? figures
-      : [
-          {
-            kind: "visual",
-            title: section.heading,
-            note: "Figure in progress.",
-          },
-        ];
     const copy = section.blocks.filter(
       (b) => b.type !== "media" && !isResult(b),
     );
@@ -1067,18 +1068,25 @@ function groupSections(
       act,
       heading: section.heading,
       copy: copy.map((block, bi) => <Block key={bi} block={block} split />),
-      figures: (
+      figures: figures.length ? (
         <div
-          className={
-            shown.length >= 4 ? "grid grid-cols-2 gap-2" : "flex flex-col gap-2"
-          }
+          className={`lg:sticky lg:top-24 ${
+            figures.length >= 4
+              ? "grid grid-cols-2 gap-2"
+              : "flex flex-col gap-2"
+          }`}
         >
-          {shown.map((item) => (
+          {figures.map((item) => (
             <Media key={item.title} item={item} />
           ))}
         </div>
-      ),
-      className: "pb-8 lg:pb-14",
+      ) : null,
+      // A beat with no figure has nothing on the right to give it height, so
+      // it would be scrolled through in an instant and its copy would never
+      // settle. Hold the row open for most of a screen instead.
+      className: figures.length
+        ? "pb-8 lg:pb-14"
+        : "pb-8 lg:min-h-[60vh] lg:pb-14",
     };
 
     const last = groups[groups.length - 1];
@@ -1139,6 +1147,7 @@ export function CaseStudyStory({ story }: { story: CaseStudy }) {
                 {
                   type: "impact",
                   label: "The impact",
+                  compact: true,
                   items: story.roleImpact,
                 },
               ] as const)

@@ -89,7 +89,7 @@ export default async function CaseStudy({ params }: Params) {
             <div>
               {/* the opening statement, set to 48px on desktop so it carries
                   the header beside the wordmark rather than reading as a deck */}
-              <p className="text-3xl leading-snug text-fg sm:text-4xl md:text-5xl">
+              <p className="text-3xl leading-[1.08] text-fg sm:text-4xl md:text-5xl">
                 {project.statement}
               </p>
               {project.story && (

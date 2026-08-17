@@ -21,6 +21,8 @@ export type ActRunSection = {
   act?: string;
   heading: string;
   copy: ReactNode;
+  /* null for a beat that carries no figure — the column stays empty while it
+     is read, rather than the beat leaving the run */
   figures: ReactNode;
   /* extra pad so a short figure column still gives the panel room to sit */
   className?: string;
@@ -83,7 +85,7 @@ export function StickyActRun({ sections }: { sections: ActRunSection[] }) {
                 {section.act}
               </div>
             )}
-            <h2 className="text-[2.25rem] leading-tight text-fg">
+            <h2 className="text-[2.25rem] leading-[1.1] text-fg">
               {section.heading}
             </h2>
             <div className="mt-6 flex flex-col gap-y-6">{section.copy}</div>
@@ -92,27 +94,34 @@ export function StickyActRun({ sections }: { sections: ActRunSection[] }) {
       </div>
 
       <div className="lg:col-span-6 lg:col-start-7">
-        {sections.map((section) => (
+        {sections.map((section, i) => (
           <section
             key={section.id}
             id={section.id}
             className={`scroll-mt-24 ${section.className ?? ""}`}
           >
-            {/* below lg the copy travels with its own figures */}
+            {/* below lg the copy travels with its own figures. The act label
+                only prints where the act changes: the pinned panel above can
+                hold one label across a run because a single beat is on screen
+                at a time, but here the beats stack and it would repeat. */}
             <div className="lg:hidden">
-              {section.act && (
+              {section.act && section.act !== sections[i - 1]?.act && (
                 <div className="pb-4 text-sm font-medium uppercase tracking-[-0.02em] text-muted">
                   {section.act}
                 </div>
               )}
-              <h2 className="text-[2.25rem] leading-tight text-fg">
+              <h2 className="text-[2.25rem] leading-[1.1] text-fg">
                 {section.heading}
               </h2>
               <div className="mt-6 flex flex-col gap-y-6">{section.copy}</div>
             </div>
             {/* on the same rhythm as a full-width figure run, so a figure sits
-                the same distance from its copy wherever it is set */}
-            <div className="mt-10 lg:mt-0">{section.figures}</div>
+                the same distance from its copy wherever it is set. A beat with
+                no figure adds nothing here — below lg its copy simply runs on
+                into the next beat. */}
+            {section.figures && (
+              <div className="mt-10 lg:mt-0">{section.figures}</div>
+            )}
           </section>
         ))}
       </div>
