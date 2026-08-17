@@ -727,7 +727,8 @@ export const projects: Project[] = [
     tags: ["Product Design", "AI Systems"],
     link: "https://shopos.ai/feature/brand-memory",
     image: "/cover-ShopOS.webp",
-    statement: "Teaching AI what makes a brand, a brand.",
+    statement:
+      "Teaching AI to remember a brand, so no one explains it twice",
     industry: "AI, Commerce",
     scope: "Product Design, AI Systems, Experimentation",
     story: {
