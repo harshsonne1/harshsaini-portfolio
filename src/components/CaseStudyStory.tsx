@@ -1032,18 +1032,31 @@ function groupSections(
     const id = ids[i + 2];
     if (section.act) act = section.act;
 
+    const figures = section.blocks.flatMap((b) =>
+      b.type === "media" ? b.items : [],
+    );
+    // A beat with no figure yet still joins the run and takes a placeholder
+    // frame. Dropping it out instead cut the pinned panel in two and left the
+    // figure column blank beside it. A beat that ends in numbers still renders
+    // on its own — a run has no full-width band to put them in.
     const joins =
       split &&
       !section.layout &&
-      section.blocks.some((b) => b.type === "media");
+      (figures.length > 0 || !section.blocks.some(isResult));
     if (!joins) {
       groups.push({ section: { ...section, id } });
       return;
     }
 
-    const figures = section.blocks.flatMap((b) =>
-      b.type === "media" ? b.items : [],
-    );
+    const shown: CaseStudyMedia[] = figures.length
+      ? figures
+      : [
+          {
+            kind: "visual",
+            title: section.heading,
+            note: "Figure in progress.",
+          },
+        ];
     const copy = section.blocks.filter(
       (b) => b.type !== "media" && !isResult(b),
     );
@@ -1057,12 +1070,10 @@ function groupSections(
       figures: (
         <div
           className={
-            figures.length >= 4
-              ? "grid grid-cols-2 gap-2"
-              : "flex flex-col gap-2"
+            shown.length >= 4 ? "grid grid-cols-2 gap-2" : "flex flex-col gap-2"
           }
         >
-          {figures.map((item) => (
+          {shown.map((item) => (
             <Media key={item.title} item={item} />
           ))}
         </div>
