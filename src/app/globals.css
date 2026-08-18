@@ -1180,6 +1180,7 @@ body {
 }
 
 .ncv-field {
+  position: relative;
   padding: 7px 8px;
   border: 1px solid var(--ncv-field-b);
   border-radius: 7px;
@@ -1199,8 +1200,83 @@ body {
 .ncv-field.h2 {
   min-height: 150px;
 }
-.ncv-field.h3 {
-  min-height: 300px;
+
+/* ---- output box ----
+   Where a placeholder field says what a step will produce, this holds what it
+   did: the frame the image model returned, the clip the video model rendered.
+   Same frame as a field so the two read as the same slot. A fixed ratio rather
+   than a min-height, so the media has no say in the card's height and the
+   canvas stays measurable — swap the ratio and the canvas wants re-measuring
+   with it. */
+.ncv-out {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 3 / 4;
+  border: 1px solid var(--ncv-field-b);
+  border-radius: 7px;
+  /* seen for the moment a clip is still decoding */
+  background: var(--ncv-ground);
+}
+/* The generated layer fills the frame outright. Left in flow it took its height
+   from the media instead of the box — which left a gap under the image, and
+   collapsed to nothing under the clip, whose own position is absolute. Being
+   positioned is also what the clip resolves its inset against. */
+.ncv-out [data-generated] {
+  position: absolute;
+  inset: 0;
+}
+.ncv-out img,
+.ncv-out video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  /* the card owns the drag; the media must not swallow the press */
+  pointer-events: none;
+}
+
+/* ---- generating ----
+   The three steps that produce something show a skeleton until they have. It
+   sits over the box the result lands in, at the result's own inset, so the bars
+   stand exactly where the text will and the block covers exactly the frame.
+   Both layers are always present and cross-fade; the stylesheet holds the
+   resolved state, so with no JS or with motion reduced the output is simply
+   there. */
+.ncv-skel {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 7px 8px;
+  opacity: 0;
+  pointer-events: none;
+}
+/* over an output box the skeleton is the whole frame, not lines of type */
+.ncv-skel.is-block {
+  padding: 0;
+  gap: 0;
+}
+
+/* Intensity is set here rather than on the Skeleton component, which stays at
+   its neutral default for anything else that uses it. Two reasons it lives in
+   this block: the fill comes from the canvas's own ink token, so it inverts with
+   the rest of the figure; and Tailwind's animate-pulse only dips to half
+   opacity, which barely registered against a card this dark. */
+.ncv-skel [data-slot="skeleton"] {
+  background: color-mix(in srgb, var(--ncv-txt) 22%, transparent);
+  animation: ncv-shimmer 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+@keyframes ncv-shimmer {
+  50% {
+    opacity: 0.3;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ncv-skel [data-slot="skeleton"] {
+    animation: none;
+  }
 }
 
 .ncv-foot {
@@ -1367,8 +1443,10 @@ body {
 .ncv-stage.is-vertical .ncv-field.h2 {
   min-height: 72px;
 }
-.ncv-stage.is-vertical .ncv-field.h3 {
-  min-height: 96px;
+/* Squarer down the column: at 3:4 the two output boxes added a sixth to the
+   whole scroll. A centre crop of either one still holds the product. */
+.ncv-stage.is-vertical .ncv-out {
+  aspect-ratio: 1 / 1;
 }
 
 /* Inputs come in across the top edge, the output leaves under the middle, so

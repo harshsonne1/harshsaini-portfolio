@@ -227,8 +227,13 @@ function Media({ item }: { item: CaseStudyMedia }) {
   // its shape is not fixed and it sets its own. Handed the slot directly rather
   // than through the ratio box below, which would crop one of the two.
   if (item.figure === "workflow") {
+    // No data-reveal on this one. The shared reveal fades a figure up over 0.8s
+    // after a 140ms hold, and the canvas's own build-in runs off its own
+    // observer — so the cards were assembling behind a panel that was still
+    // fading, and the whole thing read as most of a second late. The canvas
+    // brings itself in.
     return (
-      <figure data-reveal="up">
+      <figure>
         <WorkflowCanvas />
       </figure>
     );

@@ -23,6 +23,8 @@ import {
 } from "react";
 import gsap from "gsap";
 import Draggable from "gsap/Draggable";
+import { CoverVideo } from "@/components/CoverVideo";
+import { Skeleton } from "@/components/ui/skeleton";
 
 /* Design canvas. Every coordinate below is authored in these pixels, as the
    card's own left/top — the arrangement was set by hand on the canvas, so the
@@ -34,7 +36,7 @@ import Draggable from "gsap/Draggable";
    the figure's width/height in site.ts must keep this ratio, or the box
    letterboxes around the canvas. */
 const W = 1534;
-const H = 721;
+const H = 773;
 
 /* Narrow screens get a second arrangement entirely — see `is-vertical` in
    globals.css. Scaling the wide canvas onto a phone put it at 22%, which made
@@ -121,8 +123,15 @@ const RATIOS: [string, number, number][] = [
   ["4:5", 13, 16],
 ];
 
+/* The workflow's own output is portrait 3:4 — the frame and the clip both are —
+   so that is what the picker sits on. Looked up by label rather than index, so
+   reordering RATIOS cannot quietly change the default. */
+const DEFAULT_RATIO = "3:4";
+
 function RatioGrid() {
-  const [sel, setSel] = useState(1);
+  const [sel, setSel] = useState(() =>
+    RATIOS.findIndex(([label]) => label === DEFAULT_RATIO),
+  );
   return (
     <div className="ncv-ar">
       {RATIOS.map(([label, w, h], i) => (
@@ -141,10 +150,49 @@ function RatioGrid() {
   );
 }
 
+/* ------------------------------------------------------ generating ---- */
+/* Lines of the skeleton that stands in for generated copy, as a fraction of the
+   box — a ragged right edge, so it reads as prose rather than as a table. */
+const SKEL_LINES = ["100%", "100%", "92%", "68%", "100%", "84%", "46%"];
+
+/* The two layers of a step that generates: what it produced, hidden until it
+   has, and the skeleton over the top. */
+const Generating = ({
+  children,
+  block = false,
+  lines = 4,
+}: {
+  children: ReactNode;
+  /** a solid frame rather than lines of type, for a step that returns media */
+  block?: boolean;
+  lines?: number;
+}) => (
+  <>
+    <div data-generated style={{ opacity: 1 }}>
+      {children}
+    </div>
+    <div className={block ? "ncv-skel is-block" : "ncv-skel"} data-skeleton>
+      {block ? (
+        <Skeleton className="h-full w-full rounded-[6px]" />
+      ) : (
+        SKEL_LINES.slice(0, lines).map((w, i) => (
+          <Skeleton key={i} className="h-[6px] rounded-[3px]" style={{ width: w }} />
+        ))
+      )}
+    </div>
+  </>
+);
+
 /* ----------------------------------------------------------- the graph ---- */
 
-const PRODUCT = "/case-studies/adaptive-intelligence/input-watch.webp";
-const LOGO = "/case-studies/adaptive-intelligence/input-casio-logo.webp";
+const BASE = "/case-studies/adaptive-intelligence";
+/* what an operator hands the workflow */
+const PRODUCT = `${BASE}/input-mokobara-bag.webp`;
+const LOGO = `${BASE}/input-mokobara-logo.webp`;
+/* and what comes back out of it */
+const HERO = `${BASE}/workflow-hero.webp`;
+const REVEAL = `${BASE}/workflow-reveal.webm`;
+const REVEAL_POSTER = `${BASE}/workflow-reveal-poster.webp`;
 
 type NodeSpec = {
   id: string;
@@ -223,7 +271,18 @@ const NODES: NodeSpec[] = [
     icon: <Spark />,
     title: "Product Mockup",
     sockets: ["green", "blue"],
-    face: <div className="ncv-field h2">The generated text will appear here</div>,
+    face: (
+      <div className="ncv-field h2">
+        <Generating lines={7}>
+          <p>Category: premium travel backpack. Brand: Mokobara.</p>
+          <p>
+            Scene: a dark green mirrored set, one key light from above, the bag
+            centred on a reflective floor. Palette taken from the product&rsquo;s
+            own olive and pale sage.
+          </p>
+        </Generating>
+      </div>
+    ),
     foot: ["+ Add another image input"],
   },
   {
@@ -255,7 +314,16 @@ const NODES: NodeSpec[] = [
     icon: <Spark />,
     title: "Nano Banana - Flash",
     sockets: ["green", "blue"],
-    face: <div className="ncv-field h3">The generated text will appear here</div>,
+    face: (
+      <div className="ncv-out">
+        <Generating block>
+          <img
+            src={HERO}
+            alt="The frame the image model returned: the bag lit in a dark green set, reflected in the floor"
+          />
+        </Generating>
+      </div>
+    ),
     foot: ["+ Add another image input"],
   },
   {
@@ -276,7 +344,15 @@ const NODES: NodeSpec[] = [
       "green",
       "green",
     ],
-    face: <div className="ncv-field h3">The generated text will appear here</div>,
+    face: (
+      <div className="ncv-out">
+        <Generating block>
+          {/* the shared cover: plays while it is on screen, holds the poster
+              under reduced motion, and never decodes off-screen */}
+          <CoverVideo src={REVEAL} poster={REVEAL_POSTER} />
+        </Generating>
+      </div>
+    ),
     foot: [
       "+ Add another reference image input",
       "+ Add another reference video input",
@@ -303,8 +379,23 @@ const EDGES: [string, string, number, Sock][] = [
    that consumes them, and the video model last. */
 const BUILD = ["n2", "n1", "n3", "n4", "n6", "n5", "n7"];
 
-/* seconds between one card arriving and the next */
-const BEAT = 0.34;
+/* Seconds between one card arriving and the next. The whole build lands in
+   roughly BEAT x 7 plus the last card's wires — keep it brisk: the figure has
+   to be assembled and running before a reader scrolls past it. */
+const BEAT = 0.1;
+
+/* Once the graph is wired, the steps that produce something resolve in order:
+   the mockup writes its brief, then the image model returns a frame, then the
+   video model renders the reveal. Each waits on the one before it, which is the
+   actual dependency — so the figure runs the pipeline rather than describing it.
+   Until a step resolves it shows a skeleton. */
+const GENERATES = ["n4", "n6", "n7"];
+/* Seconds between one step resolving and the next starting to. Each cross-fade
+   takes about half of this, so the gap is what is left to read the result
+   before the next arrives — tighten it much further and the three stop landing
+   as three. */
+const GEN_GAP = 1;
+
 
 const ORDER_INDEX = new Map(BUILD.map((id, i) => [id, i]));
 
@@ -565,18 +656,57 @@ export function WorkflowCanvas() {
         const len = p.getTotalLength();
         gsap.set(p, { strokeDasharray: len, strokeDashoffset: len });
       });
+      // the stylesheet holds the resolved state, so the pending one is set here
+      // and only here — with no JS the outputs are simply present
+      GENERATES.forEach((id) => {
+        const card = nodeRefs.current.get(id);
+        if (!card) return;
+        gsap.set(card.querySelectorAll("[data-generated]"), { opacity: 0 });
+        gsap.set(card.querySelectorAll("[data-skeleton]"), { opacity: 1 });
+      });
     }
 
     // the cards are placed and the wires measured: show the canvas
     stage.classList.add("is-ready");
 
     let tl: gsap.core.Timeline | null = null;
+    let gl: gsap.core.Timeline | null = null;
+
+    /* Phase two, once every card is up and every wire drawn: each step that
+       produces something swaps its skeleton for the thing it produced, in
+       pipeline order and GEN_GAP apart. Nothing here is geometry, so a card
+       being dragged mid-sequence cannot disturb it — which is why this is its
+       own timeline rather than the tail of the build's. */
+    const generate = () => {
+      const g = gsap.timeline();
+
+      GENERATES.forEach((id, i) => {
+        const card = nodeRefs.current.get(id);
+        if (!card) return;
+        const skel = card.querySelectorAll("[data-skeleton]");
+        const out = card.querySelectorAll("[data-generated]");
+        if (!skel.length || !out.length) return;
+
+        const at = i * GEN_GAP;
+        g.to(skel, { opacity: 0, duration: 0.45, ease: "power2.out" }, at).to(
+          out,
+          { opacity: 1, duration: 0.55, ease: "power2.out" },
+          at + 0.1,
+        );
+      });
+
+      return g;
+    };
 
     const build = () => {
       const t = gsap.timeline({
         // the cards lift as they arrive, so the wires have to follow them up
         onUpdate: paint,
-        onComplete: handBack,
+        onComplete: () => {
+          handBack();
+          // the graph is connected; now let it run
+          if (!gl) gl = generate();
+        },
       });
 
       BUILD.forEach((id, i) => {
@@ -589,7 +719,7 @@ export function WorkflowCanvas() {
           {
             opacity: rest.get(id) ?? 1,
             y: 0,
-            duration: 0.5,
+            duration: 0.38,
             ease: "power2.out",
           },
           at,
@@ -599,21 +729,21 @@ export function WorkflowCanvas() {
             {
               opacity: 1,
               y: 0,
-              duration: 0.34,
-              stagger: 0.07,
+              duration: 0.26,
+              stagger: 0.045,
               ease: "power2.out",
             },
-            at + 0.1,
+            at + 0.07,
           )
-          .to(socksOf(card), { opacity: sockRest, duration: 0.3 }, at + 0.22);
+          .to(socksOf(card), { opacity: sockRest, duration: 0.24 }, at + 0.14);
 
         wiresInto(id).forEach((edge, k) => {
           const p = pathRefs.current.get(edge);
           if (!p) return;
           t.to(
             p,
-            { strokeDashoffset: 0, duration: 0.55, ease: "power1.inOut" },
-            at + 0.24 + k * 0.09,
+            { strokeDashoffset: 0, duration: 0.4, ease: "power1.inOut" },
+            at + 0.15 + k * 0.06,
           );
         });
       });
@@ -637,9 +767,11 @@ export function WorkflowCanvas() {
           io?.disconnect();
           build();
         },
-        // a column taller than the viewport would never reach a quarter of
-        // itself, so the narrow arrangement triggers as soon as it shows
-        { threshold: vertical ? 0.05 : 0.25 },
+        // A column taller than the viewport would never reach a quarter of
+        // itself, so the narrow arrangement triggers as soon as it shows. The
+        // wide one waits for less than it used to: the build reads as late if
+        // it only starts once the figure is well up the screen.
+        { threshold: vertical ? 0.05 : 0.15 },
       );
       io.observe(host);
     }
@@ -720,6 +852,7 @@ export function WorkflowCanvas() {
       io?.disconnect();
       ro.disconnect();
       tl?.kill();
+      gl?.kill();
       drags.forEach((d) => d.kill());
       cards.forEach((el) => el.removeEventListener("keydown", onKeyDown));
     };
