@@ -334,13 +334,15 @@ const NODES: NodeSpec[] = [
     out: "magenta",
     icon: <Seedance />,
     title: "Seedance 2.0 Reference Image",
+    /* Slot 5 takes the uploads, whose output is blue; it read green while the
+       wire into it was green. The four unwired slots keep their own types. */
     sockets: [
       "green",
       "blue",
       "blue",
       "violet",
       "orange",
-      "green",
+      "blue",
       "green",
       "green",
     ],
@@ -361,17 +363,26 @@ const NODES: NodeSpec[] = [
   },
 ];
 
-/* from, to, which input socket on the target, colour */
-const EDGES: [string, string, number, Sock][] = [
-  ["n3", "n4", 0, "green"],
-  ["n2", "n4", 1, "blue"],
-  ["n4", "n6", 0, "green"],
-  ["n2", "n6", 1, "blue"],
-  ["n5", "n7", 0, "green"],
-  ["n6", "n7", 1, "blue"],
-  ["n2", "n7", 5, "green"],
-  ["n1", "n7", 6, "green"],
+/* from, to, which input socket on the target.
+   The colour is deliberately not stored here. A wire is drawn in its source's
+   output colour, so it cannot change colour along its length — which is the
+   whole reason a reader can follow one out of a fan of eight. Stored per edge it
+   had drifted: the wire from the uploads to the video model was green, leaving a
+   blue socket. Match a target socket to what feeds it, below. */
+const EDGES: [string, string, number][] = [
+  ["n3", "n4", 0],
+  ["n2", "n4", 1],
+  ["n4", "n6", 0],
+  ["n2", "n6", 1],
+  ["n5", "n7", 0],
+  ["n6", "n7", 1],
+  ["n2", "n7", 5],
+  ["n1", "n7", 6],
 ];
+
+/** what each card's output is carrying, and so what any wire out of it is */
+const OUT_COLOUR = new Map(NODES.map((node) => [node.id, node.out]));
+const edgeColour = (from: string): Sock => OUT_COLOUR.get(from) ?? "green";
 
 /* The order the graph assembles itself in. Dataflow order, so a card never
    arrives before the ones that feed it and every wire has both ends to land on
@@ -886,14 +897,14 @@ export function WorkflowCanvas() {
             arrangement changes the canvas, and a stale one silently squashes
             every wire into the wrong box. */}
         <svg className="ncv-wires">
-          {EDGES.map(([from, to, index, colour], i) => (
+          {EDGES.map(([from, to, index], i) => (
             <path
               key={`${from}-${to}-${index}`}
               ref={(el) => {
                 if (el) pathRefs.current.set(i, el);
                 else pathRefs.current.delete(i);
               }}
-              stroke={wire(colour)}
+              stroke={wire(edgeColour(from))}
             />
           ))}
         </svg>
