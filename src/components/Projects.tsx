@@ -1,7 +1,14 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { projects } from "@/content/site";
+import {
+  cueCaseStudyOpen,
+  cueWorkSound,
+  primeWorkSound,
+  rearmWorkSound,
+} from "@/lib/work-sound";
 import { CoverVideo } from "./CoverVideo";
 import MagneticCursor from "./MagneticCursor";
 import GlitchInitial from "./GlitchInitial";
@@ -15,10 +22,33 @@ const TILE_GRADIENTS = [
 ];
 
 export function Projects() {
+  const sectionRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    // fetched and decoded before the first hover, so the cue is not a wait
+    primeWorkSound();
+
+    /* The cue is armed once per visit to the section, and leaving the viewport
+       is what counts as leaving — not the pointer wandering off the tiles. So
+       hovering around inside Work stays silent after the first click, while
+       scrolling away and coming back earns it again. */
+    const section = sectionRef.current;
+    if (!section || typeof IntersectionObserver === "undefined") return;
+
+    const io = new IntersectionObserver(([entry]) => {
+      if (!entry.isIntersecting) rearmWorkSound();
+    });
+    io.observe(section);
+    return () => io.disconnect();
+  }, []);
+
   return (
     <section
+      ref={sectionRef}
       id="projects"
       className="relative scroll-mt-20 px-4 py-20 sm:py-28"
+      // the whole section is the target, so reaching Work at all sounds it
+      onPointerEnter={cueWorkSound}
     >
       {/* label cursor — only appears over the project tiles */}
       <MagneticCursor
@@ -48,6 +78,9 @@ export function Projects() {
                   data-cursor="View case"
                   aria-label={project.title}
                   className="work-card group relative block aspect-video w-full overflow-hidden"
+                  // onClick rather than pointerdown: it covers opening the case
+                  // study from the keyboard too, and skips a right-click
+                  onClick={cueCaseStudyOpen}
                 >
                   {/* wipe layer — kept separate from the link (whose drop shadow
                       a clip-path would cut) and from the media layer (whose own
