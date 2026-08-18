@@ -69,7 +69,7 @@ export type CaseStudyMedia = {
   src?: string;
   /* a drawn figure rather than a file — rendered by its own component, and
      takes the slot `src` would have */
-  figure?: "pipeline" | "context" | "input-flow";
+  figure?: "pipeline" | "context" | "input-flow" | "workflow";
   /* Light-theme counterpart of `src`, for figures that are themselves a
      screenshot of a themed UI. When set, `src` is the dark-theme one and the
      page shows whichever matches the theme the reader is in. */
@@ -419,10 +419,10 @@ export const projects: Project[] = [
         {
           kind: "system",
           title: "The workflow in full",
-          note: "Product and logo in, through positioning and prompt, to the generated reveal.",
-          src: "/case-studies/adaptive-intelligence/my-role-graph.webp",
-          width: 1440,
-          height: 872,
+          note: "Product and logo in, through positioning and prompt, to the generated reveal. Drag any card.",
+          figure: "workflow",
+          width: 1534,
+          height: 721,
         },
       ],
       sections: [

@@ -24,6 +24,7 @@ import { CoverVideo } from "@/components/CoverVideo";
 import { PipelineDiagram } from "@/components/PipelineDiagram";
 import { ContextDiagram } from "@/components/ContextDiagram";
 import { InputFlowDiagram } from "@/components/InputFlowDiagram";
+import { WorkflowCanvas } from "@/components/WorkflowCanvas";
 import { StickyActRun, type ActRunSection } from "@/components/StickyActRun";
 import type { RailItem } from "@/components/SectionRail";
 
@@ -222,6 +223,17 @@ function MediaInputs({
 }
 
 function Media({ item }: { item: CaseStudyMedia }) {
+  // The workflow canvas reflows between a wide arrangement and a tall one, so
+  // its shape is not fixed and it sets its own. Handed the slot directly rather
+  // than through the ratio box below, which would crop one of the two.
+  if (item.figure === "workflow") {
+    return (
+      <figure data-reveal="up">
+        <WorkflowCanvas />
+      </figure>
+    );
+  }
+
   if (item.src || item.figure) {
     // The figure takes the file's own ratio, so a portrait diagram stays
     // portrait and a square one stays square. Forcing 16:9 here cropped the

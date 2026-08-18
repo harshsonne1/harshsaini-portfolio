@@ -1049,3 +1049,349 @@ body {
     transition: none;
   }
 }
+
+/* ---- Workflow canvas (WorkflowCanvas.tsx) ----------------------------------
+   The reveal workflow drawn as draggable node cards. Unlike the other figures
+   this one is DOM rather than SVG — the cards hold real thumbnails, real
+   buttons and text that wraps — so it needs its own surface tokens rather than
+   borrowing the page's directly. Dark is the native look (it is a recreation
+   of a dark product UI); on a light page the same greys invert, the way .pipe
+   does, so the figure follows the page instead of sitting on its own ground. */
+.ncv {
+  --ncv-ground: #0d0d0f;
+  --ncv-card: #131316;
+  --ncv-card-b: #26262b;
+  --ncv-card-b-live: #3a3a42;
+  --ncv-divider: #232328;
+  --ncv-field-b: #2c2c32;
+  --ncv-txt: #ededef;
+  --ncv-dim: #6e6e76;
+  --ncv-foot: #d6d6d8;
+  --ncv-foot-off: #4a4a52;
+  --ncv-shadow: 0 12px 30px -14px rgb(0 0 0 / 0.85);
+  --ncv-shadow-live: 0 22px 48px -16px rgb(0 0 0 / 0.95);
+
+  --ncv-green: #22c55e;
+  --ncv-blue: #38bdf8;
+  --ncv-violet: #a855f7;
+  --ncv-orange: #f97316;
+  --ncv-magenta: #d946ef;
+
+  background: var(--ncv-ground);
+  font-family: var(--font-sans);
+}
+
+:root[data-theme="light"] .ncv {
+  --ncv-ground: #f4f4f2;
+  --ncv-card: #ffffff;
+  --ncv-card-b: #cdcdc5;
+  --ncv-card-b-live: #a8a8a0;
+  --ncv-divider: #e2e2dc;
+  --ncv-field-b: #d5d5cf;
+  --ncv-txt: #1a1a19;
+  --ncv-dim: #7a7a80;
+  --ncv-foot: #3a3a38;
+  --ncv-foot-off: #a8a8a2;
+  --ncv-shadow: 0 10px 26px -16px rgb(0 0 0 / 0.28);
+  --ncv-shadow-live: 0 18px 40px -18px rgb(0 0 0 / 0.34);
+
+  /* the mid-tone brights would sit under 3:1 on a light ground, so the wire
+     colours step down while staying the same hues */
+  --ncv-green: #16a34a;
+  --ncv-blue: #0284c7;
+  --ncv-violet: #7c3aed;
+  --ncv-orange: #ea580c;
+  --ncv-magenta: #c026d3;
+}
+
+/* laid out at the design size, then scaled into the figure box */
+.ncv-stage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  opacity: 0;
+}
+/* set once the cards are placed and the wires drawn, so the canvas is never
+   seen at the wrong scale */
+.ncv-stage.is-ready {
+  opacity: 1;
+  transition: opacity 0.4s ease-out;
+}
+
+.ncv-wires {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+.ncv-wires path {
+  fill: none;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+}
+
+/* ---- the cards ----
+   `.ncv-node` is the card itself; `.ncv-sock` below is the connector node on
+   its edge. They carry different opacities, so keep the two apart. */
+.ncv-node {
+  position: absolute;
+  z-index: 10;
+  padding: 9px;
+  border: 1px solid var(--ncv-card-b);
+  border-radius: 11px;
+  background: var(--ncv-card);
+  box-shadow: var(--ncv-shadow);
+  color: var(--ncv-txt);
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+.ncv-node:focus-visible {
+  outline: 1px solid var(--color-accent);
+  outline-offset: 2px;
+}
+.ncv-node.is-dragging {
+  border-color: var(--ncv-card-b-live);
+  box-shadow: var(--ncv-shadow-live);
+}
+
+.ncv-hd {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 1px 2px 8px;
+}
+.ncv-hd svg {
+  flex: none;
+}
+.ncv-t {
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: -0.05px;
+  white-space: nowrap;
+}
+.ncv-rule {
+  height: 1px;
+  margin: 0 -9px 9px;
+  background: var(--ncv-divider);
+}
+
+.ncv-field {
+  padding: 7px 8px;
+  border: 1px solid var(--ncv-field-b);
+  border-radius: 7px;
+  font-size: 7.5px;
+  line-height: 1.6;
+  color: var(--ncv-dim);
+}
+.ncv-field p {
+  margin: 0 0 8px;
+}
+.ncv-field p:last-child {
+  margin: 0;
+}
+.ncv-field.h1 {
+  min-height: 96px;
+}
+.ncv-field.h2 {
+  min-height: 150px;
+}
+.ncv-field.h3 {
+  min-height: 300px;
+}
+
+.ncv-foot {
+  display: flex;
+  flex-direction: column;
+  margin-top: 9px;
+  font-size: 8.5px;
+  line-height: 1.85;
+  color: var(--ncv-foot);
+}
+.ncv-foot span.is-off {
+  color: var(--ncv-foot-off);
+}
+
+/* ---- connector nodes ----
+   These sit back at 60% so the wires stay the brightest thing in the figure and
+   the eye follows what feeds what, rather than stopping at every port. The card
+   they sit on stays at full strength. WorkflowCanvas.tsx reads this value back
+   off the computed style and animates the build-in up to it, so it is set only
+   here. */
+.ncv-sock {
+  position: absolute;
+  z-index: 3;
+  opacity: 0.6;
+  width: 9px;
+  height: 9px;
+  margin-top: -4.5px;
+  border: 2px solid var(--ncv-card-b);
+  border-radius: 50%;
+  background: var(--ncv-card);
+}
+.ncv-sock.is-in {
+  left: -5px;
+  top: var(--ncv-at);
+}
+.ncv-sock.is-out {
+  top: 50%;
+  right: -5px;
+}
+
+/* Hovering a connector brings it up to full, so a reader can pick one port out
+   of a stack of eight and see which wire leaves it. Armed by `is-built` rather
+   than declared outright: during the build-in GSAP writes this same property
+   every frame, and a transition on it would be smearing every one of them. */
+.ncv-stage.is-built .ncv-sock {
+  transition: opacity 140ms ease-out;
+}
+.ncv-sock:hover {
+  opacity: 1;
+}
+/* The ring is 9 design px, and smaller again once the canvas is scaled into the
+   figure, so the hit area is widened well past the paint. Transparent, centred
+   on the ring, and short of the gap to the next port in a stack. */
+.ncv-sock::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+}
+
+/* ---- aspect ratio picker ---- */
+.ncv-ar {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.ncv-ar button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 42px;
+  border: 1px solid var(--ncv-field-b);
+  border-radius: 7px;
+  cursor: pointer;
+  transition:
+    border-color 140ms ease-out,
+    background 140ms ease-out;
+}
+.ncv-ar button:hover {
+  border-color: var(--ncv-card-b-live);
+  background: color-mix(in srgb, var(--ncv-txt) 5%, transparent);
+}
+.ncv-ar button.is-sel {
+  border-color: var(--ncv-card-b-live);
+  background: color-mix(in srgb, var(--ncv-txt) 8%, transparent);
+}
+.ncv-ar i {
+  display: block;
+  border: 1px solid var(--ncv-dim);
+  border-radius: 1.5px;
+}
+.ncv-ar em {
+  font-size: 6.5px;
+  font-style: normal;
+  color: var(--ncv-dim);
+}
+
+/* ---- uploaded thumbnails ---- */
+.ncv-thumbs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.ncv-thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border-radius: 7px;
+}
+/* the product arrives on white; the logo arrives with transparency, and the
+   checkerboard is how the product UI says so */
+.ncv-thumb.is-light {
+  background: #fff;
+}
+.ncv-thumb.is-alpha {
+  background: repeating-conic-gradient(#fff 0 25%, #dcdcdc 0 50%) 0 0 / 8px 8px;
+}
+/* on a light card the white plate would dissolve into the card, so the slot
+   keeps a hairline of its own */
+:root[data-theme="light"] .ncv-thumb {
+  box-shadow: inset 0 0 0 1px var(--ncv-field-b);
+}
+.ncv-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+}
+.ncv-thumb.is-alpha img {
+  width: 88%;
+  height: auto;
+}
+
+/* ---- narrow screens: the graph reflows into a staggered column ----
+   Scaling the wide canvas onto a phone left the type at 22% of its size, so the
+   figure became a picture of a graph. WorkflowCanvas.tsx instead stacks the
+   cards down a canvas about one card wide, in dataflow order, alternating
+   sides. The cards keep their own type; what changes is the direction of flow,
+   so the connectors move to the horizontal edges and the wires curve
+   vertically. */
+.ncv-stage.is-vertical .ncv-node {
+  /* Brings the wide cards down to the width of the widest narrow one, so the
+     column reads as one set rather than as two sizes. Aspect Ratio and Brand
+     Positioning are already inside this and keep their authored width. The
+     second term is the gutter plus the right margin, so on a phone too narrow
+     for even this the cards give way rather than hanging off the canvas. */
+  max-width: min(196px, calc(100% - 72px));
+}
+/* the title no longer has a 294px card to sit across */
+.ncv-stage.is-vertical .ncv-t {
+  white-space: normal;
+}
+/* The placeholder boxes are the tallest things in the figure and hold nothing,
+   so they give up most of their room: at full height the column ran half again
+   as long for no more information. */
+.ncv-stage.is-vertical .ncv-field.h1 {
+  min-height: 0;
+}
+.ncv-stage.is-vertical .ncv-field.h2 {
+  min-height: 72px;
+}
+.ncv-stage.is-vertical .ncv-field.h3 {
+  min-height: 96px;
+}
+
+/* Inputs come in across the top edge, the output leaves under the middle, so
+   the card reads downward. --ncv-at is the position along the edge either way,
+   which is why it is a variable and not a property. */
+.ncv-stage.is-vertical .ncv-sock.is-in {
+  left: var(--ncv-at);
+  top: -5px;
+  margin-top: 0;
+  margin-left: -4.5px;
+}
+.ncv-stage.is-vertical .ncv-sock.is-out {
+  left: 50%;
+  top: auto;
+  right: auto;
+  bottom: -5px;
+  margin-top: 0;
+  margin-left: -4.5px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ncv-stage.is-ready,
+  .ncv-ar button {
+    transition: none;
+  }
+}
