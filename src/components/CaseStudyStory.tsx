@@ -104,8 +104,14 @@ function storySectionIds(story: CaseStudy): string[] {
 export function storyRailItems(story: CaseStudy): RailItem[] {
   const ids = storySectionIds(story);
 
+  const opening =
+    story.overview || story.summary?.length || story.summaryMedia?.length;
+
   return [
-    { id: ids[0], label: story.overview?.heading ?? "Overview" },
+    // no stop for an opening section that is not rendered
+    ...(opening
+      ? [{ id: ids[0], label: story.overview?.heading ?? "Overview" }]
+      : []),
     { id: ids[1], label: "My role" },
     ...story.sections.flatMap((section, i) =>
       section.railSkip
@@ -141,6 +147,52 @@ function withEmphasis(text: string) {
       return j === 0 ? [node] : [<br key={`br-${i}-${j}`} />, node];
     });
   });
+}
+
+/* Results as statements rather than a row of figures. Exported because the case
+   study header shows the same frame in place of its meta cells — one component
+   rather than two that have to be kept looking alike. */
+export function ImpactList({
+  label,
+  items,
+  compact = false,
+  className,
+}: {
+  label?: string;
+  items: string[];
+  /* sets the lines at 14px — for a run being scanned rather than a statement
+     carrying a section */
+  compact?: boolean;
+  className?: string;
+}) {
+  return (
+    <div data-reveal-group className={className}>
+      {label && <BlockLabel>{label}</BlockLabel>}
+      {/* one rule down the whole set, in the figure colour — the lines are read
+          together, so they share a single mark rather than each carrying its
+          own */}
+      <ul
+        className={`flex flex-col gap-6 border-l-2 border-[var(--color-stat)] pl-6 ${
+          label ? "mt-8" : ""
+        }`}
+      >
+        {items.map((item, i) => (
+          <li
+            key={i}
+            data-reveal-item="up"
+            style={{ "--reveal-delay": `${i * 90}ms` } as React.CSSProperties}
+            className={
+              compact
+                ? "text-sm font-medium leading-snug text-fg"
+                : "text-xl font-medium leading-snug text-fg"
+            }
+          >
+            {withEmphasis(item)}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }
 
 // What a generated figure was made from, sat in its top-left corner. Groups
@@ -491,34 +543,12 @@ function Block({
 
     case "impact":
       return (
-        <div data-reveal-group className={narrow}>
-          {block.label && <BlockLabel>{block.label}</BlockLabel>}
-          {/* one rule down the whole set, in the figure colour — the lines are
-              read together, so they share a single mark rather than each
-              carrying its own */}
-          <ul
-            className={`flex flex-col gap-6 border-l-2 border-[var(--color-stat)] pl-6 ${
-              block.label ? "mt-8" : ""
-            }`}
-          >
-            {block.items.map((item, i) => (
-              <li
-                key={i}
-                data-reveal-item="up"
-                style={
-                  { "--reveal-delay": `${i * 90}ms` } as React.CSSProperties
-                }
-                className={
-                  block.compact
-                    ? "text-sm font-medium leading-snug text-fg"
-                    : "text-xl font-medium leading-snug text-fg"
-                }
-              >
-                {withEmphasis(item)}
-              </li>
-            ))}
-          </ul>
-        </div>
+        <ImpactList
+          label={block.label}
+          items={block.items}
+          compact={block.compact}
+          className={narrow}
+        />
       );
 
     case "pairs":
@@ -1181,7 +1211,7 @@ export function CaseStudyStory({ story }: { story: CaseStudy }) {
           heading={story.overview.heading}
           blocks={story.overview.blocks}
         />
-      ) : (
+      ) : story.summary?.length || story.summaryMedia?.length ? (
         <StorySection
           split={split}
           id={ids[0]}
@@ -1193,7 +1223,9 @@ export function CaseStudyStory({ story }: { story: CaseStudy }) {
               : []),
           ]}
         />
-      )}
+      ) : /* a story whose opening matter lives in the header has no second
+             section to give it — an empty Overview frame is worse than none */
+      null}
       {/* Heading left, copy in the right band — and never the pinned split, so
           the three Spaces screens still run the full width beneath rather than
           sitting shrunk in a column beside the copy. */}

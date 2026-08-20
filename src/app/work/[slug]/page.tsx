@@ -11,7 +11,11 @@ import { BracketLink } from "@/components/BracketLink";
 import { PageBlur } from "@/components/PageBlur";
 import ScrollReveal from "@/components/ScrollReveal";
 import GlitchInitial from "@/components/GlitchInitial";
-import { CaseStudyStory, storyRailItems } from "@/components/CaseStudyStory";
+import {
+  CaseStudyStory,
+  ImpactList,
+  storyRailItems,
+} from "@/components/CaseStudyStory";
 import { CoverVideo } from "@/components/CoverVideo";
 import SectionRail from "@/components/SectionRail";
 
@@ -51,6 +55,26 @@ export default async function CaseStudy({ params }: Params) {
   const { slug } = await params;
   const project = projects.find((p) => p.slug === slug);
   if (!project) notFound();
+
+  // Defined once: it sits beside Year when the header's right-hand cells have
+  // been given over to metrics, and in the right-hand run otherwise.
+  const websiteCell = (
+    <Meta label="Website">
+      {project.link ? (
+        <span className="-ml-3 inline-block text-sm">
+          {/* literal brackets: the drawn corner ones need a padded box, which
+              this cell's line of text doesn't give them */}
+          <BracketLink
+            label="[ Visit ]"
+            href={project.link}
+            bracketsMode="none"
+          />
+        </span>
+      ) : (
+        <span className="text-muted">Not public</span>
+      )}
+    </Meta>
+  );
 
   return (
     <>
@@ -114,26 +138,34 @@ export default async function CaseStudy({ params }: Params) {
             wordmark, the other three under the statement. Four even columns
             spread them across the full width and broke that alignment. */}
         <div className="title-intro mx-auto mt-10 grid w-full grid-cols-1 gap-x-8 gap-y-8 page-gutter md:grid-cols-2 md:gap-x-12 lg:mt-14">
-          <Meta label="Year">{project.year}</Meta>
-          <div className="grid grid-cols-1 gap-x-8 gap-y-8 sm:grid-cols-3 md:gap-x-12">
-            <Meta label="Industry">{project.industry}</Meta>
-            <Meta label="Scope">{project.scope}</Meta>
-            <Meta label="Website">
-              {project.link ? (
-                <span className="-ml-3 inline-block text-sm">
-                  {/* literal brackets: the drawn corner ones need a padded
-                      box, which this cell's line of text doesn't give them */}
-                  <BracketLink
-                    label="[ Visit ]"
-                    href={project.link}
-                    bracketsMode="none"
-                  />
-                </span>
-              ) : (
-                <span className="text-muted">Not public</span>
-              )}
-            </Meta>
-          </div>
+          {/* Year keeps the left, under the wordmark. Where metrics have taken
+              the right-hand cells, the website link joins Year rather than being
+              dropped — it is the one cell of the three that is a way out of the
+              page, not a description of it. */}
+          {project.heroMetrics?.length ? (
+            /* the same three-column rhythm the right-hand run uses, so the
+               gap between Year and Website matches the one between Scope and
+               Website on a story that keeps those cells. The third column is
+               left empty rather than letting two cells spread across the half. */
+            <div className="grid grid-cols-1 gap-x-8 gap-y-8 sm:grid-cols-3 md:gap-x-12">
+              <Meta label="Year">{project.year}</Meta>
+              {websiteCell}
+            </div>
+          ) : (
+            <Meta label="Year">{project.year}</Meta>
+          )}
+          {/* A case study whose numbers are the headline carries them here, in
+              the story's own impact frame, rather than in a section below whose
+              only content they would be. */}
+          {project.heroMetrics?.length ? (
+            <ImpactList items={project.heroMetrics} compact />
+          ) : (
+            <div className="grid grid-cols-1 gap-x-8 gap-y-8 sm:grid-cols-3 md:gap-x-12">
+              <Meta label="Industry">{project.industry}</Meta>
+              <Meta label="Scope">{project.scope}</Meta>
+              {websiteCell}
+            </div>
+          )}
         </div>
 
         {/* cover — full viewport width, in the footer's gutters. When the

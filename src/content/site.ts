@@ -230,6 +230,11 @@ export type CaseStudy = {
 export type Project = {
   /* url segment — the case study lives at /work/<slug> */
   slug: string;
+  /* Key metrics for the header, in place of the industry / scope / website
+     cells. Same frame the story uses for an `impact` block, so a case study
+     whose numbers are the headline can lead with them instead of burying them
+     in a second section. One line each; `**bold**` works. */
+  heroMetrics?: string[];
   title: string;
   description: string;
   tags: string[];
@@ -728,30 +733,22 @@ export const projects: Project[] = [
     link: "https://shopos.ai/feature/brand-memory",
     image: "/cover-ShopOS.webp",
     statement:
-      "Teaching AI to remember a brand, so no one explains it twice",
+      "Teaching AI to remember a brand, so no one explains it twice.",
+    /* Carried in the header rather than as a section of its own, which is all
+       that section had in it. Unlabelled: the numbers stand on their own here,
+       and the story still marks them as internal benchmarks where it discusses
+       them. */
+    heroMetrics: [
+      "≈3× fewer tokens per generation",
+      "3.4× more accurate retrieval",
+      "10+ brand attributes held per query",
+    ],
     industry: "AI, Commerce",
     scope: "Product Design, AI Systems, Experimentation",
     story: {
+      /* a newline opens a new paragraph in the header's subhead */
       subhead:
-        "From a simple brand-context feature to the shared memory layer behind AI agents, and the experiment that changed when users should encounter it.",
-      summary: [
-        {
-          label: "Challenge",
-          text: "Generative AI could create polished outputs, but it could not reliably retain a brand's visual language, voice, product relationships, and rules across generations.",
-        },
-        {
-          label: "Approach",
-          text: "Start with the brand's existing source of truth, turn it into structured memory, then evolve that memory as agents and workflows demand more context.",
-        },
-        {
-          label: "Solution",
-          text: "Brand DNA → contextual memory → structured context → AI agents, with memory introduced when it becomes useful rather than forced during onboarding.",
-        },
-        {
-          label: "Outcome",
-          text: "Brand Memory evolved from a generation feature into shared product infrastructure. An onboarding experiment also showed that forcing setup was not the right answer.",
-        },
-      ],
+        "AI could already make good work. The problem was that it kept forgetting who it was making it for. Every new request meant explaining the brand again: how it looks, how it sounds, which products belong together, and what it should never do. So I worked on a way to capture that context once, carry it across workflows, and make it available when AI actually needed it.\nThe interesting part wasn't building memory. It was figuring out what was worth remembering, and when the user should have to think about it.",
       role: [
         {
           label: "Owned",
@@ -768,69 +765,81 @@ export const projects: Project[] = [
       ],
       sections: [
         {
-          act: "Act One: The Memory",
+          act: "I. THE PROBLEM",
           heading: "AI could generate. It couldn't remember.",
           blocks: [
             {
               type: "p",
-              text: "The product could produce a striking image. It could not reliably produce a branded one. Every new generation carried the cost of re-explaining the brand.",
+              text: "We could make a great image. Then we made another one. And somehow the brand looked different. The colours changed. The tone drifted. Products stopped feeling related. So we'd explain the brand again. And then again.",
             },
-          ],
-        },
-        {
-          railSkip: true,
-          heading: "The problem was not generation. It was context.",
-          blocks: [
             {
               type: "p",
-              text: "Without persistent context, users had to keep supplying the same information: what the brand sounds like, what it looks like, which products belong together, and what rules must never be broken.",
+              text: "The problem wasn't generation anymore.",
             },
-            {
-              type: "pull",
-              text: "The opportunity was simple: make the brand context reusable.",
-            },
+            { type: "pull", text: "It was context." },
             {
               type: "media",
               items: [
                 {
                   kind: "visual",
-                  title: "Before / after generation",
-                  note: "A generic generation beside a brand-consistent one: the proof of the problem, before the product enters.",
+                  title: "Before / after",
+                  note: "One generic generation beside one brand-consistent generation. The point should be obvious without reading the caption: the same kind of task, a very different brand understanding.",
                 },
               ],
             },
           ],
         },
         {
-          railSkip: true,
-          heading: "Before Brand Memory was a system, it was a whiteboard.",
+          act: "II. THE FIRST IDEA",
+          heading: "What if the brand only had to explain itself once?",
           blocks: [
             {
-              type: "p",
-              text: "I mapped the signals that could influence generation and asked what a brand already had that could become a source of truth.",
+              type: "notes",
+              groups: [
+                { text: "We started with what the brand already had." },
+                {
+                  bullets: [
+                    "Its website.",
+                    "Its products.",
+                    "Its language.",
+                    "Its visual rules.",
+                    "Its references.",
+                  ],
+                },
+              ],
             },
             {
-              type: "pull",
-              text: "A brand already has a source of truth. Start there.",
+              type: "p",
+              text: "We didn't want another giant brand questionnaire. The brand had already done most of the explaining. So we started with the website.",
             },
+            { type: "pull", text: "One URL. The whole brand." },
             {
               type: "media",
               items: [
                 {
                   kind: "visual",
-                  title: "Early exploration",
-                  note: "Sketches, early IA, whiteboard or flow diagram, visibly rougher than the finished UI.",
+                  title: "The first exploration",
+                  note: "Rough exploration rather than polished UI: whiteboard, IA, sketches, early thinking. The point is that this was still a problem being figured out.",
                 },
               ],
             },
           ],
         },
         {
-          heading: "One URL. The whole brand.",
+          act: "III. WHAT WAS WORTH REMEMBERING?",
+          heading: "A brand has a memory. A campaign has a mood.",
           blocks: [
             {
               type: "p",
-              text: "Instead of asking users to complete a long brand brief, the first version started with the asset they already owned: their website.",
+              text: "This was one of the first distinctions that helped. Some things shouldn't change: the brand's visual language, its voice, its product relationships, its rules. Other things should. A campaign can be playful today and serious tomorrow.",
+            },
+            { type: "p", text: "So we separated the two." },
+            {
+              type: "pairs",
+              items: [
+                { label: "Brand DNA", text: "What needed to stay true." },
+                { label: "Mood", text: "What could change." },
+              ],
             },
             {
               type: "media",
@@ -838,42 +847,32 @@ export const projects: Project[] = [
                 {
                   kind: "ui",
                   title: "Website → Brand DNA",
-                  note: "The key states: URL input → scan → extracted Brand DNA. Two or three screens, not the whole flow.",
+                  note: "URL → scan → extracted Brand DNA. Two or three screens: this is where the reader sees the actual product taking shape.",
                 },
-              ],
-            },
-          ],
-        },
-        {
-          railSkip: true,
-          heading: "A brand has a memory. A campaign has a mood.",
-          blocks: [
-            {
-              type: "p",
-              text: "Brand DNA captures what should stay true. Mood Boards capture the direction for right now. The distinction mattered because campaigns change while brands persist.",
-            },
-            {
-              type: "media",
-              items: [
                 {
                   kind: "ui",
-                  title: "Brand DNA + Mood Boards",
-                  note: "Brand DNA, editable brand attributes or Mood Boards: the place for an early → final evolution.",
+                  title: "Brand DNA + Mood",
+                  note: "The distinction drawn out — Brand DNA, what stays true, beside Mood, what changes. An important concept, so it should not be buried in copy.",
                 },
               ],
             },
           ],
         },
         {
-          heading: "Then the agents arrived.",
+          act: "IV. THEN THE AGENTS ARRIVED",
+          heading: "Suddenly, everyone needed the same memory.",
           blocks: [
             {
               type: "p",
-              text: "ShopOS expanded from generation into AI agents across commerce workflows. Now every agent needed the same brand context.",
+              text: "At first, Brand Memory helped one generation workflow. Then more workflows started using it. Then the agents arrived. Search needed the brand. Creative needed the brand. Product workflows needed the brand.",
+            },
+            {
+              type: "p",
+              text: "We could keep copying the same context into every workflow. Or we could give them all the same memory.",
             },
             {
               type: "pull",
-              text: "Brand Memory could no longer just be a feature. It had to become infrastructure.",
+              text: "So Brand Memory stopped being just a feature. It became part of the system underneath everything.",
             },
             {
               type: "media",
@@ -881,38 +880,56 @@ export const projects: Project[] = [
                 {
                   kind: "ui",
                   title: "An agent using Brand Memory",
-                  note: "An agent or workflow consuming Brand Memory: proof that memory powers the rest of the product.",
+                  note: "One agent or workflow consuming the same Brand Memory. The visual should answer: this isn't just a settings page anymore.",
                 },
               ],
             },
           ],
         },
         {
-          heading: "From memory to structured context.",
+          act: "V. FROM MEMORY TO STRUCTURED CONTEXT",
+          heading: "We still had to teach the AI how to remember.",
           blocks: [
             {
               type: "p",
-              text: "A flat history contains everything but gives an agent little structure. Interactions became units, related units became clusters, and clusters connected into a retrievable context model.",
+              text: "A giant history had everything in it. But that didn't mean the AI knew what mattered. So we started breaking the memory into smaller pieces. Related things stayed together. Useful things became easier to find.",
+            },
+            {
+              type: "pull",
+              text: "When an agent needed context, it should find the right part of the brand and not the entire history.",
+            },
+            {
+              type: "stats",
+              label: "Internal benchmarks",
+              items: [
+                { value: "≈3×", label: "fewer tokens" },
+                { value: "3.4×", label: "retrieval accuracy" },
+                { value: "10+", label: "brand attributes per query" },
+              ],
             },
             {
               type: "media",
               items: [
                 {
                   kind: "visual",
-                  title: "Context graph",
-                  note: "The context graph or a simplified architecture visual, annotated with what the agent retrieves and why.",
+                  title: "Structured memory",
+                  note: "Not a complicated technical graph: brand information → structured memory → agent retrieves what it needs, with the benchmark numbers beside it.",
                 },
               ],
             },
           ],
         },
         {
-          act: "Act Two: The Test",
-          heading: "The product worked. The onboarding question didn't.",
+          act: "VI. THE PRODUCT WORKED",
+          heading: "The onboarding question didn't.",
           blocks: [
             {
               type: "p",
-              text: "By this point, Brand Memory worked as a product. But onboarding raised a different question: should setup be optional or mandatory?",
+              text: "By this point, Brand Memory worked. Now we had a different question. Should setup be optional? Or should we make it mandatory?",
+            },
+            {
+              type: "p",
+              text: "We made a pretty reasonable assumption: if memory is important, make people set it up. So we tested it.",
             },
             {
               type: "media",
@@ -920,59 +937,54 @@ export const projects: Project[] = [
                 {
                   kind: "ui",
                   title: "Optional vs mandatory",
-                  note: "The two onboarding variants side by side, readable enough that the comparison carries the story.",
+                  note: "A — optional, where Brand Memory can be skipped. B — mandatory, where it is required. Keep the comparison extremely easy to scan.",
                 },
               ],
             },
-            { type: "pull", text: "The number said ship it." },
+          ],
+        },
+        {
+          act: "VII. THE NUMBER WASN'T THE STORY",
+          heading: "It looked like a clean win. It wasn't.",
+          blocks: [
+            {
+              type: "p",
+              text: "The mandatory variant gave us a +12pp lift in completed generation. For a moment, it looked obvious.",
+            },
             {
               type: "stats",
               items: [
-                {
-                  value: "+12pp",
-                  label: "completed generation, mandatory variant",
-                },
+                { value: "+12pp", label: "completed generation" },
               ],
             },
-            { type: "p", text: "It looked like a clean win. It wasn't." },
             {
               type: "p",
-              text: "The sample was small. One cohort had missing Brand Memory telemetry. And the headline metric sat beside weaker signals: lower chat creation and a much higher generation failure rate.",
+              text: "Then we looked closer. The sample was small. One cohort had missing Brand Memory telemetry. And the headline metric sat beside weaker signals, including lower chat creation and a much higher generation failure rate.",
             },
             {
               type: "media",
               items: [
                 {
                   kind: "visual",
-                  title: "Experiment metrics",
-                  note: "A clean table or analytics view with the +12pp highlighted and the contradictory metrics around it.",
+                  title: "Experiment results",
+                  note: "An evidence card rather than a dashboard screenshot: +12pp completed generation, and underneath it the small sample, the missing telemetry, the higher generation failure and the lower chat creation. The contradiction should be obvious.",
                 },
               ],
             },
           ],
         },
         {
-          railSkip: true,
-          heading:
-            "A variant that wins on one metric is not necessarily a winner.",
+          act: "VIII. ONE USER IN THIRTY-SEVEN FINISHED THE SCAN",
+          heading: "That was the part we couldn't ignore.",
           blocks: [
             {
               type: "p",
-              text: "The question was no longer which variant converted better. It was whether the experiment was measuring the outcome we actually cared about.",
-            },
-          ],
-        },
-        {
-          heading: "One user in thirty-seven finished the scan.",
-          blocks: [
-            {
-              type: "p",
-              text: "The control cohort had usable telemetry. Twenty people clicked Scan. Seventeen skipped. One entered a URL. One completed the scan. Nobody failed the scan.",
+              text: "The control cohort gave us the clearest signal. Twenty clicked Scan. Seventeen skipped. One entered a URL. One completed.",
             },
             {
               type: "stats",
               items: [
-                { value: "20", label: "clicked Scan" },
+                { value: "20", label: "clicked" },
                 { value: "17", label: "skipped" },
                 { value: "1", label: "entered a URL" },
                 { value: "1", label: "completed" },
@@ -981,181 +993,151 @@ export const projects: Project[] = [
             },
             {
               type: "pull",
-              text: "The scanner wasn't simply broken. People were starting the task and walking away.",
+              text: "Nobody failed. People were just walking away.",
             },
             {
               type: "media",
               items: [
                 {
                   kind: "visual",
-                  title: "Brand Memory funnel",
-                  note: "The drop-off drawn out: 20 clicked Scan → 17 skipped → 1 entered a URL → 1 completed → 0 failed.",
+                  title: "The funnel",
+                  note: "Almost embarrassingly simple: 20 clicked → 17 skipped → 1 entered a URL → 1 completed → 0 failed. One of the strongest pieces of evidence here, so let the numbers breathe.",
                 },
               ],
             },
           ],
         },
         {
-          railSkip: true,
+          act: "IX. THE QUESTION CHANGED",
           heading: "The funnel was measuring passage, not accomplishment.",
           blocks: [
             {
               type: "p",
-              text: "A click on Scan is easy to instrument. A brand actually having usable memory is a state that lives somewhere else. The dashboard could show users passing through a step without proving that the step succeeded.",
+              text: "A click was easy to count. It didn't tell us whether the user ended up with useful brand memory. We had been asking which onboarding version wins. That wasn't the real question anymore.",
             },
             {
               type: "pull",
-              text: "Both variants delivered users who got past the Brand Memory screen. Neither delivered users with Brand Memory.",
-            },
-            {
-              type: "p",
-              text: "That made the original A/B question secondary. The real problem was when and why users should care about memory.",
+              text: "Why are we asking users to care about memory here at all?",
             },
             {
               type: "media",
               items: [
                 {
                   kind: "visual",
-                  title: "Session replay / behaviour",
-                  note: "A redacted replay frame or a simplified interaction trace, where the human enters the story.",
+                  title: "Session behaviour",
+                  note: "A session replay, interaction trace or simplified behavioural visual. The point isn't the analytics: it is where I stopped trusting the aggregate number and looked at what people were actually doing.",
                 },
               ],
             },
           ],
         },
         {
-          act: "Act Three: The Decision",
-          heading: "Move the ask to where the need appears.",
+          act: "X. THE BIGGEST CHANGE",
+          heading: "We moved the ask to where the need appears.",
           blocks: [
             {
               type: "p",
-              text: "The recommendation was not to ship either variant and not to rerun the same test. Both variants accepted the premise that Brand Memory belonged in onboarding.",
+              text: "We could have made Brand Memory mandatory. We could have run the same test again. But both options accepted the same premise: that Brand Memory belonged in onboarding. We weren't convinced anymore.",
+            },
+            {
+              type: "p",
+              text: "So we changed the order. Generate first. Let the user see the work. Let them notice when something feels off. Then introduce memory when it can actually help.",
+            },
+            {
+              type: "comparison",
+              headings: ["Before", "After"],
+              rows: [
+                { before: "Sign up", after: "Generate" },
+                {
+                  before: "Brand Memory",
+                  after: "'This doesn't feel like my brand.'",
+                },
+                { before: "Generate", after: "Brand Memory" },
+                { before: "—", after: "Generate again" },
+              ],
             },
             {
               type: "pull",
-              text: "Instead, introduce it when the user has a concrete reason to want the system to know their brand.",
+              text: "The request didn't change. The moment changed.",
             },
             {
               type: "media",
               items: [
                 {
                   kind: "ui",
-                  title: "Before → after experience",
-                  note: "Before: sign up → Brand Memory → generate. After: generate → disappointing result → Brand Memory → generate again.",
-                },
-              ],
-            },
-            { type: "pull", text: "The ask is identical. The moment is not." },
-            {
-              type: "p",
-              text: "The experiment changed the product decision from how do we force setup? to when does the user actually need memory?",
-            },
-          ],
-        },
-        {
-          heading: "What changed because of the decision.",
-          blocks: [
-            {
-              type: "pairs",
-              items: [
-                {
-                  label: "UX",
-                  text: "Forced onboarding → contextual memory.",
-                },
-                {
-                  label: "Telemetry",
-                  text: "Instrument missing upstream events before asking the experiment question again.",
-                },
-                {
-                  label: "Product",
-                  text: "Fix the scan experience itself rather than optimising around it.",
-                },
-                {
-                  label: "Experiment",
-                  text: "Run again only with sufficient sample size and complete instrumentation.",
-                },
-              ],
-            },
-            {
-              type: "media",
-              items: [
-                {
-                  kind: "ui",
-                  title: "Final onboarding / contextual memory",
-                  note: "The redesigned interaction if it exists, otherwise a clean flow diagram.",
+                  title: "Before → after",
+                  note: "The hero visual of the second half: sign up → Brand Memory → generate, against generate → this doesn't feel like my brand → Brand Memory → generate again.",
                 },
               ],
             },
           ],
         },
         {
-          act: "Act Four: What It Became",
+          act: "XI. WHAT IT BECAME",
           heading: "Brand Memory became more than a feature.",
           blocks: [
             {
               type: "p",
-              text: "It evolved from a way to improve one generation into shared context that could support AI agents across the product.",
+              text: "It started as a way to make one generation workflow better. Then it became reusable context. Then other workflows needed it. Then agents needed it.",
             },
             {
               type: "pairs",
               items: [
                 {
-                  label: "Product",
+                  label: "System",
                   text: "Brand DNA → contextual memory → structured context → AI agents.",
                 },
                 {
-                  label: "UX",
+                  label: "Product",
                   text: "Forced setup → memory introduced when it becomes useful.",
-                },
-                {
-                  label: "Decision",
-                  text: "+12pp apparent lift → do not ship.",
-                },
-                {
-                  label: "System",
-                  text: "Internal benchmarks: ≈3× fewer tokens, 3.4× retrieval accuracy, and 10+ brand attributes per query.",
-                },
-              ],
-            },
-            {
-              type: "media",
-              items: [
-                {
-                  kind: "ui",
-                  title: "Final product hero",
-                  note: "The most polished production Brand Memory screen, as the visual bookend.",
-                },
-              ],
-            },
-          ],
-        },
-        {
-          heading: "What I would do differently.",
-          blocks: [
-            {
-              type: "points",
-              items: [
-                {
-                  title: "Validate the experiment before running it.",
-                  text: "Sample size and instrumentation should be conditions of entry, not discoveries after the test.",
-                },
-                {
-                  title: "Measure accomplishment, not just passage.",
-                  text: "A click tells you a user touched a step. It does not tell you the step worked.",
-                },
-                {
-                  title: "Use sessions earlier.",
-                  text: "Aggregate data can locate a problem. Watching behaviour can explain it.",
                 },
               ],
             },
             {
               type: "pull",
-              text: "The biggest outcome wasn't that we built an AI that could remember. It was learning when it should remember.",
+              text: "+12pp wasn't enough reason to ship. The rest of the evidence told us why.",
+            },
+          ],
+        },
+        {
+          act: "XII. WHAT I WOULD DO DIFFERENTLY",
+          heading:
+            "We should have checked the experiment before trusting the experiment.",
+          blocks: [
+            {
+              type: "p",
+              text: "The biggest miss wasn't the product decision. It was the experiment setup. We were missing important telemetry. The sample wasn't strong enough. And we were measuring whether someone passed through a step, rather than whether the step actually worked. Next time, I'd make those conditions of entry.",
+            },
+            {
+              type: "pull",
+              text: "Good instrumentation first. Then the experiment.",
             },
             {
               type: "p",
-              text: "Brand Memory started as a feature for better generations. It became a system for giving AI the context to make better decisions.",
+              text: "And I'd use session behaviour earlier. Aggregate data tells you where people leave. Watching them tells you why.",
+            },
+          ],
+        },
+        {
+          act: "XIII. THE TAKEAWAY",
+          heading:
+            "The hard part wasn't teaching AI to remember. It was knowing when memory mattered.",
+          layout: "stacked",
+          /* Deliberately the same serial Adaptive Intelligence closes on — the
+             mark reads as the same printed artefact across both stories. Keep
+             the two in step if either changes. All digits either way: the code
+             glitches through a hex charset before it settles, so a serial
+             carrying % @ or a non-hex letter would snap to characters that
+             never appeared in the churn, and change width doing it. */
+          barcode: "640509-040147",
+          blocks: [
+            {
+              type: "p",
+              text: "We started by thinking the answer was simple: remember more. It wasn't.\nThe better question was what AI should remember, and when it should use it.\nThat changed how I think about AI products.",
+            },
+            {
+              type: "pull",
+              text: "Don't make the user manage the system. Let the system earn the next step.",
             },
           ],
         },
