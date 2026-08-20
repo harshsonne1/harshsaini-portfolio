@@ -749,6 +749,9 @@ export const projects: Project[] = [
       /* a newline opens a new paragraph in the header's subhead */
       subhead:
         "AI could already make good work. The problem was that it kept forgetting who it was making it for. Every new request meant explaining the brand again: how it looks, how it sounds, which products belong together, and what it should never do. So I worked on a way to capture that context once, carry it across workflows, and make it available when AI actually needed it.\nThe interesting part wasn't building memory. It was figuring out what was worth remembering, and when the user should have to think about it.",
+      /* heading and copy pin on the left while the beat's figures scroll past on
+         the right, the way the other story reads */
+      layout: "split",
       role: [
         {
           label: "Owned",
