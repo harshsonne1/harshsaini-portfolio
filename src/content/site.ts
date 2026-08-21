@@ -268,7 +268,12 @@ export const projects: Project[] = [
       "Making AI video generation easier to control, by breaking generation into simple steps.",
     tags: ["AI Systems", "Prompt Architecture"],
     link: "https://shopos.ai/agents/monica",
-    /* no still cover — the video is the cover, on the card and on the page */
+    /* The video's own first frame. Both the work tile and the case study cover
+       paint this immediately and play the video over it — without it there was
+       nothing to show until a 1.1MB webm had loaded a frame, so the tile sat
+       empty while the other one was already there. Taken at t=0, so playback
+       starts on the same frame and there is no jump into it. */
+    image: "/adaptive-intelligence-cover.webp",
     video: "/adaptive-intelligence.webm",
     statement: "Humans set the direction. AI does the heavy lifting.",
     industry: "AI, Fashion, Commerce",
