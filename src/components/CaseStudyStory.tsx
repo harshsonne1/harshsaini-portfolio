@@ -359,7 +359,9 @@ function Media({ item }: { item: CaseStudyMedia }) {
         {item.kind === "ui" ? "UI" : item.kind}
       </span>
       <span className="text-lg text-fg">{item.title}</span>
-      <span className="max-w-3xl text-sm leading-relaxed text-muted">
+      {/* set with the story's body copy rather than a size below it — in a
+          figure that has no asset yet, this note is the copy */}
+      <span className="max-w-3xl text-base leading-relaxed text-muted">
         {item.note}
       </span>
     </figure>

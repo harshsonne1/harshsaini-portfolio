@@ -757,18 +757,18 @@ export const projects: Project[] = [
       /* heading and copy pin on the left while the beat's figures scroll past on
          the right, the way the other story reads */
       layout: "split",
-      role: [
+      /* prose in place of the owned / built / guided rows */
+      roleText:
+        "I defined what the AI needed to remember, how people would interact with that memory, and how it would be used across the product. I designed the experience, built the frontend, and shipped it. Engineering built the underlying memory system.",
+      /* closes My role, before the story opens */
+      roleMedia: [
         {
-          label: "Owned",
-          text: "Product definition, UX, information architecture, memory model and experimentation framing.",
-        },
-        {
-          label: "Built",
-          text: "Production frontend, interactions and API-connected experiences.",
-        },
-        {
-          label: "Guided",
-          text: "Engineering implementation and the ship / no-ship decision.",
+          kind: "ui",
+          title: "Brand Memory in the product",
+          note: "The product film: a generation that gets the image but not the brand, the assets and persona gathered into memory, then the same request holding consistent with memory switched on.",
+          src: "/case-studies/brand-memory/demo.webm",
+          width: 960,
+          height: 540,
         },
       ],
       sections: [
