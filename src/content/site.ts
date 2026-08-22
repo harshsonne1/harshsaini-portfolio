@@ -69,7 +69,12 @@ export type CaseStudyMedia = {
   src?: string;
   /* a drawn figure rather than a file — rendered by its own component, and
      takes the slot `src` would have */
-  figure?: "pipeline" | "context" | "input-flow" | "workflow";
+  figure?:
+    | "pipeline"
+    | "context"
+    | "input-flow"
+    | "workflow"
+    | "memory-compare";
   /* Light-theme counterpart of `src`, for figures that are themselves a
      screenshot of a themed UI. When set, `src` is the dark-theme one and the
      page shows whichever matches the theme the reader is in. */
@@ -791,7 +796,8 @@ export const projects: Project[] = [
                 {
                   kind: "visual",
                   title: "Before / after",
-                  note: "One generic generation beside one brand-consistent generation. The point should be obvious without reading the caption: the same kind of task, a very different brand understanding.",
+                  note: "One prompt, run with memory off and on: a plain cut-out beside the cream-palette hero shot it asked for.",
+                  figure: "memory-compare",
                 },
               ],
             },
@@ -825,9 +831,12 @@ export const projects: Project[] = [
               type: "media",
               items: [
                 {
-                  kind: "visual",
-                  title: "The first exploration",
-                  note: "Rough exploration rather than polished UI: whiteboard, IA, sketches, early thinking. The point is that this was still a problem being figured out.",
+                  kind: "ui",
+                  title: "One brand, everywhere",
+                  note: "The idea as a film: one composer, one switch, and the brand carried into whatever gets asked for next.",
+                  src: "/case-studies/brand-memory/first-idea.webm",
+                  width: 1280,
+                  height: 720,
                 },
               ],
             },
@@ -860,7 +869,7 @@ export const projects: Project[] = [
                 {
                   kind: "ui",
                   title: "Brand DNA + Mood",
-                  note: "The distinction drawn out — Brand DNA, what stays true, beside Mood, what changes. An important concept, so it should not be buried in copy.",
+                  note: "The distinction drawn out: Brand DNA, what stays true, beside Mood, what changes. An important concept, so it should not be buried in copy.",
                 },
               ],
             },
@@ -945,7 +954,7 @@ export const projects: Project[] = [
                 {
                   kind: "ui",
                   title: "Optional vs mandatory",
-                  note: "A — optional, where Brand Memory can be skipped. B — mandatory, where it is required. Keep the comparison extremely easy to scan.",
+                  note: "A is optional, where Brand Memory can be skipped. B is mandatory, where it is required. Keep the comparison extremely easy to scan.",
                 },
               ],
             },

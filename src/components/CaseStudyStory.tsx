@@ -25,6 +25,7 @@ import { PipelineDiagram } from "@/components/PipelineDiagram";
 import { ContextDiagram } from "@/components/ContextDiagram";
 import { InputFlowDiagram } from "@/components/InputFlowDiagram";
 import { WorkflowCanvas } from "@/components/WorkflowCanvas";
+import { MemoryCompare } from "@/components/MemoryCompare";
 import { StickyActRun, type ActRunSection } from "@/components/StickyActRun";
 import type { RailItem } from "@/components/SectionRail";
 
@@ -278,6 +279,16 @@ function Media({ item }: { item: CaseStudyMedia }) {
   // The workflow canvas reflows between a wide arrangement and a tall one, so
   // its shape is not fixed and it sets its own. Handed the slot directly rather
   // than through the ratio box below, which would crop one of the two.
+  // Sizes itself too: a composer is the height a composer is, and the pair
+  // under it keeps the ratio the shots were cut at.
+  if (item.figure === "memory-compare") {
+    return (
+      <figure data-reveal="up">
+        <MemoryCompare />
+      </figure>
+    );
+  }
+
   if (item.figure === "workflow") {
     // No data-reveal on this one. The shared reveal fades a figure up over 0.8s
     // after a 140ms hold, and the canvas's own build-in runs off its own

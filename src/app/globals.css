@@ -1473,3 +1473,239 @@ body {
     transition: none;
   }
 }
+
+/* ---- Before / after memory (MemoryCompare.tsx) -----------------------------
+   A composer carrying one prompt and the memory switch, and the two results
+   under it. The values are the ones the panel was designed at; they sit on
+   tokens so the same figure can invert on a light page rather than staying a
+   dark card on a light ground. */
+.bmc {
+  --bmc-card: #0c0e13;
+  --bmc-line: rgb(255 255 255 / 0.12);
+  --bmc-ink: rgb(235 238 242 / 0.95);
+  --bmc-ink-dim: rgb(235 238 242 / 0.55);
+  --bmc-ink-faint: rgb(235 238 242 / 0.5);
+  --bmc-track: rgb(255 255 255 / 0.18);
+  --bmc-knob: rgb(235 238 242 / 0.85);
+  --bmc-fill: rgb(255 255 255 / 0.02);
+  --bmc-send-bg: #ffffff;
+  --bmc-send-ink: #0c0e13;
+  /* the switch once memory is on. Blue against a panel that is otherwise
+     monochrome, so switching it is the one coloured thing that happens. */
+  --bmc-on: #3b82f6;
+  --bmc-on-knob: #ffffff;
+  --bmc-on-line: rgb(59 130 246 / 0.45);
+  --bmc-label: #8c929b;
+  --bmc-shadow: 0 12px 16px rgb(0 0 0 / 0.2), 0 40px 80px -50px rgb(0 0 0 / 0.9);
+
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  width: 100%;
+  font-family: var(--font-sans);
+}
+
+:root[data-theme="light"] .bmc {
+  --bmc-card: #ffffff;
+  --bmc-line: rgb(0 0 0 / 0.12);
+  --bmc-ink: rgb(26 26 25 / 0.95);
+  --bmc-ink-dim: rgb(26 26 25 / 0.55);
+  --bmc-ink-faint: rgb(26 26 25 / 0.5);
+  --bmc-track: rgb(0 0 0 / 0.18);
+  --bmc-knob: #ffffff;
+  --bmc-fill: rgb(0 0 0 / 0.02);
+  --bmc-send-bg: #1a1a19;
+  --bmc-send-ink: #ffffff;
+  /* a step deeper, to hold its contrast against a white card */
+  --bmc-on: #2563eb;
+  --bmc-on-knob: #ffffff;
+  --bmc-on-line: rgb(37 99 235 / 0.4);
+  --bmc-label: #56565e;
+  --bmc-shadow: 0 10px 14px rgb(0 0 0 / 0.06), 0 30px 60px -45px rgb(0 0 0 / 0.25);
+}
+
+/* ---- the composer ---- */
+.bmc-composer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  padding: 16px 16px 12px;
+  border: 1px solid var(--bmc-line);
+  border-radius: 20px;
+  background: var(--bmc-card);
+  box-shadow: var(--bmc-shadow);
+}
+.bmc-prompt {
+  min-height: 54px;
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--bmc-ink);
+  overflow-wrap: break-word;
+}
+/* the caret the prompt was left sitting on */
+.bmc-caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.05em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: currentColor;
+  animation: bmc-blink 1.1s steps(1, end) infinite;
+}
+@keyframes bmc-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.bmc-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+.bmc-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.bmc-round {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 9999px;
+}
+.bmc-add {
+  border: 1px solid var(--bmc-line);
+  color: var(--bmc-ink-dim);
+}
+.bmc-send {
+  background: var(--bmc-send-bg);
+  color: var(--bmc-send-ink);
+}
+
+/* ---- the memory switch ---- */
+.bmc-switch {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 14px 0 8px;
+  border: 1px solid var(--bmc-line);
+  border-radius: 9999px;
+  background: var(--bmc-fill);
+  transition: border-color 0.3s;
+}
+.bmc-switch.is-on {
+  border-color: var(--bmc-on-line);
+}
+.bmc-track {
+  position: relative;
+  flex-shrink: 0;
+  width: 33px;
+  height: 18px;
+  border-radius: 9999px;
+  background: var(--bmc-track);
+  transition: background 0.3s;
+}
+.bmc-switch.is-on .bmc-track {
+  background: var(--bmc-on);
+}
+.bmc-knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  background: var(--bmc-knob);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.4);
+  transition:
+    left 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+    background 0.3s;
+}
+/* 33 wide less the 14 knob and its 2px inset either side */
+.bmc-switch.is-on .bmc-knob {
+  left: 17px;
+  background: var(--bmc-on-knob);
+}
+.bmc-switch-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--bmc-ink-faint);
+  white-space: nowrap;
+  transition: color 0.3s;
+}
+.bmc-switch.is-on .bmc-switch-label {
+  color: var(--bmc-ink);
+}
+
+/* ---- the two results ---- */
+.bmc-pair {
+  display: flex;
+  gap: 24px;
+  width: 100%;
+  /* the ratio the pair was cut at, so the panels keep their shape */
+  aspect-ratio: 736 / 376;
+}
+.bmc-panel {
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+  flex-direction: column;
+  gap: 12px;
+}
+.bmc-label {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--bmc-label);
+}
+.bmc-shot {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--bmc-line);
+  border-radius: 12px;
+}
+.bmc-shot img {
+  object-fit: cover;
+  /* held to the bottom of the frame: both shots stand on the same floor */
+  object-position: 50% 100%;
+}
+
+/* the pair stacks before the panels get too narrow to read */
+@media (max-width: 640px) {
+  .bmc-pair {
+    flex-direction: column;
+    aspect-ratio: auto;
+  }
+  .bmc-shot {
+    /* the ratio has to be what sets the height here. Left growing from a zero
+       basis it collapsed to nothing, the pair no longer having a height of its
+       own to divide up. */
+    flex: 0 0 auto;
+    aspect-ratio: 356 / 376;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bmc-caret {
+    animation: none;
+  }
+  .bmc-switch,
+  .bmc-track,
+  .bmc-knob,
+  .bmc-switch-label {
+    transition: none;
+  }
+}
