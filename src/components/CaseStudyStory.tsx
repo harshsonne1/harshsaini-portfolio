@@ -511,7 +511,7 @@ function Block({
       return (
         <p
           data-reveal="up"
-          className={`text-xl leading-snug text-fg sm:text-2xl ${narrow}`}
+          className={`text-base leading-snug text-fg ${narrow}`}
         >
           {withEmphasis(block.text)}
         </p>
