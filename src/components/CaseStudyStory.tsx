@@ -26,6 +26,8 @@ import { ContextDiagram } from "@/components/ContextDiagram";
 import { InputFlowDiagram } from "@/components/InputFlowDiagram";
 import { WorkflowCanvas } from "@/components/WorkflowCanvas";
 import { MemoryCompare } from "@/components/MemoryCompare";
+import { IterationsReel } from "@/components/IterationsReel";
+import { OnboardingGallery } from "@/components/OnboardingGallery";
 import { StickyActRun, type ActRunSection } from "@/components/StickyActRun";
 import type { RailItem } from "@/components/SectionRail";
 
@@ -285,6 +287,23 @@ function Media({ item }: { item: CaseStudyMedia }) {
     return (
       <figure data-reveal="up">
         <MemoryCompare />
+      </figure>
+    );
+  }
+
+  // Sets its own height: the run has to be several screens long for the stack
+  // to build, and each card takes the shape of the photo in it.
+  // Brings its own <figure> and caption, and sets its own height from the grid.
+  if (item.figure === "onboarding-gallery") {
+    return <OnboardingGallery />;
+  }
+
+  if (item.figure === "iterations-reel" || item.figure === "mood-reel") {
+    return (
+      <figure>
+        <IterationsReel
+          set={item.figure === "mood-reel" ? "mood" : "exploration"}
+        />
       </figure>
     );
   }
@@ -942,12 +961,16 @@ function StackedSection({
               {act}
             </div>
           )}
-          <h2
-            data-reveal="up"
-            className="max-w-3xl text-[2.25rem] leading-[1.1] text-fg"
-          >
-            {heading}
-          </h2>
+          {/* a figure-only section has none, and an empty one would still
+              take its top margin with it */}
+          {heading && (
+            <h2
+              data-reveal="up"
+              className="max-w-3xl text-[2.25rem] leading-[1.1] text-fg"
+            >
+              {heading}
+            </h2>
+          )}
           {copy.length > 0 && (
             <div className="mt-6 flex max-w-2xl flex-col gap-y-6">
               {copy.map((block, i) => (
@@ -1155,12 +1178,20 @@ function groupSections(
     const figures = section.blocks.flatMap((b) =>
       b.type === "media" ? b.items : [],
     );
+    // A figureless section that is the whole of its act has nothing to pin
+    // against, and joining would hold most of a screen of empty column open
+    // beside its copy — the run reserves that height so the copy has room to
+    // settle. Full width instead: no column, so nothing to leave empty. A
+    // figureless beat *inside* an act still joins, where the empty column is
+    // the cheaper of the two costs.
+    const aloneInAct = !!section.act && !!story.sections[i + 1]?.act;
     // Numbers need the full-width band under a section, which a run has not
     // got, so a beat that ends in them still renders on its own.
     const joins =
       split &&
       !section.layout &&
-      (figures.length > 0 || !section.blocks.some(isResult));
+      (figures.length > 0 ||
+        (!section.blocks.some(isResult) && !aloneInAct));
     if (!joins) {
       // Copy-only sections run full width. Set beside a figure column they
       // have nothing to fill it with, and their copy reads as a caption on

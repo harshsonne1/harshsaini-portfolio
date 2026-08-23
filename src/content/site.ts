@@ -74,7 +74,10 @@ export type CaseStudyMedia = {
     | "context"
     | "input-flow"
     | "workflow"
-    | "memory-compare";
+    | "memory-compare"
+    | "iterations-reel"
+    | "mood-reel"
+    | "onboarding-gallery";
   /* Light-theme counterpart of `src`, for figures that are themselves a
      screenshot of a themed UI. When set, `src` is the dark-theme one and the
      page shows whichever matches the theme the reader is in. */
@@ -184,6 +187,9 @@ export type CaseStudyBlock =
 export type CaseStudySection = {
   /* act header, printed once above the first section that carries it */
   act?: string;
+  /* Empty for a section that is only a figure — a gallery set between two acts
+     carries its own caption and needs no heading over it. Pair it with
+     `railSkip`, since a stop with no label is no use on the rail. */
   heading: string;
   /* "stacked" overrides a split story for this section: copy at the top,
      figures full width beneath it, results last. For a section whose figure
@@ -804,6 +810,28 @@ export const projects: Project[] = [
           ],
         },
         {
+          /* Between the problem and the idea: what the setup actually asked of
+             someone, before the story starts arguing about whether it should
+             have asked at all. Full width, so the length of the flow is the
+             thing you see. */
+          heading: "",
+          layout: "stacked",
+          railSkip: true,
+          blocks: [
+            {
+              type: "media",
+              items: [
+                {
+                  kind: "ui",
+                  title: "The onboarding flow, screen by screen",
+                  note: "Eight screens, from the welcome to the populated memory.",
+                  figure: "onboarding-gallery",
+                },
+              ],
+            },
+          ],
+        },
+        {
           act: "II. THE FIRST IDEA",
           heading: "What if the brand only had to explain itself once?",
           blocks: [
@@ -832,11 +860,11 @@ export const projects: Project[] = [
               items: [
                 {
                   kind: "ui",
-                  title: "One brand, everywhere",
-                  note: "The idea as a film: one composer, one switch, and the brand carried into whatever gets asked for next.",
-                  src: "/case-studies/brand-memory/first-idea.webm",
-                  width: 1280,
-                  height: 720,
+                  title: "The scan, asking for one thing",
+                  note: "The whole of setup: a URL, and the promise of a context graph on the other side of it.",
+                  src: "/case-studies/brand-memory/brand-dna-scan.webp",
+                  width: 1600,
+                  height: 1040,
                 },
               ],
             },
@@ -860,9 +888,10 @@ export const projects: Project[] = [
               type: "media",
               items: [
                 {
-                  kind: "ui",
-                  title: "Website scan to Brand Memory",
-                  note: "The scan and the early Brand Memory screen it produced.",
+                  kind: "visual",
+                  title: "Working the iterations out on a whiteboard",
+                  note: "The whiteboards behind this act, stacking as it is read: the attributes worth extracting, the scan as a pipeline, the memory screen, the wider system, and the question of what should be captured at all.",
+                  figure: "iterations-reel",
                 },
               ],
             },
@@ -896,9 +925,34 @@ export const projects: Project[] = [
               type: "media",
               items: [
                 {
+                  kind: "visual",
+                  title: "Brand DNA beside Mood",
+                  note: "What stays true, then what changes: the product line and the reference language, then one campaign's moodboard and lighting direction.",
+                  figure: "mood-reel",
+                },
+              ],
+            },
+          ],
+        },
+        {
+          /* Set between the split and the agents: the brand explaining itself
+             once is the idea the rest of the act is built on, and this is the
+             beat where it stops being one workflow's feature. Full width, on
+             its own, with no heading over it. */
+          heading: "",
+          layout: "stacked",
+          railSkip: true,
+          blocks: [
+            {
+              type: "media",
+              items: [
+                {
                   kind: "ui",
-                  title: "Brand DNA and Mood",
-                  note: "A very simple side by side visual: what stays true, beside what changes.",
+                  title: "One brand, everywhere",
+                  note: "The idea as a film: one composer, one switch, and the brand carried into whatever gets asked for next.",
+                  src: "/case-studies/brand-memory/first-idea.webm",
+                  width: 1280,
+                  height: 720,
                 },
               ],
             },

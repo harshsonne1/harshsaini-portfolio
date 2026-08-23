@@ -1709,3 +1709,70 @@ body {
     transition: none;
   }
 }
+
+/* ---------- iterations reel (Brand Memory: the whiteboards) ----------
+   A stack of sticky cards. Each slot is a normal block in the flow, so six of
+   them give the run its scroll length; the card inside each one sticks, and the
+   component scales the ones already laid down. */
+
+.imr {
+  --imr-top: 6rem; /* clears the header, same as the pinned copy panel */
+  --imr-cap: 44vh; /* tallest a card gets, so the fan stays on one screen */
+  position: relative;
+  /* room after the last card so the run can finish before the next beat */
+  padding-bottom: 30vh;
+}
+
+.imr-slot {
+  position: sticky;
+  top: var(--imr-top);
+  display: flex;
+  justify-content: center;
+}
+
+.imr-card {
+  position: relative;
+  top: var(--imr-step);
+  aspect-ratio: var(--imr-ar);
+  /* height-led for a tall shot, width-led for a wide one — one rule for both,
+     and neither is cropped */
+  width: min(100%, calc(var(--imr-cap) * var(--imr-ar)));
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--color-fg) 6%, transparent);
+  /* lifts each card off the one it covers, so two whiteboard photos in a row
+     still read as two cards */
+  box-shadow: 0 -1px 0 rgb(0 0 0 / 0.5), 0 -18px 34px -18px rgb(0 0 0 / 0.65);
+  /* the top edge holds still while a card shrinks, so the card beneath keeps
+     showing the same strip rather than sliding */
+  transform-origin: top center;
+  will-change: transform;
+}
+
+.imr-card img {
+  object-fit: cover;
+}
+
+/* The mood boards are square and dense with small type, so they are given the
+   column's width rather than the height cap a wide photo needs. Still capped
+   against the viewport, so the fan never runs off the bottom. */
+.imr[data-set="mood"] {
+  --imr-cap: 68vh;
+}
+
+@media (max-width: 1023px) {
+  .imr {
+    --imr-cap: 38vh;
+    padding-bottom: 20vh;
+  }
+  .imr[data-set="mood"] {
+    --imr-cap: 52vh;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .imr-card {
+    will-change: auto;
+  }
+}
