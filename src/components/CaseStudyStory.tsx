@@ -30,6 +30,8 @@ import { IterationsReel } from "@/components/IterationsReel";
 import { ScreenGallery } from "@/components/ScreenGallery";
 import { ContextGraph } from "@/components/ContextGraph";
 import { ScanFunnel } from "@/components/ScanFunnel";
+import { FlowReorder } from "@/components/FlowReorder";
+import StoryMotion from "@/components/StoryMotion";
 import { StickyActRun, type ActRunSection } from "@/components/StickyActRun";
 import type { RailItem } from "@/components/SectionRail";
 
@@ -173,11 +175,12 @@ export function ImpactList({
   return (
     <div data-reveal-group className={className}>
       {label && <BlockLabel>{label}</BlockLabel>}
-      {/* one rule down the whole set, in the figure colour — the lines are read
-          together, so they share a single mark rather than each carrying its
-          own */}
+      {/* One rule down the whole set — the lines are read together, so they
+          share a single mark rather than each carrying its own. It takes the act
+          marker's accent, so the two pieces of furniture that run the length of
+          a case study agree with each other in both themes. */}
       <ul
-        className={`flex flex-col gap-6 border-l-2 border-[var(--color-stat)] pl-6 ${
+        className={`flex flex-col gap-6 border-l-2 border-[var(--color-act)] pl-6 ${
           label ? "mt-8" : ""
         }`}
       >
@@ -308,6 +311,16 @@ function Media({ item }: { item: CaseStudyMedia }) {
   // — so it is handed the slot rather than the ratio box.
   if (item.figure === "structured-memory") {
     return <ContextGraph />;
+  }
+
+  // Sets its own height: the stage has to have several screens of run to hold
+  // itself against while the sequence rearranges.
+  if (item.figure === "flow-reorder") {
+    return (
+      <figure>
+        <FlowReorder />
+      </figure>
+    );
   }
 
   if (item.figure === "iterations-reel" || item.figure === "mood-reel") {
@@ -901,7 +914,7 @@ function SplitSection({
           <div className="flex flex-col gap-y-8 lg:grid lg:grid-cols-12 lg:gap-x-8">
             <div className="lg:sticky lg:top-24 lg:col-span-6 lg:col-start-1 lg:self-start">
               {act && (
-                <div className="pb-4 text-sm font-medium uppercase tracking-[-0.02em] text-muted">
+                <div className="act-mark pb-4 text-sm font-medium uppercase tracking-[-0.02em]">
                   {act}
                 </div>
               )}
@@ -975,7 +988,7 @@ function StackedSection({
       <div className={COLUMN}>
         <div className="relative">
           {act && (
-            <div className="pb-4 text-sm font-medium uppercase tracking-[-0.02em] text-muted">
+            <div className="act-mark pb-4 text-sm font-medium uppercase tracking-[-0.02em]">
               {act}
             </div>
           )}
@@ -1135,7 +1148,7 @@ function StorySection({
           <div key={runIndex} className={COLUMN}>
             <div className="relative">
               {runIndex === 0 && act && (
-                <div className="pb-4 text-sm font-medium uppercase tracking-[-0.02em] text-muted">
+                <div className="act-mark pb-4 text-sm font-medium uppercase tracking-[-0.02em]">
                   {act}
                 </div>
               )}
@@ -1263,7 +1276,9 @@ export function CaseStudyStory({ story }: { story: CaseStudy }) {
   const split = story.layout === "split";
 
   return (
-    <div className="mt-12 sm:mt-16">
+    <div className="mt-12 sm:mt-16" data-story>
+      {/* figures drift against the copy beside them, scrubbed to the scroll */}
+      <StoryMotion />
       {/* The opening section. A composed one keeps the standard layout on
           purpose — its heading belongs on the left with the whole run of copy
           beside it, which the pinned split cannot do. */}

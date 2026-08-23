@@ -81,7 +81,7 @@ export function StickyActRun({ sections }: { sections: ActRunSection[] }) {
             }`}
           >
             {section.act && (
-              <div className="pb-4 text-sm font-medium uppercase tracking-[-0.02em] text-muted">
+              <div className="act-mark pb-4 text-sm font-medium uppercase tracking-[-0.02em]">
                 {section.act}
               </div>
             )}
@@ -106,7 +106,7 @@ export function StickyActRun({ sections }: { sections: ActRunSection[] }) {
                 at a time, but here the beats stack and it would repeat. */}
             <div className="lg:hidden">
               {section.act && section.act !== sections[i - 1]?.act && (
-                <div className="pb-4 text-sm font-medium uppercase tracking-[-0.02em] text-muted">
+                <div className="act-mark pb-4 text-sm font-medium uppercase tracking-[-0.02em]">
                   {section.act}
                 </div>
               )}

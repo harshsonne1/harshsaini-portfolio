@@ -6,8 +6,17 @@
 // A centre, five branches, and three leaves on each. The whole argument of the
 // beat is in the shape — an agent that needs the tone of voice walks to one
 // branch and takes three nodes, instead of reading everything the brand has
-// ever said. Packets run the branch edges so the graph reads as something being
-// queried rather than a static picture.
+// ever said.
+//
+// Which branch is being read is scrubbed to the scroll: the five are taken in
+// turn as the figure crosses the viewport, so halfway down is halfway round the
+// graph and scrolling back up walks it in reverse.
+//
+// Under that, dots run every edge inwards — a leaf into its branch, a branch
+// into the centre — pulsing up as they set off and out as they arrive. That one
+// piece is on a clock rather than the scroll, because a current that stops when
+// you stop scrolling is not a current. It runs only while the figure is on
+// screen, and not at all under reduced motion.
 //
 // Canvas because of what the nodes are: each is a small shaded sphere with a
 // soft bloom behind it, and there are twenty-one of them. Twenty-one layered
@@ -17,6 +26,8 @@
 // coordinate below is a design coordinate and nothing is ever re-measured.
 
 import { useEffect, useRef } from "react";
+
+import { scrub, reducedMotion } from "@/lib/scroll-scrub";
 
 const W = 1210;
 const H = 680;
@@ -71,9 +82,6 @@ const R_CORE = 11;
 const R_BRANCH = 8;
 const R_LEAF = 4.5;
 
-const QUERY_MS = 1500; // one branch being read
-const REST_MS = 700;
-
 const rad = (deg: number) => (deg * Math.PI) / 180;
 
 type Node = { x: number; y: number; r: number; label: string; branch: number };
@@ -106,6 +114,36 @@ const NODES: { branch: Node; leaves: Node[] }[] = BRANCHES.map((b, i) => {
 const easeInOut = (t: number) =>
   t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
 
+/* Every edge, pointed inwards: a leaf feeds its branch, a branch feeds the
+   centre. The flow runs along these, always towards the middle, because that is
+   the direction the brand's information actually travels. */
+type Segment = {
+  from: { x: number; y: number };
+  to: { x: number; y: number };
+  branch: number;
+  /* offset into the cycle, so twenty dots do not arrive together */
+  phase: number;
+};
+
+const SEGMENTS: Segment[] = (() => {
+  const out: Segment[] = [];
+  NODES.forEach(({ branch, leaves }, i) => {
+    leaves.forEach((leaf, k) => {
+      out.push({
+        from: leaf,
+        to: branch,
+        branch: i,
+        phase: (i * 3 + k) / 15,
+      });
+    });
+    out.push({ from: branch, to: CORE, branch: i, phase: (i + 0.5) / 5 });
+  });
+  return out;
+})();
+
+/* How long a dot takes to run its segment. Slow: it is a current, not traffic. */
+const FLOW_MS = 3200;
+
 export function ContextGraph() {
   const hostRef = useRef<HTMLElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -117,24 +155,59 @@ export function ContextGraph() {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)")
-      .matches;
+    /* The graph has no ground of its own, so on a light page every part of it
+       has to swap or it is a white cloud on white. Three separate inks rather
+       than one: the glow, the wiring and the type do not want the same
+       treatment when the page turns over.
 
-    /* On a light page the graph would be a white cloud on white, so the ink
-       flips with the theme. Read off the host, not hard-coded, and re-read
-       when the theme attribute changes. */
+       Read off the host and re-read when the theme attribute changes, so the
+       accent stays whatever --color-act is rather than a copy of it. */
     let light = false;
     let font = "system-ui, sans-serif";
+    let accent = "212,40,0";
+
+    /* "#d42800" -> "212,40,0", for use inside rgba() */
+    const rgbOf = (hex: string, fallback: string) => {
+      const m = hex.trim().match(/^#?([0-9a-f]{6})$/i);
+      if (!m) return fallback;
+      const n = parseInt(m[1], 16);
+      return `${(n >> 16) & 255},${(n >> 8) & 255},${n & 255}`;
+    };
+
     const readTheme = () => {
+      const cs = getComputedStyle(host);
       light = document.documentElement.dataset.theme === "light";
-      font = getComputedStyle(host).fontFamily || font;
+      font = cs.fontFamily || font;
+      accent = rgbOf(cs.getPropertyValue("--color-act"), accent);
     };
     readTheme();
 
+    /* The bloom behind a node. White on the dark page; on the light one it
+       takes the accent, because grey light on a grey ground is not light at
+       all — it is a smudge. */
+    const glow = () => (light ? accent : "255,255,255");
+    /* Wiring wants to be read, not to shine, so it stays neutral either way. */
+    const wire = () => (light ? "44,52,66" : "255,255,255");
     const ink = () => (light ? "17,17,20" : "255,255,255");
-    const hi = () => (light ? "#f8fafc" : "#f2f5fa");
-    const mid = () => (light ? "#8b93a6" : "#9aa6bd");
-    const low = () => (light ? "#39404f" : "#46505f");
+
+    /* A pearl lit from the top left. On a light page the whole sphere steps
+       down, or its highlight is the background and the node loses its top. */
+    const hi = () => (light ? "#aab2c4" : "#f2f5fa");
+    const mid = () => (light ? "#5c6579" : "#9aa6bd");
+    const low = () => (light ? "#2a3141" : "#46505f");
+
+    /* How hard each of those has to be pushed for the theme it is in. */
+    const A = () => ({
+      core: light ? 0.15 : 0.07,
+      branch: light ? 0.09 : 0.05,
+      branchOn: light ? 0.14 : 0.05,
+      edge: light ? 0.2 : 0.13,
+      edgeOn: light ? 0.42 : 0.3,
+      leaf: light ? 0.16 : 0.1,
+      leafOn: light ? 0.34 : 0.22,
+      flow: light ? 0.5 : 0.42,
+      flowOn: light ? 0.95 : 0.9,
+    });
 
     let dpr = 1;
     const size = () => {
@@ -152,8 +225,8 @@ export function ContextGraph() {
     // the diffuse light each node sits in
     const bloom = (x: number, y: number, r: number, alpha: number) => {
       const g = ctx.createRadialGradient(x, y, 0, x, y, r);
-      g.addColorStop(0, `rgba(${ink()},${alpha})`);
-      g.addColorStop(1, `rgba(${ink()},0)`);
+      g.addColorStop(0, `rgba(${glow()},${alpha})`);
+      g.addColorStop(1, `rgba(${glow()},0)`);
       ctx.fillStyle = g;
       ctx.beginPath();
       ctx.arc(x, y, r, 0, Math.PI * 2);
@@ -180,7 +253,7 @@ export function ContextGraph() {
     };
 
     const edge = (a: Node, b: Node, alpha: number) => {
-      ctx.strokeStyle = `rgba(${ink()},${alpha})`;
+      ctx.strokeStyle = `rgba(${wire()},${alpha})`;
       ctx.lineWidth = 1;
       ctx.beginPath();
       ctx.moveTo(a.x, a.y);
@@ -220,41 +293,45 @@ export function ContextGraph() {
 
     /* ---------- a frame ---------- */
 
-    // active: which branch is being read. reach: how far the query has run.
-    const draw = (active: number, reach: number) => {
+    // active: which branch the scroll is reading. now: the clock the inward
+    // flow runs on, which is the one thing here that is not scroll driven.
+    const draw = (active: number, now: number) => {
       ctx.clearRect(0, 0, W, H);
 
+      const a = A();
+
       // the light behind everything
-      bloom(CX, CY, 210, light ? 0.05 : 0.07);
+      bloom(CX, CY, 210, a.core);
       NODES.forEach(({ branch }, i) => {
-        const on = i === active;
-        bloom(branch.x, branch.y, 96, (light ? 0.035 : 0.05) + (on ? 0.05 : 0));
+        bloom(branch.x, branch.y, 96, i === active ? a.branchOn : a.branch);
       });
 
       // edges, centre outwards
       NODES.forEach(({ branch, leaves }, i) => {
         const on = i === active;
-        edge(CORE, branch, on ? 0.3 : 0.13);
-        leaves.forEach((leaf) => edge(branch, leaf, on ? 0.22 : 0.1));
+        edge(CORE, branch, on ? a.edgeOn : a.edge);
+        leaves.forEach((leaf) => edge(branch, leaf, on ? a.leafOn : a.leaf));
       });
 
-      // the packet, running the active branch's edge and on into its leaves
-      if (active >= 0 && reach > 0) {
-        const { branch, leaves } = NODES[active];
-        const t = easeInOut(Math.min(1, reach));
-        const px = CORE.x + (branch.x - CORE.x) * t;
-        const py = CORE.y + (branch.y - CORE.y) * t;
-        bloom(px, py, 22, 0.22);
-        sphere(px, py, 3.2);
-        if (reach > 1) {
-          const lt = easeInOut(Math.min(1, reach - 1));
-          leaves.forEach((leaf) => {
-            const lx = branch.x + (leaf.x - branch.x) * lt;
-            const ly = branch.y + (leaf.y - branch.y) * lt;
-            sphere(lx, ly, 2.6);
-          });
-        }
-      }
+      /* The flow: dots running every edge inwards, brighter on the branch the
+         scroll is reading. They pulse rather than crawl — up as they set off,
+         out as they arrive — so the graph reads as being fed continuously
+         rather than as something with traffic on it. */
+      SEGMENTS.forEach((seg) => {
+        const t = (now / FLOW_MS + seg.phase) % 1;
+        const on = seg.branch === active;
+        // in at the start, out at the end
+        const pulse = Math.sin(t * Math.PI);
+        const alpha = pulse * (on ? a.flowOn : a.flow);
+        if (alpha < 0.02) return;
+        const x = seg.from.x + (seg.to.x - seg.from.x) * t;
+        const y = seg.from.y + (seg.to.y - seg.from.y) * t;
+        bloom(x, y, 13, alpha * 0.55);
+        ctx.beginPath();
+        ctx.arc(x, y, 2.4, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${glow()},${alpha})`;
+        ctx.fill();
+      });
 
       // nodes
       NODES.forEach(({ branch, leaves }) => {
@@ -266,10 +343,10 @@ export function ContextGraph() {
       // labels last, so nothing is drawn over them
       NODES.forEach(({ branch, leaves }, i) => {
         const on = i === active;
-        leaves.forEach((leaf) => leafLabel(leaf, on ? 0.78 : 0.46));
+        leaves.forEach((leaf) => leafLabel(leaf, on ? 0.82 : light ? 0.6 : 0.46));
         text(branch.label, branch.x, branch.y + 30, {
           size: 15,
-          alpha: on ? 1 : 0.82,
+          alpha: on ? 1 : light ? 0.88 : 0.82,
         });
       });
       text(CORE.label, CORE.x, CORE.y + 34, { size: 15, alpha: 0.95 });
@@ -277,56 +354,65 @@ export function ContextGraph() {
 
     /* ---------- the run ---------- */
 
-    let raf = 0;
-    let startedAt = 0;
-    let running = false;
-    const CYCLE = QUERY_MS + REST_MS;
+    /* Two clocks, and they do different jobs. Which branch is lit is the
+       scroll's: the figure's travel is divided between the five, so scrolling
+       walks round the graph and scrolling back walks round it the other way.
+       The dots running the edges inwards are the only thing here on a clock of
+       its own, because a current that stops when you stop scrolling is not a
+       current. */
+    const SLICE = 1 / BRANCHES.length;
 
-    const frame = (now: number) => {
-      if (!startedAt) startedAt = now;
-      const t = now - startedAt;
-      const turn = Math.floor(t / CYCLE);
-      const phase = t - turn * CYCLE;
-      const active = turn % BRANCHES.length;
-      // 0..2: out to the branch, then on to its leaves
-      const reach = phase < QUERY_MS ? (phase / QUERY_MS) * 2 : 0;
-      draw(phase < QUERY_MS ? active : -1, reach);
-      if (running) raf = requestAnimationFrame(frame);
+    let lit = -1;
+    let frame = 0;
+    const flowing = !reducedMotion();
+
+    const paint = (now: number) => draw(lit, flowing ? now : 0);
+
+    const tick = (now: number) => {
+      paint(now);
+      frame = requestAnimationFrame(tick);
     };
 
-    const start = () => {
-      if (running) return;
-      running = true;
-      raf = requestAnimationFrame(frame);
-    };
-    const stop = () => {
-      running = false;
-      if (raf) cancelAnimationFrame(raf);
-      raf = 0;
+    const at = (p: number) => {
+      lit =
+        p <= 0 || p >= 1
+          ? -1
+          : Math.min(BRANCHES.length - 1, Math.floor(p / SLICE));
+      // repaint now, so a scroll with the loop parked still updates
+      if (!frame) paint(performance.now());
     };
 
     size();
-    draw(-1, 0);
+    at(0);
 
-    // nothing ticks behind the fold
+    const stopScrub = scrub(host, at, { start: "top 85%", end: "bottom 15%" });
+
+    /* The flow only runs while the figure is on screen — a canvas ticking
+       behind the fold is work nobody is watching. */
     const io = new IntersectionObserver(
       (entries) => {
-        if (entries.some((e) => e.isIntersecting) && !reduced) start();
-        else stop();
+        const seen = entries.some((e) => e.isIntersecting);
+        if (seen && flowing && !frame) frame = requestAnimationFrame(tick);
+        else if (!seen && frame) {
+          cancelAnimationFrame(frame);
+          frame = 0;
+        }
       },
-      { threshold: 0.15 },
+      { threshold: 0 },
     );
     io.observe(host);
 
     const ro = new ResizeObserver(() => {
       size();
-      if (!running) draw(-1, 0);
+      paint(performance.now());
     });
     ro.observe(canvas);
 
+    /* the page's light mode is an attribute on <html>, not a media query, so
+       the palette is re-read when that attribute changes */
     const themes = new MutationObserver(() => {
       readTheme();
-      if (!running) draw(-1, 0);
+      paint(performance.now());
     });
     themes.observe(document.documentElement, {
       attributes: true,
@@ -334,7 +420,8 @@ export function ContextGraph() {
     });
 
     return () => {
-      stop();
+      if (frame) cancelAnimationFrame(frame);
+      stopScrub();
       io.disconnect();
       ro.disconnect();
       themes.disconnect();

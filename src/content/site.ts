@@ -80,7 +80,8 @@ export type CaseStudyMedia = {
     | "onboarding-gallery"
     | "memory-gallery"
     | "structured-memory"
-    | "scan-funnel";
+    | "scan-funnel"
+    | "flow-reorder";
   /* Light-theme counterpart of `src`, for figures that are themselves a
      screenshot of a themed UI. When set, `src` is the dark-theme one and the
      page shows whichever matches the theme the reader is in. */
@@ -1142,9 +1143,12 @@ export const projects: Project[] = [
               type: "media",
               items: [
                 {
-                  kind: "visual",
-                  title: "Session behaviour",
-                  note: "A session replay or a simplified behavioural trace: why the aggregate number was not enough.",
+                  kind: "ui",
+                  title: "The ask, before there is anything to ask about",
+                  note: "The empty board: set your visual direction, said to someone who has not generated anything yet and has no way of knowing what direction they want.",
+                  src: "/case-studies/brand-memory/empty-board.webp",
+                  width: 1600,
+                  height: 1121,
                 },
               ],
             },
@@ -1178,7 +1182,8 @@ export const projects: Project[] = [
                 {
                   kind: "ui",
                   title: "Before and after",
-                  note: "The two orders drawn against each other.",
+                  note: "The same steps in a different order: generate rises to first, memory drops to third, and the sentence that earns it arrives between them.",
+                  figure: "flow-reorder",
                 },
               ],
             },
@@ -1202,8 +1207,19 @@ export const projects: Project[] = [
               items: [
                 {
                   kind: "system",
-                  title: "Brand Memory in the system",
-                  note: "Brand Memory in the wider ShopOS system: the strongest system visual of the set.",
+                  title: "Memory as a wiki",
+                  note: "One brand's memory read as articles: brand identity, creative, ad performance, email, store and product, kept in sync.",
+                  src: "/case-studies/brand-memory/memory-wiki.webp",
+                  width: 1600,
+                  height: 962,
+                },
+                {
+                  kind: "system",
+                  title: "Memory as a graph",
+                  note: "The same memory as the graph underneath it: a hundred and two units in thirteen clusters, and the cluster the system is leaning on hardest called out beside them.",
+                  src: "/case-studies/brand-memory/memory-graph.webp",
+                  width: 1600,
+                  height: 962,
                 },
               ],
             },

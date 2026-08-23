@@ -10,6 +10,9 @@
   --color-accent-fg: #ffffff;
   /* the figure colour on a stat row — the number, never its label */
   --color-stat: #00ff04;
+  /* act labels: the story's green in the dark, and a red that carries the
+     same weight against a light ground, where a bright green would not */
+  --color-act: #00ff04;
   --font-sans:
     ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica,
     Arial, sans-serif;
@@ -29,6 +32,7 @@
   /* #00ff04 sits at ~1.1:1 on the light background — same hue, taken down far
      enough to read */
   --color-stat: #007a02;
+  --color-act: #d42800;
 }
 
 /* page-load shimmer stroke color — dark by default, muted grey in light mode */
@@ -1867,23 +1871,119 @@ body {
   fill: var(--fun-line);
 }
 
-/* ---- the rewind, and the play ---- */
+/* ---- handed to the scroll ----
+   The rule above paints the finished funnel, which is what renders with no JS
+   and under reduced motion. `is-scrubbed` is added by the component when it has
+   taken over, and only says that opacity is its to set now. */
 
-.fun.is-armed .fun-band,
-.fun.is-armed .fun-leak {
-  opacity: 0;
+.fun.is-scrubbed .fun-band,
+.fun.is-scrubbed .fun-leak {
+  will-change: transform, opacity;
 }
 
-.fun.is-armed.is-in .fun-band,
-.fun.is-armed.is-in .fun-leak {
-  opacity: 1;
-  transition: opacity 520ms ease;
-  transition-delay: calc(var(--i, 0) * 150ms);
+/* ---------- flow reorder (Brand Memory: the change of order) ----------
+   A run several screens tall with the stage held at the centre of the viewport,
+   so the sequence rearranges while the reader stays put and the run releases
+   when it has finished. Colour and spacing are the story's own. */
+
+.flr {
+  position: relative;
+  /* the travel the reorder is scrubbed across */
+  height: 280vh;
+}
+
+.flr-stage {
+  position: sticky;
+  top: 0;
+  display: flex;
+  height: 100vh;
+  align-items: center;
+}
+
+.flr-inner {
+  width: 100%;
+}
+
+.flr-head {
+  position: relative;
+  height: 1.25rem;
+  margin-bottom: 1.75rem;
+}
+.flr-state {
+  position: absolute;
+  inset: 0 auto 0 0;
+  font-family: var(--font-label);
+  font-size: 0.6875rem;
+  letter-spacing: 0.25em;
+  color: color-mix(in srgb, var(--color-fg) 55%, transparent);
+}
+
+.flr-rows {
+  position: relative;
+}
+
+.flr-card {
+  position: absolute;
+  inset-inline: 0;
+  display: flex;
+  height: 78px;
+  align-items: center;
+  padding-inline: 1.375rem;
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-fg) 4%, transparent);
+  font-size: 1rem;
+  color: var(--color-fg);
+  transform-origin: 50% 50%;
+  will-change: transform, opacity;
+}
+
+/* not a step but the reason for the next one */
+.flr-card.is-quote {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--color-stat) 55%, transparent);
+  background: color-mix(in srgb, var(--color-stat) 8%, transparent);
+  color: var(--color-stat);
+}
+
+.flr-foot {
+  position: relative;
+  height: 3rem;
+  margin-top: 1.75rem;
+}
+.flr-note {
+  position: absolute;
+  inset: 0 auto auto 0;
+  max-width: 34ch;
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: color-mix(in srgb, var(--color-fg) 62%, transparent);
+}
+
+/* Below lg the copy sits above its own figures and there is no pinned panel to
+   hold the stage against, so the run collapses to the height of one screen and
+   the stage simply sits in the flow. */
+@media (max-width: 1023px) {
+  .flr {
+    height: 200vh;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .fun .fun-band,
-  .fun .fun-leak {
-    transition: none;
+  .flr {
+    height: auto;
   }
+  .flr-stage {
+    position: static;
+    height: auto;
+    padding-block: 2rem;
+  }
+}
+
+/* The act marker. It is the one piece of furniture that repeats the length of a
+   case study, so it carries the accent rather than the muted grey every other
+   label uses. */
+.act-mark {
+  color: var(--color-act);
 }

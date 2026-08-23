@@ -10,11 +10,17 @@
 //
 // Under it, what the brief returned with memory off and with it on.
 //
+// It is scrubbed to the scroll rather than run on a clock: the first prompt
+// types as the figure comes up, is thrown away and retyped as the second, and
+// the switch goes on as it settles. Halfway down is halfway through, and
+// scrolling back up untypes it.
+//
 // The finished state — second prompt typed, switch on — is what renders without
-// JS and under reduced motion. The effect rewinds to the start while the figure
-// is still off screen, so nothing is seen out of order.
+// JS and under reduced motion.
 
 import { useEffect, useRef, useState } from "react";
+
+import { scrub } from "@/lib/scroll-scrub";
 import Image from "next/image";
 
 const BASE = "/case-studies/brand-memory";
@@ -26,10 +32,16 @@ const PROMPTS = [
   "same pair worn while walking, cream and sand tones, soft daylight again, don't crop the print, premium not sporty",
 ];
 
-const TYPE_MS = 14;
-const ERASE_MS = 6;
-/* long enough to read the prompt before it is thrown away and retyped */
-const HOLD_MS = 1100;
+/* The figure's travel, divided: type the first prompt, hold it long enough to
+   read, throw it away, type the second, hold, and switch memory on for the rest
+   of the way. */
+const BEATS: [number, number][] = [
+  [0.0, 0.3], // typing the first
+  [0.3, 0.44], // holding it
+  [0.44, 0.55], // erasing it
+  [0.55, 0.8], // typing the second
+];
+const SWITCH_AT = 0.9;
 
 const SHOTS = [
   {
@@ -52,65 +64,27 @@ export function MemoryCompare() {
   useEffect(() => {
     const host = hostRef.current;
     if (!host) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-    let cancelled = false;
-    const timers = new Set<ReturnType<typeof setTimeout>>();
-    const wait = (ms: number) =>
-      new Promise<void>((resolve) => {
-        const id = setTimeout(() => {
-          timers.delete(id);
-          resolve();
-        }, ms);
-        timers.add(id);
-      });
+    const cut = (text: string, t: number) =>
+      text.slice(0, Math.round(text.length * Math.min(1, Math.max(0, t))));
 
-    // rewound while the figure is still below the fold
-    setTyped("");
-    setMemoryOn(false);
-
-    const type = async (text: string) => {
-      for (let i = 1; i <= text.length; i++) {
-        if (cancelled) return;
-        setTyped(text.slice(0, i));
-        await wait(TYPE_MS);
-      }
+    /* how far into a beat the scroll has come, 0 before it and 1 after */
+    const through = (p: number, i: number) => {
+      const [from, to] = BEATS[i];
+      return Math.min(1, Math.max(0, (p - from) / (to - from)));
     };
 
-    const erase = async (text: string) => {
-      for (let i = text.length; i >= 0; i--) {
-        if (cancelled) return;
-        setTyped(text.slice(0, i));
-        await wait(ERASE_MS);
-      }
-    };
-
-    const run = async () => {
-      await type(PROMPTS[0]);
-      await wait(HOLD_MS);
-      await erase(PROMPTS[0]);
-      await type(PROMPTS[1]);
-      await wait(HOLD_MS);
-      if (cancelled) return;
+    const at = (p: number) => {
+      if (p >= BEATS[3][0]) setTyped(cut(PROMPTS[1], through(p, 3)));
+      else if (p >= BEATS[2][0]) setTyped(cut(PROMPTS[0], 1 - through(p, 2)));
+      else if (p >= BEATS[1][0]) setTyped(PROMPTS[0]);
+      else setTyped(cut(PROMPTS[0], through(p, 0)));
       // and now it never has to be typed again
-      setMemoryOn(true);
+      setMemoryOn(p >= SWITCH_AT);
     };
 
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (!entries.some((e) => e.isIntersecting)) return;
-        io.disconnect();
-        void run();
-      },
-      { threshold: 0.3 },
-    );
-    io.observe(host);
-
-    return () => {
-      cancelled = true;
-      io.disconnect();
-      timers.forEach(clearTimeout);
-    };
+    at(0);
+    return scrub(host, at, { start: "top 82%", end: "bottom 40%" });
   }, []);
 
   return (

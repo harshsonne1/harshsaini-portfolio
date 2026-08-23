@@ -15,11 +15,16 @@
 // arcs a corner. The stroke has to take the same gradient, not a flat shade of
 // it, or the join paints a rim inside every band. Colour is CSS, so the whole figure inverts with the theme.
 //
-// The reveal is CSS too: the stylesheet holds the finished funnel, the effect
-// rewinds it while the figure is off screen, and an observer lets it play once.
-// No JS, or reduced motion, and the finished state is what renders.
+// The build is scrubbed to the scroll: each band takes a slice of the figure's
+// travel and rises into place across it, and its callout follows a beat later.
+// Halfway down is halfway built, and scrolling back up empties it again. The
+// stylesheet holds the finished funnel, so with no JS, or under reduced motion,
+// that is what renders.
 
 import { useEffect, useRef } from "react";
+import gsap from "gsap";
+
+import { scrub } from "@/lib/scroll-scrub";
 
 const W = 1200;
 const H = 960;
@@ -72,21 +77,51 @@ export function ScanFunnel() {
   useEffect(() => {
     const svg = ref.current;
     if (!svg) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-    // rewound while the figure is still below the fold
-    svg.classList.add("is-armed");
+    const bands = Array.from(svg.querySelectorAll<SVGGElement>(".fun-band"));
+    const leaks = Array.from(svg.querySelectorAll<SVGGElement>(".fun-leak"));
+    if (bands.length === 0) return;
 
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (!entries.some((e) => e.isIntersecting)) return;
-        io.disconnect();
-        svg.classList.add("is-in");
-      },
-      { threshold: 0.2 },
-    );
-    io.observe(svg);
-    return () => io.disconnect();
+    /* The stylesheet paints the finished funnel; this hands it back to the
+       scroll while it is still off screen. */
+    svg.classList.add("is-scrubbed");
+
+    const setters = [...bands, ...leaks].map((el) => ({
+      el,
+      y: gsap.quickSetter(el, "y", "px"),
+      o: gsap.quickSetter(el, "opacity") as (v: number) => void,
+    }));
+
+    /* Each band owns a slice of the travel, overlapping the next a little so
+       one is always arriving as the last settles. A callout follows its own
+       band rather than the funnel as a whole. */
+    const SLICE = 1 / (bands.length + 1);
+    const span = (i: number) => [i * SLICE, i * SLICE + SLICE * 1.9] as const;
+
+    const ease = (t: number) => 1 - Math.pow(1 - t, 3);
+    const clamp01 = (t: number) => (t < 0 ? 0 : t > 1 ? 1 : t);
+
+    const at = (p: number) => {
+      bands.forEach((band, i) => {
+        const [from, to] = span(i);
+        const t = ease(clamp01((p - from) / (to - from)));
+        const s = setters.find((x) => x.el === band)!;
+        s.o(t);
+        s.y((1 - t) * 34);
+      });
+      leaks.forEach((leak) => {
+        // a callout belongs to a band, so it takes that band's slice, late
+        const i = Number(leak.dataset.band ?? 0);
+        const [from, to] = span(i);
+        const t = ease(clamp01((p - (from + (to - from) * 0.55)) / ((to - from) * 0.6)));
+        const s = setters.find((x) => x.el === leak)!;
+        s.o(t);
+        s.y((1 - t) * 10);
+      });
+    };
+
+    at(0);
+    return scrub(svg, at, { start: "top 88%", end: "bottom 45%" });
   }, []);
 
   return (
@@ -117,10 +152,7 @@ export function ScanFunnel() {
         const y = midY(i);
         return (
           <g key={band.label}>
-            <g
-              className="fun-band"
-              style={{ "--i": i } as React.CSSProperties}
-            >
+            <g className="fun-band">
               <path
                 d={bandPath(i)}
                 fill={`url(#fun-g${i})`}
@@ -139,10 +171,7 @@ export function ScanFunnel() {
 
             {/* what left, set beside the band it left from */}
             {band.leak && (
-              <g
-                className="fun-leak"
-                style={{ "--i": BANDS.length + i * 0.5 } as React.CSSProperties}
-              >
+              <g className="fun-leak" data-band={i}>
                 <line
                   className="fun-dash"
                   x1={rightEdge(i) + 24}
