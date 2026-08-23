@@ -1101,8 +1101,10 @@ export const projects: Project[] = [
               ],
             },
             {
+              /* the turn in the whole experiment: a funnel that loses everyone
+                 without a single failure is being walked away from */
               type: "p",
-              text: "Nobody failed. That last part mattered.",
+              text: "**Nobody failed. That last part mattered.**",
             },
             {
               type: "pull",

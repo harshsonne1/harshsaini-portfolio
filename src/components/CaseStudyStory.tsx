@@ -128,6 +128,10 @@ export function storyRailItems(story: CaseStudy): RailItem[] {
   ];
 }
 
+/* Figures that hold their own contents in place as the reader scrolls, and so
+   must not be put inside a pinned column. */
+const SELF_PINNING = new Set(["iterations-reel", "mood-reel", "flow-reorder"]);
+
 const isVideo = (src: string) => /\.(webm|mp4|mov)$/i.test(src);
 
 // Results (numbers, comparisons) break out of the copy column and run the full
@@ -1242,8 +1246,13 @@ function groupSections(
       heading: section.heading,
       copy: copy.map((block, bi) => <Block key={bi} block={block} split />),
       figures: figures.length ? (
+        /* The column is pinned so a short figure stays beside the copy it
+           belongs to. A figure that pins its own contents is not short and does
+           not want it: nesting one sticky mechanism inside another leaves the
+           inner one measuring its own position against a rect that has stopped
+           tracking the scroll, and the stack desyncs from what is on screen. */
         <div
-          className={`lg:sticky lg:top-24 ${
+          className={`${figures.some((f) => f.figure && SELF_PINNING.has(f.figure)) ? "" : "lg:sticky lg:top-24"} ${
             figures.length >= 4
               ? "grid grid-cols-2 gap-2"
               : "flex flex-col gap-2"

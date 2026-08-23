@@ -115,12 +115,26 @@ export function IterationsReel({ set = "exploration" }: { set?: SetName }) {
 
     let frame = 0;
 
+    const slots = Array.from(run.querySelectorAll<HTMLElement>(".imr-slot"));
+
     const update = () => {
       frame = 0;
       const box = run.getBoundingClientRect();
-      // 0 when the run's top reaches the top of the viewport, 1 when its
-      // bottom does — the same span the cards are sticky across
-      const travel = box.height - window.innerHeight;
+
+      /* The scaling has to finish exactly when the last card lands on the pile,
+         not when the run's bottom clears the viewport. Those are not the same
+         moment: the run carries a card's worth of padding after the last slot
+         so the pile has room to stay pinned, and measuring against the run's
+         full height spent that padding still changing the scales — by which
+         point the pile had released and was on its way off screen.
+
+         So the span is the last slot's own travel: from where it sits in the
+         flow to where it comes to rest. */
+      const last = slots[slots.length - 1];
+      const rest = last
+        ? parseFloat(getComputedStyle(last).top) || 0
+        : 0;
+      const travel = last ? last.offsetTop - rest : 0;
       const progress =
         travel <= 0 ? 0 : Math.min(1, Math.max(0, -box.top / travel));
 

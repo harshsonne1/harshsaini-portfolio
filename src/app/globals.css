@@ -1723,8 +1723,10 @@ body {
   --imr-top: 6rem; /* clears the header, same as the pinned copy panel */
   --imr-cap: 44vh; /* tallest a card gets, so the fan stays on one screen */
   position: relative;
-  /* room after the last card so the run can finish before the next beat */
-  padding-bottom: 30vh;
+  /* A full card's worth of room after the last one arrives. Short of that the
+     container runs out of space for the pile before the run ends, and the whole
+     stack slides up together in the last stretch instead of holding. */
+  padding-bottom: var(--imr-cap);
 }
 
 .imr-slot {
@@ -1768,7 +1770,6 @@ body {
 @media (max-width: 1023px) {
   .imr {
     --imr-cap: 38vh;
-    padding-bottom: 20vh;
   }
   .imr[data-set="mood"] {
     --imr-cap: 52vh;
