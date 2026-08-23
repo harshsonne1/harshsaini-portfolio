@@ -77,7 +77,9 @@ export type CaseStudyMedia = {
     | "memory-compare"
     | "iterations-reel"
     | "mood-reel"
-    | "onboarding-gallery";
+    | "onboarding-gallery"
+    | "memory-gallery"
+    | "structured-memory";
   /* Light-theme counterpart of `src`, for figures that are themselves a
      screenshot of a themed UI. When set, `src` is the dark-theme one and the
      page shows whichever matches the theme the reader is in. */
@@ -823,7 +825,7 @@ export const projects: Project[] = [
               items: [
                 {
                   kind: "ui",
-                  title: "The onboarding flow, screen by screen",
+                  title: "The v1 design: onboarding",
                   note: "Eight screens, from the welcome to the populated memory.",
                   figure: "onboarding-gallery",
                 },
@@ -959,6 +961,26 @@ export const projects: Project[] = [
           ],
         },
         {
+          /* The redesigned memory surface, laid out before everything starts
+             asking for it. Full width, so the extent of it is what you see. */
+          heading: "",
+          layout: "stacked",
+          railSkip: true,
+          blocks: [
+            {
+              type: "media",
+              items: [
+                {
+                  kind: "ui",
+                  title: "The v2 redesign",
+                  note: "Nine screens of the redesign: moodboards, assets, voice, personas, and the panels where any of it can be edited.",
+                  figure: "memory-gallery",
+                },
+              ],
+            },
+          ],
+        },
+        {
           heading: "Then the agents arrived.",
           blocks: [
             {
@@ -976,7 +998,10 @@ export const projects: Project[] = [
                 {
                   kind: "ui",
                   title: "One memory, many agents",
-                  note: "Several agents and workflows drawing on the same Brand Memory.",
+                  note: "The agents, under an orchestrator and across discover, acquire, convert, retain and grow — every one of them needing the same brand.",
+                  src: "/case-studies/brand-memory/agents-overview.webp",
+                  width: 1600,
+                  height: 1040,
                 },
               ],
             },
@@ -1012,7 +1037,8 @@ export const projects: Project[] = [
                 {
                   kind: "visual",
                   title: "Structured memory",
-                  note: "Not a giant technical graph. Brand information, then structured memory, then the agent retrieving what it needs.",
+                  note: "The brand as a context graph: one centre, five branches, and a query that walks to one of them.",
+                  figure: "structured-memory",
                 },
               ],
             },

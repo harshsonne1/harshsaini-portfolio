@@ -1776,3 +1776,18 @@ body {
     will-change: auto;
   }
 }
+
+/* ---------- context graph (Brand Memory: structured memory) ----------
+   The figure owns its own frame, the way the reference markup does: 16:9 with
+   its corners clipped. The ground stays transparent — the graph is meant to sit
+   in the page's dark, not on a panel of its own. */
+
+.cgr {
+  position: relative;
+  margin: 0;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  border-radius: 10px;
+  background: transparent;
+  font-family: var(--font-sans);
+}

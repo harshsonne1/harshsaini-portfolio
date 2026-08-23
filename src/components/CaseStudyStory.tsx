@@ -27,7 +27,8 @@ import { InputFlowDiagram } from "@/components/InputFlowDiagram";
 import { WorkflowCanvas } from "@/components/WorkflowCanvas";
 import { MemoryCompare } from "@/components/MemoryCompare";
 import { IterationsReel } from "@/components/IterationsReel";
-import { OnboardingGallery } from "@/components/OnboardingGallery";
+import { ScreenGallery } from "@/components/ScreenGallery";
+import { ContextGraph } from "@/components/ContextGraph";
 import { StickyActRun, type ActRunSection } from "@/components/StickyActRun";
 import type { RailItem } from "@/components/SectionRail";
 
@@ -294,8 +295,18 @@ function Media({ item }: { item: CaseStudyMedia }) {
   // Sets its own height: the run has to be several screens long for the stack
   // to build, and each card takes the shape of the photo in it.
   // Brings its own <figure> and caption, and sets its own height from the grid.
-  if (item.figure === "onboarding-gallery") {
-    return <OnboardingGallery />;
+  if (item.figure === "onboarding-gallery" || item.figure === "memory-gallery") {
+    return (
+      <ScreenGallery
+        set={item.figure === "memory-gallery" ? "memory" : "onboarding"}
+      />
+    );
+  }
+
+  // Owns its own frame — 16:9, clipped corners, and the caption inside the art
+  // — so it is handed the slot rather than the ratio box.
+  if (item.figure === "structured-memory") {
+    return <ContextGraph />;
   }
 
   if (item.figure === "iterations-reel" || item.figure === "mood-reel") {
@@ -339,6 +350,7 @@ function Media({ item }: { item: CaseStudyMedia }) {
             <ContextDiagram />
           ) : item.figure === "input-flow" ? (
             <InputFlowDiagram />
+
           ) : !item.src ? null : isVideo(item.src) ? (
             // plays while it is on screen and stops when it isn't, so a wall
             // of clips never runs four decoders at once off-screen
