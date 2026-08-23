@@ -1791,3 +1791,99 @@ body {
   background: transparent;
   font-family: var(--font-sans);
 }
+
+/* ---------- scan funnel (Brand Memory: the control cohort) ----------
+   Four bands narrowing downward. The bands are the only colour in the figure,
+   and they step a shade darker as they narrow, so the collapse reads even
+   before the numbers do. Dark first, inverted for a light page.
+
+   The stylesheet holds the finished funnel. `is-armed` is added by the
+   component while it is still off screen and rewinds it; `is-in` lets it play,
+   once, in the order the --i on each group sets. No JS, or reduced motion, and
+   the finished state is what renders. */
+
+.fun {
+  display: block;
+  width: 100%;
+  height: 100%;
+  font-family: var(--font-sans);
+
+  --fun-0a: #1c1c21;
+  --fun-0b: #24242a;
+  --fun-1a: #212128;
+  --fun-1b: #2b2b33;
+  --fun-2a: #27272f;
+  --fun-2b: #32323b;
+  --fun-3a: #2e2e38;
+  --fun-3b: #3b3b46;
+
+  --fun-ink: #ededef;
+  --fun-sub: #b6b6c0;
+  --fun-note: #8b8b95;
+  --fun-line: #45454e;
+}
+
+:root[data-theme="light"] .fun {
+  --fun-0a: #f6f6f4;
+  --fun-0b: #ebebe6;
+  --fun-1a: #f1f1ee;
+  --fun-1b: #e4e4de;
+  --fun-2a: #ececE7;
+  --fun-2b: #dcdcd5;
+  --fun-3a: #e6e6e0;
+  --fun-3b: #d3d3cb;
+
+  --fun-ink: #16161a;
+  --fun-sub: #3d3d45;
+  --fun-note: #6b6b74;
+  --fun-line: #b4b4ad;
+}
+
+.fun-num {
+  font-size: 64px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-anchor: middle;
+  fill: var(--fun-ink);
+}
+.fun-lab {
+  font-size: 25px;
+  font-weight: 400;
+  text-anchor: middle;
+  fill: var(--fun-sub);
+}
+.fun-note {
+  font-size: 21px;
+  font-weight: 400;
+  fill: var(--fun-note);
+}
+
+.fun-dash {
+  stroke: var(--fun-line);
+  stroke-width: 1.5;
+  stroke-dasharray: 6 6;
+}
+.fun-pip {
+  fill: var(--fun-line);
+}
+
+/* ---- the rewind, and the play ---- */
+
+.fun.is-armed .fun-band,
+.fun.is-armed .fun-leak {
+  opacity: 0;
+}
+
+.fun.is-armed.is-in .fun-band,
+.fun.is-armed.is-in .fun-leak {
+  opacity: 1;
+  transition: opacity 520ms ease;
+  transition-delay: calc(var(--i, 0) * 150ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fun .fun-band,
+  .fun .fun-leak {
+    transition: none;
+  }
+}

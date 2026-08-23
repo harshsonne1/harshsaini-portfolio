@@ -29,6 +29,7 @@ import { MemoryCompare } from "@/components/MemoryCompare";
 import { IterationsReel } from "@/components/IterationsReel";
 import { ScreenGallery } from "@/components/ScreenGallery";
 import { ContextGraph } from "@/components/ContextGraph";
+import { ScanFunnel } from "@/components/ScanFunnel";
 import { StickyActRun, type ActRunSection } from "@/components/StickyActRun";
 import type { RailItem } from "@/components/SectionRail";
 
@@ -350,6 +351,8 @@ function Media({ item }: { item: CaseStudyMedia }) {
             <ContextDiagram />
           ) : item.figure === "input-flow" ? (
             <InputFlowDiagram />
+          ) : item.figure === "scan-funnel" ? (
+            <ScanFunnel />
 
           ) : !item.src ? null : isVideo(item.src) ? (
             // plays while it is on screen and stops when it isn't, so a wall
@@ -539,10 +542,13 @@ function Block({
       );
 
     case "pull":
+      // Body size, but carried in the foreground at the same weight as an
+      // emphasised phrase — the beat of a section reads as one, not as a
+      // heading set in the middle of the copy.
       return (
         <p
           data-reveal="up"
-          className={`text-base leading-snug text-fg ${narrow}`}
+          className={`text-base font-medium leading-snug text-fg ${narrow}`}
         >
           {withEmphasis(block.text)}
         </p>

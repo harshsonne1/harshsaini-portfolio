@@ -79,7 +79,8 @@ export type CaseStudyMedia = {
     | "mood-reel"
     | "onboarding-gallery"
     | "memory-gallery"
-    | "structured-memory";
+    | "structured-memory"
+    | "scan-funnel";
   /* Light-theme counterpart of `src`, for figures that are themselves a
      screenshot of a themed UI. When set, `src` is the dark-theme one and the
      page shows whichever matches the theme the reader is in. */
@@ -910,11 +911,14 @@ export const projects: Project[] = [
               type: "notes",
               groups: [
                 {
+                  /* Brand DNA is the half that stays true, so the four things
+                     it holds are carried in the foreground while the copy
+                     around them stays back. */
                   bullets: [
-                    "The voice.",
-                    "The visual language.",
-                    "The products.",
-                    "The rules.",
+                    "**The voice.**",
+                    "**The visual language.**",
+                    "**The products.**",
+                    "**The rules.**",
                   ],
                 },
               ],
@@ -1063,8 +1067,11 @@ export const projects: Project[] = [
               items: [
                 {
                   kind: "ui",
-                  title: "Optional and mandatory",
-                  note: "The two onboarding variants side by side. Keep the comparison extremely easy to scan.",
+                  title: "Memory, offered rather than required",
+                  note: "The optional path: a finished generation, with adding it to memory sat beside the rating as a follow-up rather than asked for up front.",
+                  src: "/case-studies/brand-memory/optional-memory.webp",
+                  width: 1600,
+                  height: 1040,
                 },
               ],
             },
@@ -1106,7 +1113,10 @@ export const projects: Project[] = [
                 {
                   kind: "visual",
                   title: "The funnel",
-                  note: "20, then 17, then 1, then 1. Let this visual breathe.",
+                  note: "The control cohort read two ways: the chain of thirty-seven down to one, and the same thirty-seven counted, with the one that finished lit.",
+                  figure: "scan-funnel",
+                  width: 1200,
+                  height: 960,
                 },
               ],
             },
