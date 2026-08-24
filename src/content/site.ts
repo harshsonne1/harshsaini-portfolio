@@ -1150,7 +1150,7 @@ export const projects: Project[] = [
                   note: "The empty board: set your visual direction, said to someone who has not generated anything yet and has no way of knowing what direction they want.",
                   src: "/case-studies/brand-memory/empty-board.webp",
                   width: 1600,
-                  height: 1121,
+                  height: 961,
                 },
               ],
             },
