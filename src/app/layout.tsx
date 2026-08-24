@@ -66,6 +66,11 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${fontHero.variable} ${fontPixel.variable} ${fontMonoska.variable}`}
+      // Next neutralises `scroll-behavior: smooth` during a route transition only
+      // when it is declared here too — without it the router's scroll to the top
+      // of a case study animates, and the first ScrollTrigger refresh freezes it
+      // partway down.
+      data-scroll-behavior="smooth"
       suppressHydrationWarning
     >
       <body>
