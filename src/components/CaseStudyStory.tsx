@@ -29,6 +29,7 @@ import { MemoryCompare } from "@/components/MemoryCompare";
 import { IterationsReel } from "@/components/IterationsReel";
 import { ScreenGallery } from "@/components/ScreenGallery";
 import { ContextGraph } from "@/components/ContextGraph";
+import { ScanEras } from "@/components/ScanEras";
 import { ScanFunnel } from "@/components/ScanFunnel";
 import { FlowReorder } from "@/components/FlowReorder";
 import StoryMotion from "@/components/StoryMotion";
@@ -44,6 +45,15 @@ const SHOW_EMPTY_MEDIA = true;
 // width — so the rule that opens a section sits an equal distance from the
 // content either side of it.
 const SECTION_PAD = "py-[clamp(3rem,6vw,6rem)]";
+
+// A section holds a screen of its own: a two-sentence beat is read on its own
+// rather than sharing the viewport with the one after it, so the story advances
+// a section at a time. `svh` rather than `vh` because mobile browser chrome
+// makes 100vh taller than what is actually on screen. The copy sits centred in
+// the screen it is given; a section already taller than the viewport is
+// unaffected, and the rule stays on the top edge — it is positioned, not laid
+// out by the flex column.
+const SECTION_FRAME = `relative flex min-h-[100svh] flex-col justify-center scroll-mt-24 ${SECTION_PAD}`;
 
 // the reading column — capped and centred. Figures deliberately skip this and
 // run the full viewport in the footer's 16px gutters instead.
@@ -370,7 +380,10 @@ function Media({ item }: { item: CaseStudyMedia }) {
             <InputFlowDiagram />
           ) : item.figure === "scan-funnel" ? (
             <ScanFunnel />
-
+          ) : item.figure === "funnel-april" ? (
+            <ScanEras set="april" />
+          ) : item.figure === "funnel-august" ? (
+            <ScanEras set="august" />
           ) : !item.src ? null : isVideo(item.src) ? (
             // plays while it is on screen and stops when it isn't, so a wall
             // of clips never runs four decoders at once off-screen
@@ -911,7 +924,7 @@ function SplitSection({
   const shown = SHOW_EMPTY_MEDIA ? figures : figures.filter((f) => f.src);
 
   return (
-    <section id={id} className={`relative scroll-mt-24 ${SECTION_PAD}`}>
+    <section id={id} className={SECTION_FRAME}>
       <SectionRule />
       <div className={COLUMN}>
         <div className="relative">
@@ -987,7 +1000,7 @@ function StackedSection({
   const shown = SHOW_EMPTY_MEDIA ? figures : figures.filter((f) => f.src);
 
   return (
-    <section id={id} className={`relative scroll-mt-24 ${SECTION_PAD}`}>
+    <section id={id} className={SECTION_FRAME}>
       <SectionRule />
       <div className={COLUMN}>
         <div className="relative">
@@ -1112,7 +1125,7 @@ function StorySection({
 
   return (
     // scroll-mt clears the fixed nav when the rail jumps to this section
-    <section id={id} className={`relative scroll-mt-24 ${SECTION_PAD}`}>
+    <section id={id} className={SECTION_FRAME}>
       <SectionRule />
       {runs.map((run, runIndex) => {
         const items = run.media
@@ -1263,12 +1276,11 @@ function groupSections(
           ))}
         </div>
       ) : null,
-      // A beat with no figure has nothing on the right to give it height, so
-      // it would be scrolled through in an instant and its copy would never
-      // settle. Hold the row open for most of a screen instead.
-      className: figures.length
-        ? "pb-8 lg:pb-14"
-        : "pb-8 lg:min-h-[60vh] lg:pb-14",
+      // Each beat holds a screen of its own, figure or not: the pinned panel
+      // keeps its copy for that screen instead of swapping twice in one, and a
+      // beat with nothing on the right is no longer scrolled through in an
+      // instant.
+      className: "min-h-[100svh] pb-8 lg:pb-14",
     };
 
     const last = groups[groups.length - 1];

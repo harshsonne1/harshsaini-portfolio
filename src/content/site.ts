@@ -81,6 +81,8 @@ export type CaseStudyMedia = {
     | "memory-gallery"
     | "structured-memory"
     | "scan-funnel"
+    | "funnel-april"
+    | "funnel-august"
     | "flow-reorder";
   /* Light-theme counterpart of `src`, for figures that are themselves a
      screenshot of a themed UI. When set, `src` is the dark-theme one and the
@@ -842,15 +844,8 @@ export const projects: Project[] = [
             {
               type: "notes",
               groups: [
-                { text: "We started with what the brand already had." },
                 {
-                  bullets: [
-                    "Its website.",
-                    "Its products.",
-                    "Its language.",
-                    "Its visual rules.",
-                    "Its references.",
-                  ],
+                  text: "We started with what the brand already had: its website, its products, its language, its visual rules and its references.",
                 },
               ],
             },
@@ -1025,7 +1020,7 @@ export const projects: Project[] = [
             },
             {
               type: "pull",
-              text: "When an agent needed context, it should find the right part of the brand, not the entire history.",
+              text: "When an agent needed context, it should find the right part of the brand, not read everything again.",
             },
             {
               type: "stats",
@@ -1054,7 +1049,7 @@ export const projects: Project[] = [
           blocks: [
             {
               type: "p",
-              text: "If memory is important, maybe users should set it up from the start. So we tested that: optional setup versus mandatory setup.",
+              text: "If memory was this useful, maybe people should set it up from the start. So we tested two versions: optional setup and mandatory setup. The mandatory version looked better.",
             },
             {
               type: "stats",
@@ -1062,7 +1057,10 @@ export const projects: Project[] = [
                 { value: "+12pp", label: "completed generation, mandatory" },
               ],
             },
-            { type: "pull", text: "It looked like a clean win." },
+            {
+              type: "pull",
+              text: "For a moment, it felt like we'd found the answer.",
+            },
             {
               type: "media",
               items: [
@@ -1131,7 +1129,7 @@ export const projects: Project[] = [
           blocks: [
             {
               type: "p",
-              text: "We were asking whether Brand Memory should be optional or mandatory. But the behaviour suggested something else. Maybe the real problem wasn't the setup. Maybe it was the timing.",
+              text: "We were asking whether Brand Memory should be optional or mandatory. But maybe the problem wasn't the setup. Maybe it was the timing.",
             },
             {
               type: "pull",
@@ -1197,13 +1195,12 @@ export const projects: Project[] = [
           blocks: [
             {
               type: "p",
-              text: "It started as a way to make one generation workflow better. Then it became reusable brand context. Then more workflows needed it. Then agents needed it.",
+              text: "It started as a way to make generation more consistent. Then more workflows needed the same context. Then agents needed it too. What started as **remember the brand** became:",
             },
             {
               type: "pull",
-              text: "What started as remember the brand became give the whole system the right context when it needs it.",
+              text: "give the whole system the right context when it needs it.",
             },
-            { type: "p", text: "That was the bigger shift." },
             {
               type: "media",
               items: [
@@ -1228,37 +1225,84 @@ export const projects: Project[] = [
           ],
         },
         {
-          act: "VIII. WHAT I'D DO DIFFERENTLY",
-          heading: "I would trust the experiment less, earlier.",
+          act: "VIII. WHAT HAPPENED NEXT",
+          heading: "We fixed the scan. The bigger problem stayed.",
           blocks: [
             {
               type: "p",
-              text: "We were missing data. The sample wasn't strong enough. And we gave too much weight to one conversion number.",
+              text: "A few months later, we looked at production again. The original scan problem was basically gone. Once people started a scan, **97% completed it successfully.**",
             },
             {
               type: "p",
-              text: "Next time, I'd make sure we had all the right data before starting the test. And I'd look at behaviour earlier.",
+              text: "But something else became much clearer. **63% of onboarding completers still skipped Brand Memory.** And inside the product, people were still opening Brand Memory without using it. Weekly scan conversion fell to **3.4%**, even while traffic stayed roughly the same. So the mechanics were working.",
             },
             {
               type: "pull",
-              text: "Numbers tell you where people leave. Watching them tells you why.",
+              text: "The value still wasn't obvious enough.",
+            },
+            {
+              type: "media",
+              items: [
+                {
+                  kind: "visual",
+                  title: "April, when the scan flow was broken",
+                  note: "Out of eighty-six onboarding completers: twenty clicked the scan, and one of them submitted a URL.",
+                  figure: "funnel-april",
+                  width: 1200,
+                  height: 467,
+                },
+                {
+                  kind: "visual",
+                  title: "August, once the scan flow was fixed",
+                  note: "The same eighty-six: thirty-three clicked, thirty-two submitted a URL and thirty-two finished the scan — and fifty-four never entered it at all.",
+                  figure: "funnel-august",
+                  width: 1200,
+                  height: 434,
+                },
+              ],
             },
           ],
         },
         {
-          act: "IX. THE TAKEAWAY",
+          act: "IX. WHAT I'D DO NEXT",
+          heading: "The next question is why people still don't care enough.",
+          blocks: [
+            {
+              type: "p",
+              text: "We fixed the scan. That didn't fix adoption. So I wouldn't run another onboarding test yet.",
+            },
+            {
+              type: "pull",
+              text: "I'd watch what people are actually doing and understand why they still choose to skip it.",
+            },
+          ],
+        },
+        {
+          act: "X. THE TAKEAWAY",
           heading:
-            "The hard part wasn't teaching AI to remember. It was knowing when memory mattered.",
+            "The hard part wasn't teaching AI to remember. It was making memory worth caring about.",
           layout: "stacked",
           barcode: "640509-040147",
           blocks: [
             {
               type: "p",
-              text: "We started by thinking the answer was simple: remember more.\nIt wasn't.\nThe better question was what AI should remember, and when it should use it.\nThat changed how I think about AI products.",
+              text: "We started by thinking the answer was simple:",
             },
             {
               type: "pull",
-              text: "Don't make the user manage the system. Let the system earn the next step.",
+              text: "Remember more.",
+            },
+            {
+              type: "p",
+              text: "Then we thought the problem was timing. That was only part of it. Even after the scan worked reliably, most people still chose to skip it. So the question I'm left with is simpler:",
+            },
+            {
+              type: "pull",
+              text: "What does the user get back for giving us their brand context?",
+            },
+            {
+              type: "p",
+              text: "That is where I think Brand Memory goes next.",
             },
           ],
         },

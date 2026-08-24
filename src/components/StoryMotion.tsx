@@ -26,7 +26,7 @@ import { useEffect } from "react";
 import { drift, refreshScrub, reducedMotion } from "@/lib/scroll-scrub";
 
 /* figures with their own scroll behaviour, left as they are */
-const OWN_MOTION = ".imr, .cgr, .fun, .bmc, .flr";
+const OWN_MOTION = ".imr, .cgr, .fun, .bmc, .flr, .sef";
 
 /* how far a figure drifts against the scroll. Small: the grid has to hold. */
 const DEPTH = 22;
