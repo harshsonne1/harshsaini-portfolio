@@ -59,7 +59,7 @@ export function HeroNav({ compact = false }: HeroNavProps) {
       )}
 
       <div className="flex flex-col items-end gap-3">
-        <ScheduleCTA />
+        <ScheduleCTA label="Download Resume" href={site.resumeUrl} newTab />
       </div>
     </nav>
   );

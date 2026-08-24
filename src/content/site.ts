@@ -7,7 +7,7 @@ export const site = {
     "I build fast, accessible web experiences, from pixel-perfect interfaces to the systems behind them.",
   location: "India",
   email: "harshsonne1@gmail.com",
-  resumeUrl: "/resume.pdf",
+  resumeUrl: "/Harsh_Saini_Product_Designer_Resume.pdf",
   socials: {
     github: "https://github.com/harshsonne1",
     instagram: "https://www.instagram.com/harsh.saini/",

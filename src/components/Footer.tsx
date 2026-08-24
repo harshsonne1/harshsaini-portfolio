@@ -77,12 +77,13 @@ export function Footer() {
               />
             </li>
           ))}
-          {/* resume — file to be uploaded to /public/resume.pdf */}
+          {/* resume — the PDF in /public, opened in its own tab */}
           <li>
             <BracketLink
               label="Resume"
               href={site.resumeUrl}
               arrow
+              newTab
               bracketsMode="none"
             />
           </li>

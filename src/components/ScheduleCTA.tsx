@@ -1,15 +1,28 @@
 import { site } from "@/content/site";
 
-// "Schedule a call" button shared by the nav and the footer so they stay the
-// same size. Two hover moves: the label slides up while a duplicate slides in
-// from below, and the four corner brackets push out to the edges.
+// The bracketed button shared by the nav and the footer so they stay the same
+// size. Two hover moves: the label slides up while a duplicate slides in from
+// below, and the four corner brackets push out to the edges. Defaults to the
+// "Schedule a call" mailto; the nav passes the resume instead.
 const corner =
   "pointer-events-none absolute h-2 w-2 border-current opacity-40 transition-all duration-300 ease-out group-hover:opacity-70";
 
-export function ScheduleCTA() {
+type ScheduleCTAProps = {
+  label?: string;
+  href?: string;
+  /* opens in a new tab — for the resume PDF, so the page isn't left behind */
+  newTab?: boolean;
+};
+
+export function ScheduleCTA({
+  label = "Schedule a call",
+  href,
+  newTab = false,
+}: ScheduleCTAProps = {}) {
   return (
     <a
-      href={`mailto:${site.email}`}
+      href={href ?? `mailto:${site.email}`}
+      {...(newTab ? { target: "_blank", rel: "noreferrer" } : {})}
       className="group relative inline-flex items-center justify-center px-6 py-2.5 text-sm text-fg"
     >
       <span
@@ -30,10 +43,10 @@ export function ScheduleCTA() {
       />
       <span className="relative block h-[1.4em] overflow-hidden leading-[1.4em]">
         <span className="block whitespace-nowrap transition-transform duration-300 ease-out group-hover:-translate-y-full">
-          Schedule a call
+          {label}
         </span>
         <span className="absolute inset-x-0 top-full block whitespace-nowrap transition-transform duration-300 ease-out group-hover:-translate-y-full">
-          Schedule a call
+          {label}
         </span>
       </span>
     </a>

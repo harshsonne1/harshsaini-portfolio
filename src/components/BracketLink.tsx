@@ -13,6 +13,8 @@ type BracketLinkProps = {
      "hover": brackets hidden at rest, appear on hover.
      "none": no corner brackets — just the arrow + text-slide effect. */
   bracketsMode?: "always" | "hover" | "none";
+  /* force a new tab for an href that isn't http — e.g. the resume PDF */
+  newTab?: boolean;
   className?: string;
 };
 
@@ -22,6 +24,7 @@ export function BracketLink({
   arrow = false,
   back = false,
   bracketsMode = "always",
+  newTab = false,
   className = "",
 }: BracketLinkProps) {
   const cornerBase =
@@ -90,7 +93,7 @@ export function BracketLink({
     return <span className="inline-block cursor-default">{inner}</span>;
   }
 
-  const external = href.startsWith("http");
+  const external = newTab || href.startsWith("http");
   return (
     <a
       href={href}
