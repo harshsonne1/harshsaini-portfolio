@@ -94,9 +94,20 @@ export function ScanFunnel() {
 
     /* Each band owns a slice of the travel, overlapping the next a little so
        one is always arriving as the last settles. A callout follows its own
-       band rather than the funnel as a whole. */
-    const SLICE = 1 / (bands.length + 1);
-    const span = (i: number) => [i * SLICE, i * SLICE + SLICE * 1.9] as const;
+       band rather than the funnel as a whole.
+
+       The build finishes in the first two thirds of the run. Spread across the
+       whole of it, the last band's callout — the 0 failed that the beat turns
+       on — started at four fifths of the travel and had not finished by the
+       end of it, so it landed only as the funnel left the screen: a reader
+       stopped in front of a fully drawn funnel never saw it. */
+    const BAND_DUR = 0.26;
+    const BAND_STAGGER = 0.13;
+    const span = (i: number) =>
+      [i * BAND_STAGGER, i * BAND_STAGGER + BAND_DUR] as const;
+
+    const LEAK_LAG = 0.05;
+    const LEAK_DUR = 0.18;
 
     const ease = (t: number) => 1 - Math.pow(1 - t, 3);
     const clamp01 = (t: number) => (t < 0 ? 0 : t > 1 ? 1 : t);
@@ -110,10 +121,11 @@ export function ScanFunnel() {
         s.y((1 - t) * 34);
       });
       leaks.forEach((leak) => {
-        // a callout belongs to a band, so it takes that band's slice, late
+        // a callout belongs to a band, so it takes that band's slice a beat
+        // behind it — a beat, not a wait: it settles with the band it names
         const i = Number(leak.dataset.band ?? 0);
-        const [from, to] = span(i);
-        const t = ease(clamp01((p - (from + (to - from) * 0.55)) / ((to - from) * 0.6)));
+        const [from] = span(i);
+        const t = ease(clamp01((p - (from + LEAK_LAG)) / LEAK_DUR));
         const s = setters.find((x) => x.el === leak)!;
         s.o(t);
         s.y((1 - t) * 10);
