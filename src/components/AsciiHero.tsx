@@ -760,7 +760,7 @@ export function AsciiHero() {
         { light: mode === "light" ? 1 : 0 },
         glowRef.current,
       );
-      handleRef.current?.setImage("/portrait.png");
+      handleRef.current?.setImage("/portrait.webp");
     } catch {
       /* WebGL2 unavailable — hero shows a bare background */
     }

@@ -95,7 +95,12 @@ export function CoverVideo({
       muted
       loop
       playsInline
-      preload="metadata"
+      // Nothing is fetched until this is played, and it is only played once it
+      // is on screen. At "metadata" the browser went and got whole files up
+      // front — a webm keeps its index at the end, so asking for the metadata
+      // of a one-megabyte clip fetched the megabyte. Two of those were landing
+      // on the Brand Memory page before a reader had scrolled to either.
+      preload="none"
       aria-hidden="true"
       className={className}
     />
