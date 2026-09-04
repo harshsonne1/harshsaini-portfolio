@@ -282,7 +282,7 @@ export const projects: Project[] = [
     title: "Adaptive Intelligence",
     year: "2026",
     description:
-      "Making AI video generation easier to control, by breaking generation into simple steps.",
+      "AI video generation can feel like a black box. I designed a workflow that breaks generation into understandable steps, giving people more control over what they create.",
     tags: ["AI Systems", "Prompt Architecture"],
     link: "https://shopos.ai/agents/monica",
     /* The video's own first frame. Both the work tile and the case study cover
@@ -750,7 +750,7 @@ export const projects: Project[] = [
     title: "Brand Memory",
     year: "2026",
     description:
-      "The shared memory layer behind ShopOS's AI agents, from a brand's website to structured context.",
+      "How do AI agents understand a brand? I worked on the system that turns information from a brand's website into structured context that AI agents can actually use.",
     tags: ["Product Design", "AI Systems"],
     link: "https://shopos.ai/feature/brand-memory",
     image: "/cover-ShopOS.webp",
@@ -1325,21 +1325,21 @@ export const experience: Experience[] = [
     role: "Product Designer",
     company: "ShopOS",
     description:
-      "Product designer at ShopOS: a full-time, on-site role in Bangalore, working across Vibe Design, agentic workflows, and the systems that support them.",
+      "Working on AI-native products, agentic workflows, and the systems behind them, while getting hands-on with code to prototype, raise PRs, and ship faster.",
   },
   {
     period: "Nov 2024 - Oct 2025",
     role: "UI/UX Designer",
     company: "SketchMonk",
     description:
-      "Remote UI/UX designer at SketchMonk, focused on user experience design (UED) and UI design across product work.",
+      "Designing intuitive product experiences across user research, interaction design, and polished UI, from idea to execution.",
   },
   {
     period: "Oct 2024 - Jan 2025",
     role: "Freelance Designer",
     company: "Digitow Design Studio",
     description:
-      "Part-time freelance designer with Digitow Design Studio (remote), working across user interface design and Lean UX.",
+      "Exploring ideas and turning them into intuitive digital experiences through UI design and Lean UX.",
   },
   {
     period: "Apr 2024 - Oct 2024",

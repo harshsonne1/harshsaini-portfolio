@@ -24,22 +24,22 @@ export function About() {
               data-reveal-item="up"
               style={{ "--reveal-delay": "90ms" } as React.CSSProperties}
             >
-              Design Engineer &amp; Product Designer crafting cutting-edge and
-              innovative interactive experiences using modern web technologies.
+              I’m a Product Designer who likes figuring out messy problems and
+              turning them into simple products.
             </p>
             <p
               data-reveal-item="up"
               style={{ "--reveal-delay": "180ms" } as React.CSSProperties}
             >
-              2+ years of experience in design and development, specializing in
-              crafting intuitive, user-focused interfaces for websites, apps,
-              and digital products.
+              Over 2+ years, I’ve worked across AI, SaaS, UI/UX, and
+              interactive experiences, often exploring where design and
+              technology meet.
             </p>
             <p
               data-reveal-item="up"
               style={{ "--reveal-delay": "270ms" } as React.CSSProperties}
             >
-              Currently working as a Product Designer at{" "}
+              Currently designing AI products at{" "}
               <a
                 href="https://shopos.ai"
                 target="_blank"
@@ -50,8 +50,8 @@ export function About() {
               >
                 ShopOS
               </a>
-              . Looking for a new challenge. Have been a multidisciplinary
-              designer, and much more.
+              , while getting hands-on with code, raising PRs, and shipping
+              beyond the Figma file.
             </p>
           </div>
         </div>

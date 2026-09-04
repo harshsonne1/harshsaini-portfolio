@@ -77,10 +77,25 @@ export function Experiments() {
     // no horizontal padding: the wall runs the full viewport width, edge to
     // edge, and only the heading keeps the page's gutter
     <section id="experiments" className="relative scroll-mt-20 py-20 sm:py-28">
-      <h2 className="mb-12 px-4 font-hero-1 text-4xl leading-none text-fg sm:mb-16 sm:text-5xl">
+      <h2 className="mb-6 px-4 font-hero-1 text-4xl leading-none text-fg sm:mb-8 sm:text-5xl">
         <GlitchInitial letter="E" intervalMs={6400} />
         xperiments
       </h2>
+
+      {/* keeps the page's gutter like the heading — only the wall below is
+          full-bleed */}
+      <div className="mb-12 max-w-2xl space-y-5 px-4 text-xl leading-snug tracking-tight text-fg sm:mb-16 sm:text-2xl">
+        <p>
+          Not everything I make needs to become a product.
+          {/* the second sentence gets its own line */}
+          <br />
+          Sometimes I just want to see if an idea works.
+        </p>
+        <p>
+          I experiment with code, interactions, graphics, AI, WebGL, and
+          whatever else catches my attention.
+        </p>
+      </div>
 
       <div className="exp-gallery">
         {/* Σ 3.85 */}

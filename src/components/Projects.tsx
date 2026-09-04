@@ -134,7 +134,9 @@ export function Projects() {
                   <p
                     data-reveal-item="up"
                     style={{ "--reveal-delay": "750ms" } as React.CSSProperties}
-                    className="mt-2 max-w-md text-sm leading-relaxed text-muted"
+                    // full card width, not a narrower measure, so the longer
+                    // descriptions run the width of the tile above them
+                    className="mt-2 text-base leading-relaxed text-muted"
                   >
                     {project.description}
                   </p>
