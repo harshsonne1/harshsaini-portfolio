@@ -96,8 +96,8 @@ export function Experiments() {
           Sometimes I just want to see if an idea works.
         </p>
         <p>
-          I experiment with code, interactions, graphics, AI, WebGL, and
-          whatever else catches my attention.
+          I sketch, paint, draw and experiment with code, motion interactions,
+          and whatever else catches my attention.
         </p>
       </div>
 
