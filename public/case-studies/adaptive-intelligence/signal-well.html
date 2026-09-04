@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Signal Well</title>
+<style>
+  /* Only the ground colour is a token — every stroke inside the SVG carries
+     its own literal, so the piece renders identically wherever it is embedded
+     and inherits nothing from a host stylesheet. */
+  :root{ --ground:#07080A; }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--ground);display:grid;place-items:center}
+  /* the stage IS the piece now — no frame, no chrome, no type */
+  .stage{width:100%;max-width:1200px;position:relative;line-height:0}
+  .stage svg{display:block;width:100%;height:auto}
+</style>
+</head>
+<body>
+<div class="stage">
+  <svg id="scene" viewBox="0 0 1200 1180" role="img" aria-label="Five light beams converge down a funnel grid into its throat; the camera descends a spiralling tunnel where one brighter beam overtakes the others from behind; the tunnel opens into space and that beam swings out into a steady orbit around a small sun.">
+      <defs>
+        <radialGradient id="sunGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#F4F8FC" stop-opacity=".34"/>
+          <stop offset="38%" stop-color="#C9D4E0" stop-opacity=".10"/>
+          <stop offset="100%" stop-color="#C9D4E0" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="orbGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#FFFFFF" stop-opacity=".55"/>
+          <stop offset="40%" stop-color="#DCE6F2" stop-opacity=".16"/>
+          <stop offset="100%" stop-color="#DCE6F2" stop-opacity="0"/>
+        </radialGradient>
+        <!-- the throat aperture, punched out of the beam layer only -->
+        <mask id="throatMask" maskUnits="userSpaceOnUse" x="0" y="0" width="1200" height="1180">
+          <rect width="1200" height="1180" fill="#ffffff"/>
+          <path id="throatHole" fill="#000000" d=""/>
+        </mask>
+      </defs>
+      <rect width="1200" height="1180" fill="#0A0A0C"/>
+      <g id="gRings" fill="none" stroke="#9AA3B0" stroke-width="0.85"></g>
+      <g id="gSpokes" fill="none" stroke="#9AA3B0" stroke-width="0.85"></g>
+      <g id="gRails" fill="none" stroke="#9AA3B0" stroke-width="0.85"></g>
+      <g id="gTunnel" fill="none" stroke="#9AA3B0" stroke-width="0.85"></g>
+      <circle id="sunHalo" fill="url(#sunGlow)" opacity="0"></circle>
+      <g id="gSun" fill="none" stroke="#E8EDF3"></g>
+      <g id="gBodies"></g>
+      <g id="gBeams" fill="none" mask="url(#throatMask)"></g>
+      <rect id="veil" width="1200" height="1180" fill="#0A0A0C" opacity="0" pointer-events="none"/>
+    </svg>
+</div>
+<script>
+(function(){
+  "use strict";
+  var NS="http://www.w3.org/2000/svg";
+  var CX=600, CY_CREATE=128, CY_REVIEW=590, CY_SPACE=390, BOUND=4000;
+  var RS=32;
+  var RING_R=[400,780,1521,2966,5784];
+  var RMAX=RING_R[RING_R.length-1];
+  var ZMAX=2*Math.sqrt(RS*(RMAX-RS));
+  var Y_PINCH=-ZMAX;
+  var RING_SEG=260, SPOKE_SEG=170, SPOKE_N=12;
+  /* parallax amplitude is keyed per act: the scenes differ by two orders of
+     magnitude in scale, and ±88 inside a radius-40 tunnel puts the lens
+     outside the wall. eye/pitchOff are normalised -1..1; these are the gains. */
+  var K_EYEAMP=[[0,88],[3850,88],[4550,14],[7800,14],[10200,130]];
+  var K_PITAMP=[[0,1.6],[3850,1.6],[4550,0.9],[7800,0.9],[10200,1.3]];
+  var TUN_N=44, TUN_STEP=100, TUN_END=Y_PINCH-TUN_N*TUN_STEP;
+  /* the tunnel never stops: drift wraps on the ring spacing so the set is
+     exactly periodic, and rot wraps on the 12-fold rail symmetry */
+  var TWIST=0.65, DRIFT_RATE=0.055, ROT_RATE=0.00022, FLOW_T0=4550;
+  var SUN_Y=-3580, SUN_R=155;
+  /* coplanar and concentric — the drifting ellipse centres in the reference
+     are pure perspective, not offset orbits. every period divides PERIOD. */
+  var ORBITS=[
+    {R:300,per:2250,dash:0},{R:470,per:3000,dash:0},{R:660,per:4500,dash:0},
+    {R:860,per:9000,dash:0},{R:1060,per:9000,dash:0},{R:1260,per:9000,dash:1}
+  ];
+  var HERO_ORBIT=ORBITS[3];
+  var LOOP_START=11200, PERIOD=9000, TEND=LOOP_START+PERIOD;
+  /* The piece runs the funnel, the tunnel and one full orbit, then starts
+     again from the top. Cutting straight from a wide orbit back to the funnel
+     is a hard jump, so the veil that already bridges the act changes carries
+     the loop too: it closes over the last of the orbit and opens again on the
+     well. */
+  var LOOP_FADE=800;
+  function smooth(x){x=x<0?0:x>1?1:x; return x*x*(3-2*x)}
+
+  function wellY(R){ return 2*Math.sqrt(RS*Math.max(0,R-RS)) - ZMAX; }
+  function tunnelR(y){ return RS*(1 + 0.28*(Y_PINCH-y)/900); }
+  function railTh(th0,y,rot){ return th0 + rot + TWIST*(Y_PINCH-y)/900 }
+
+  var ease=(function(){
+    function A(a,b){return 1-3*b+3*a} function B(a,b){return 3*b-6*a} function C(a){return 3*a}
+    function calc(t,a,b){return ((A(a,b)*t+B(a,b))*t+C(a))*t}
+    function slope(t,a,b){return 3*A(a,b)*t*t+2*B(a,b)*t+C(a)}
+    return function(x){ if(x<=0)return 0; if(x>=1)return 1; var t=x;
+      for(var i=0;i<6;i++){var s=slope(t,0.22,0.36); if(!s)break; t-=(calc(t,0.22,0.36)-x)/s;}
+      return calc(t,1,1); };
+  })();
+  function clamp(v,a,b){a=a===undefined?0:a;b=b===undefined?1:b;return v<a?a:v>b?b:v}
+  function span(t,a,b){return clamp((t-a)/(b-a))}
+  function lerp(a,b,t){return a+(b-a)*t}
+  function keyed(t,k){
+    if(t<=k[0][0])return k[0][1];
+    for(var i=1;i<k.length;i++) if(t<=k[i][0]) return lerp(k[i-1][1],k[i][1],ease((t-k[i-1][0])/(k[i][0]-k[i-1][0])));
+    return k[k.length-1][1];
+  }
+
+  /* ---- camera ----
+     Act boundaries live in these key tracks. The well-to-tunnel handoff is the
+     3850..4550 window — 700ms, and every downstream instant sits 400ms earlier
+     than it once did so act 2 starts flowing the moment the camera arrives
+     rather than holding on a still tunnel. */
+  /* pitch 35 with focal/dist = 0.49 reproduces the reference exactly:
+     inner ellipse aspect 0.578, outer 0.644, centres drifting down with radius */
+  var K_PITCH=[[3850,14],[4550,90],[7800,90],[10400,35]];
+  var K_DIST =[[3850,6000],[4073,3200],[4550,350],[7800,350],[10400,2600]];
+  var K_FOCAL=[[7800,2860],[10400,1280]];
+  var K_TY   =[[3850,0],[4550,-1500],[7800,-2500],[10400,SUN_Y]];
+  var K_CY   =[[3850,CY_CREATE],[4136,215],[4550,CY_REVIEW],[9200,CY_REVIEW],[10400,CY_SPACE]];
+  var cam={pitch:14*Math.PI/180,dist:6000,focal:2860,ty:0,cy:CY_CREATE,near:720,eye:0,
+           cosP:Math.cos(14*Math.PI/180),sinP:Math.sin(14*Math.PI/180)};
+  var eye=0, pitchOff=0, eyeT=0, pitchT=0;
+  function camTy(t){ return keyed(t,K_TY) }
+
+  function setCam(t){
+    cam.dist=keyed(t,K_DIST); cam.focal=keyed(t,K_FOCAL);
+    cam.ty=keyed(t,K_TY); cam.cy=keyed(t,K_CY);
+    cam.pitch=keyed(t,K_PITCH)*Math.PI/180 + pitchOff*keyed(t,K_PITAMP)*Math.PI/180;
+    cam.cosP=Math.cos(cam.pitch); cam.sinP=Math.sin(cam.pitch);
+    cam.near=Math.max(40, cam.dist*0.12);
+    cam.eye=eye*keyed(t,K_EYEAMP);
+  }
+  function projectC(x,z,y){
+    var yr=y-cam.ty;
+    var d=cam.dist + z*cam.cosP - yr*cam.sinP;
+    if(d<cam.near) return null;
+    var s=cam.focal/d;
+    var sx=CX+(x+cam.eye)*s, sy=cam.cy-(yr*cam.cosP + z*cam.sinP)*s;
+    if(Math.abs(sx-CX)>BOUND || Math.abs(sy-cam.cy)>BOUND) return null;
+    return {x:sx, y:sy, d:d, s:s};
+  }
+  function project(R,th,y){ return projectC(R*Math.cos(th), R*Math.sin(th), y) }
+  function poly(pts){
+    var s="",open=false;
+    for(var i=0;i<pts.length;i++){
+      var q=pts[i];
+      if(!q){open=false;continue}
+      s+=(open?"L":"M")+q.x.toFixed(1)+","+q.y.toFixed(1); open=true;
+    }
+    return s;
+  }
+  function ring(R,y,seg){
+    var pts=[]; for(var k=0;k<=seg;k++) pts.push(project(R,k/seg*Math.PI*2,y)); return pts;
+  }
+  function el(tag,a){var n=document.createElementNS(NS,tag);for(var k in a)n.setAttribute(k,a[k]);return n}
+
+  var gRings=document.getElementById("gRings"), gSpokes=document.getElementById("gSpokes"),
+      gRails=document.getElementById("gRails"), gTunnel=document.getElementById("gTunnel"),
+      gSun=document.getElementById("gSun"), gBodies=document.getElementById("gBodies"),
+      gBeams=document.getElementById("gBeams"), sunHalo=document.getElementById("sunHalo"),
+      throatHole=document.getElementById("throatHole"), veil=document.getElementById("veil");
+
+  /* well */
+  var rings=RING_R.map(function(R,i){
+    var op=0.31-0.028*i, n=el("path",{"stroke-opacity":op});
+    gRings.appendChild(n); return {R:R,y:wellY(R),node:n,base:op};
+  });
+  var spokeR=[]; for(var m=0;m<=SPOKE_SEG;m++) spokeR.push(RS*Math.pow(RMAX/RS,1-m/SPOKE_SEG));
+  var spokes=[];
+  for(var j=0;j<SPOKE_N;j++){
+    var n=el("path",{}); gSpokes.appendChild(n);
+    spokes.push({th:j/SPOKE_N*Math.PI*2,node:n,pts:[]});
+  }
+
+  /* tunnel: three deep rings expand into the orbits, the rest retire */
+  var ORB_OF={20:0,23:1,26:2,29:3,32:4,35:5};
+  var tunRings=[];
+  for(var i=0;i<=TUN_N;i++){
+    var y=Y_PINCH-i*TUN_STEP, n=el("path",{});
+    gTunnel.appendChild(n);
+    tunRings.push({y0:y,node:n,orb:ORB_OF[i]===undefined?null:ORBITS[ORB_OF[i]]});
+  }
+  var rails=[];
+  for(var j2=0;j2<SPOKE_N;j2++){
+    var n2=el("path",{}); gRails.appendChild(n2);
+    rails.push({th:j2/SPOKE_N*Math.PI*2,node:n2});
+  }
+
+  /* sun: a sphere, so a screen-space circle, plus one thin corona ring */
+  var sunDisc=el("circle",{"stroke-width":1,"stroke-opacity":.85,fill:"#0A0A0C"}),
+      sunCorona=el("circle",{"stroke-width":0.7,"stroke-opacity":.22,fill:"none"});
+  gSun.appendChild(sunCorona); gSun.appendChild(sunDisc);
+
+  /* ---- beams. hero is BEAMS[2]: last to land in Create, and the one that
+     re-enters from behind in Review and ends up in orbit. ---- */
+  var BEAMS=[
+    /* relA is distance-from-lens on entry. the camera sits at d 350, so a relA
+       near 300 puts the beam at d ~50 where scale = focal/d explodes — that was
+       the whip. these keep entry depth above 240. */
+    {spoke:1,  cStart:0,   cArrive:2600, th0:0.00, relA:   70, relB:-640, rStart:4550, rEnd:8200, hero:false, swallow:340},
+    {spoke:5,  cStart:180, cArrive:2880, th0:1.90, relA:   58, relB:-700, rStart:4640, rEnd:8200, hero:false, swallow:340},
+    {spoke:3,  cStart:420, cArrive:3400, th0:3.55, relA:  108, relB:-1120,rStart:5500, rEnd:7800, hero:true,  swallow:500},
+    {spoke:10, cStart:300, cArrive:3050, th0:4.55, relA:   64, relB:-600, rStart:4720, rEnd:8200, hero:false, swallow:340},
+    {spoke:8,  cStart:640, cArrive:3230, th0:5.60, relA:   52, relB:-680, rStart:4810, rEnd:8200, hero:false, swallow:340}
+  ];
+  var HERO=BEAMS[2];
+
+  /* angular accumulator: rate blends from the tunnel spiral into the orbital
+     rate, integrated in closed form so value AND derivative stay continuous */
+  var W_ORBIT=2*Math.PI/PERIOD, BLEND_A=7800, BLEND_B=10600;
+
+  /* The rate is COUPLED TO THE RADIUS, not blended over time: w = V / R^K.
+     With an independent time blend, w stayed high while R grew 14x, so the
+     tangential speed w*R spiked mid-expansion and then dropped to orbital.
+     That was the jump, and no easing curve could have fixed it. */
+  var HERO_K=0.72, HERO_V=W_ORBIT*Math.pow(HERO_ORBIT.R,HERO_K);
+  function tunnelY(b,t){
+    return camTy(Math.min(t,BLEND_A)) + lerp(b.relA,b.relB,smooth(span(t,b.rStart,b.rEnd)));
+  }
+  function heroRadius(t){
+    var R=tunnelR(tunnelY(HERO,t));
+    return t>8300 ? lerp(R,HERO_ORBIT.R,smooth(span(t,8700,BLEND_B))) : R;
+  }
+  /* w has no closed-form integral once it depends on R(t), so the angle is
+     tabulated once at init — still a pure function of t, so scrubbing works */
+  var TH_STEP=20, TH_TAB=[];
+  (function(){
+    var acc=0;
+    for(var tt=HERO.rStart; tt<=LOOP_START+TH_STEP; tt+=TH_STEP){
+      TH_TAB.push(acc);
+      acc+=(HERO_V/Math.pow(heroRadius(tt),HERO_K))*TH_STEP;
+    }
+  })();
+  function heroAngle(t){
+    if(t<=HERO.rStart) return 0;
+    var f=(t-HERO.rStart)/TH_STEP, i=Math.floor(f), n=TH_TAB.length-1;
+    if(i>=n) return TH_TAB[n]+W_ORBIT*(t-(HERO.rStart+n*TH_STEP));
+    return lerp(TH_TAB[i],TH_TAB[i+1],f-i);
+  }
+  var W_PACK=0.0042;
+  function packAngle(b,t){ return t<=b.rStart?0:W_PACK*(t-b.rStart) }
+
+  /* world position of a beam at time t, or null when it should not be drawn */
+  function beamPos(b,t){
+    if(t<b.rStart){                                   /* Create: across the well */
+      var swal=span(t,b.cArrive,b.cArrive+b.swallow);
+      if(swal>=1) return null;                         /* fully inside the throat */
+      /* p keeps climbing past 1 so the head travels INTO the aperture and the
+         mask eats it, then keeps eating the trail behind it */
+      var p=ease(span(t,b.cStart,b.cArrive))+swal*0.55;
+      if(p<=0.001) return null;
+      var R=RS*Math.pow(RMAX/RS,1-p);
+      return {R:R, th:spokes[b.spoke].th, y:wellY(R)};
+    }
+    var y=tunnelY(b,t);
+    var th=(b.hero?heroAngle(t):packAngle(b,t))+b.th0;
+    var R=tunnelR(y);
+    if(b.hero && t>8300){                              /* merge into orbit */
+      var w=smooth(span(t,8700,BLEND_B));
+      R=heroRadius(t);
+      y=lerp(y,SUN_Y,w);
+    }
+    return {R:R, th:th, y:y};
+  }
+
+  /* one hairline trail, one soft halo, one small bright orb — nothing else */
+  var TRAIL_N=26;
+  var beams=BEAMS.map(function(b){
+    var g=el("g",{});
+    b.tail=el("path",{fill:"none",stroke:"#C9D4E0","stroke-width":b.hero?0.75:0.6,
+                      "stroke-opacity":b.hero?.20:.13,"stroke-linecap":"round"});
+    b.head=el("path",{fill:"none",stroke:"#EEF3F8","stroke-width":b.hero?0.95:0.75,
+                      "stroke-opacity":b.hero?.6:.42,"stroke-linecap":"round"});
+    b.halo=el("circle",{r:b.hero?7:5,fill:"url(#orbGlow)",opacity:0});
+    b.dot=el("circle",{r:b.hero?2.2:1.6,fill:"#FFFFFF",opacity:0});
+    g.appendChild(b.tail); g.appendChild(b.head); g.appendChild(b.halo); g.appendChild(b.dot);
+    gBeams.appendChild(g);
+    return b;
+  });
+
+  /* the body field — one per orbit plus a few doubles, as in the reference */
+  var BODY_SPEC=[[0,0.0],[0,3.6],[1,1.4],[2,2.7],[2,5.3],[4,0.8],[5,4.1],[1,4.9]];
+  var bodies=BODY_SPEC.map(function(sp){
+    var c=el("circle",{r:2.2,fill:"#F0F4F8",opacity:0});
+    gBodies.appendChild(c);
+    return {orb:ORBITS[sp[0]],node:c,ph:sp[1],dim:ORBITS[sp[0]].dash?0.42:1};
+  });
+
+  /* ---- frame ---- */
+  function render(t){
+    setCam(t);
+
+    var wellOp=1-ease(span(t,3945,4423));
+    var tunOp=ease(span(t,4041,4423));
+    var railOut=ease(span(t,8200,9400));
+    var open=ease(span(t,7900,9800));        /* deep rings -> orbits */
+    var sunUp=ease(span(t,8200,9500));
+    /* linear, never decelerating. drift wraps on TUN_STEP, rot on 2pi/12. */
+    var run=Math.max(0,t-FLOW_T0);
+    var drift=(run*DRIFT_RATE)%TUN_STEP, rot=run*ROT_RATE;
+    var pulse=ease(span(t,3400,3620))*(1-ease(span(t,3620,4136)));
+
+    /* the aperture the beams vanish into — beam layer only, so the grid,
+       spokes and throat pulse all stay untouched by it */
+    throatHole.setAttribute("d", wellOp>0.004 ? poly(ring(RS*1.25,Y_PINCH,72))+"Z" : "");
+
+    /* well */
+    gRings.setAttribute("opacity",wellOp.toFixed(3));
+    gSpokes.setAttribute("opacity",wellOp.toFixed(3));
+    if(wellOp>0.004){
+      rings.forEach(function(r){
+        r.node.setAttribute("d",poly(ring(r.R,r.y,RING_SEG)));
+        r.node.setAttribute("stroke-opacity",(r.base*(r===rings[0]?1+pulse*0.7:1)).toFixed(3));
+      });
+      spokes.forEach(function(sp){
+        var pts=[];
+        for(var m2=0;m2<spokeR.length;m2++) pts.push(project(spokeR[m2],sp.th,wellY(spokeR[m2])));
+        sp.node.setAttribute("d",poly(pts));
+        sp.node.setAttribute("stroke-opacity",0.27);
+        sp.pts=pts;
+      });
+    }
+
+    /* tunnel rings, three of which open into orbits */
+    gTunnel.setAttribute("opacity",tunOp.toFixed(3));
+    if(tunOp>0.004){
+      tunRings.forEach(function(r){
+        var R,y,op;
+        if(r.orb){
+          /* orbit rings carry no drift — they need a stable identity to morph,
+             and a wrapping offset would jump them mid-transition */
+          R=lerp(tunnelR(r.y0), r.orb.R, open);
+          y=lerp(r.y0, SUN_Y, open);
+          op=lerp(0.30, r.orb.dash?0.13:(r.orb===HERO_ORBIT?0.24:0.17), open);
+          r.node.setAttribute("stroke-dasharray", r.orb.dash&&open>0.6 ? "7 9" : "");
+        } else {
+          y=r.y0-drift; R=tunnelR(y);
+          /* opacity from depth, not from index — that is what makes the
+             drift wrap invisible as rings recycle through the set */
+          var rel=y-cam.ty;
+          op=0.34*clamp(1+rel/2500)*clamp(-rel/200)*(1-ease(span(t,8200,9400)));
+        }
+        if(op<=0.004){ r.node.setAttribute("d",""); return }
+        r.node.setAttribute("d",poly(ring(R,y,open>0.02?200:120)));
+        r.node.setAttribute("stroke-opacity",op.toFixed(3));
+      });
+    }
+
+    /* spiral rails */
+    gRails.setAttribute("opacity",(tunOp*(1-railOut)).toFixed(3));
+    if(tunOp>0.004 && railOut<0.996){
+      /* rails are sampled in a window that travels with the camera, so they
+         are always present and always turning — no visible ends, no stall */
+      rails.forEach(function(ra){
+        var pts=[], y0=cam.ty+150, y1=cam.ty-2400;
+        for(var q2=0;q2<=48;q2++){
+          var yy=lerp(y0,y1,q2/48);
+          pts.push(project(tunnelR(yy),railTh(ra.th,yy,rot),yy));
+        }
+        ra.node.setAttribute("d",poly(pts));
+        ra.node.setAttribute("stroke-opacity",0.22);
+      });
+    }
+
+    /* sun */
+    var sp2=projectC(0,0,SUN_Y);
+    if(sp2 && sunUp>0.004){
+      var rr=SUN_R*sp2.s;
+      sunDisc.setAttribute("cx",sp2.x.toFixed(1)); sunDisc.setAttribute("cy",sp2.y.toFixed(1));
+      sunDisc.setAttribute("r",rr.toFixed(1));
+      sunCorona.setAttribute("cx",sp2.x.toFixed(1)); sunCorona.setAttribute("cy",sp2.y.toFixed(1));
+      sunCorona.setAttribute("r",(rr*1.28).toFixed(1));
+      gSun.setAttribute("opacity",sunUp.toFixed(3));
+      sunHalo.setAttribute("cx",sp2.x.toFixed(1)); sunHalo.setAttribute("cy",sp2.y.toFixed(1));
+      sunHalo.setAttribute("r",(rr*2.4).toFixed(1));
+      sunHalo.setAttribute("opacity",(sunUp*0.55).toFixed(3));
+    } else { gSun.setAttribute("opacity",0); sunHalo.setAttribute("opacity",0) }
+
+    /* inner bodies */
+    bodies.forEach(function(bd){
+      var vis=ease(span(t,9300,10600));
+      if(vis<=0.004){ bd.node.setAttribute("opacity",0); return }
+      var th=bd.ph+2*Math.PI*(t-LOOP_START)/bd.orb.per;
+      var p=project(bd.orb.R,th,SUN_Y);
+      if(!p){ bd.node.setAttribute("opacity",0); return }
+      bd.node.setAttribute("cx",p.x.toFixed(1)); bd.node.setAttribute("cy",p.y.toFixed(1));
+      bd.node.setAttribute("r",(2.2*clamp(p.s/0.49,0.72,1.5)).toFixed(2));
+      bd.node.setAttribute("opacity",(vis*0.9*bd.dim).toFixed(3));
+    });
+
+    /* beams: the trail is the beam's own past, resampled every frame */
+    beams.forEach(function(b){
+      var vis = b.hero ? 1 : (1-ease(span(t,7800,8800)));
+      /* ease the entry in rather than popping a full-brightness orb at d~240 */
+      if(t>=b.rStart) vis*=ease(span(t,b.rStart,b.rStart+300));
+      var here=beamPos(b,t);
+      if(!here || vis<=0.004){
+        b.head.setAttribute("d",""); b.tail.setAttribute("d","");
+        b.dot.setAttribute("opacity",0); b.halo.setAttribute("opacity",0); return;
+      }
+      /* the mask does the disappearing. opacity only cleans up the last sliver,
+         and the trail shortens just enough to keep the tail from lagging. */
+      var swal=(t>=b.cArrive&&t<b.rStart)?span(t,b.cArrive,b.cArrive+b.swallow):0;
+      vis*=1-ease(clamp((swal-0.86)/0.14));
+      if(vis<=0.004){
+        b.head.setAttribute("d",""); b.tail.setAttribute("d","");
+        b.dot.setAttribute("opacity",0); b.halo.setAttribute("opacity",0); return;
+      }
+      var len=(b.hero?360:230)*(1-0.25*swal), pts=[];
+      for(var k=0;k<=TRAIL_N;k++){
+        var tk=t-len*k/TRAIL_N;
+        var pk=(tk<b.rStart&&t>=b.rStart)?null:beamPos(b,tk);
+        pts.push(pk?project(pk.R,pk.th,pk.y):null);
+      }
+      var cut=Math.round(TRAIL_N*0.28);
+      b.head.setAttribute("d",poly(pts.slice(0,cut+1)));
+      b.tail.setAttribute("d",poly(pts.slice(cut)));
+      b.head.setAttribute("stroke-opacity",((b.hero?0.60:0.42)*vis).toFixed(3));
+      b.tail.setAttribute("stroke-opacity",((b.hero?0.20:0.13)*vis).toFixed(3));
+      var q3=pts[0];
+      if(q3){
+        var k=clamp(q3.s?q3.s/0.6:1,0.75,1.7);
+        b.dot.setAttribute("cx",q3.x.toFixed(1)); b.dot.setAttribute("cy",q3.y.toFixed(1));
+        b.dot.setAttribute("r",((b.hero?2.2:1.6)*k).toFixed(2));
+        b.dot.setAttribute("opacity",vis.toFixed(3));
+        b.halo.setAttribute("cx",q3.x.toFixed(1)); b.halo.setAttribute("cy",q3.y.toFixed(1));
+        b.halo.setAttribute("r",((b.hero?7:5)*k).toFixed(2));
+        b.halo.setAttribute("opacity",(vis*0.9).toFixed(3));
+      } else { b.dot.setAttribute("opacity",0); b.halo.setAttribute("opacity",0) }
+    });
+
+    /* every transition gets the same soft bridge: one veil in, one veil out */
+    var v1=ease(span(t,3914,4232))*(1-ease(span(t,4232,4518)));
+    var v2=ease(span(t,7850,8350))*(1-ease(span(t,8350,9200)));
+    /* full at both ends of the timeline, so the wrap happens behind it */
+    var vLoop=Math.max(1-ease(span(t,0,LOOP_FADE)), ease(span(t,TEND-LOOP_FADE,TEND)));
+    veil.setAttribute("opacity",Math.max(v1*0.46+v2*0.30, vLoop).toFixed(3));
+  }
+
+  var reduced=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var canHover=window.matchMedia&&window.matchMedia("(hover: hover)").matches;
+  var parallax=canHover&&!reduced;
+  var t=reduced?LOOP_START+2000:0, playing=!reduced, last=null;
+
+  render(t);
+
+  (function tick(now){
+    if(last===null) last=now;
+    var dt=Math.min(now-last,60); last=now;
+    var de=eyeT-eye, dp=pitchT-pitchOff;
+    var moving=Math.abs(de)>0.002 || Math.abs(dp)>0.002;
+    if(moving){ eye+=de*0.09; pitchOff+=dp*0.09 }
+    if(playing){
+      t+=dt;
+      /* back to the top, keeping the overshoot so the wrap costs no frame */
+      if(t>=TEND) t-=TEND;
+      render(t);
+    } else if(moving){ render(t) }
+    requestAnimationFrame(tick);
+  })(performance.now());
+
+  var stage=document.querySelector(".stage");
+  stage.addEventListener("pointermove",function(e){
+    if(!parallax) return;
+    var r=stage.getBoundingClientRect();
+    eyeT=clamp((e.clientX-r.left)/r.width*2-1,-1,1);
+    pitchT=clamp((e.clientY-r.top)/r.height*2-1,-1,1);
+  });
+  stage.addEventListener("pointerleave",function(){ eyeT=0; pitchT=0 });
+})();
+</script>
+</body>
+</html>

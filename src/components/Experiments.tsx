@@ -13,8 +13,9 @@
 //
 // A row's height is (row width) ÷ (sum of its aspects), so rows are composed by
 // that sum rather than by tile count: a row summing to ~3.7 runs tall, one
-// summing to ~4.8 runs short. The four rows below sum to 3.85 / 3.72 / 4.08 /
-// 3.76, which at 1600px puts them within 40px of each other.
+// summing to ~5.5 runs short. The four rows below sum to 4.06 / 4.11 / 5.46 /
+// 3.76 — at 1600px that is 394 / 389 / 293 / 426px, so the first two sit level
+// with each other and the gradient band stays the flat one.
 //
 // Below 640px each tile takes a line to itself, full width, still uncropped.
 
@@ -33,7 +34,10 @@ const ASPECT = {
   asciiArt: 1024 / 585,
   avatar: 236 / 214,
   sunset: 1184 / 1184,
-  clock: 540 / 888,
+  // 82 columns x 34 rows of glyphs, each cell 1.995x as tall as it is wide.
+  // The field fits its box rather than stretching, so the tile carries the
+  // lattice's own ratio or it sits in dead ground.
+  asciiCortex: 82 / (34 * 1.995),
   // the board fits its own 1600x900 stage to the frame it is given, so the
   // tile has to be exactly 16:9 or it sits letterboxed inside its own tile
   agents: 1600 / 900,
@@ -98,24 +102,27 @@ export function Experiments() {
       </div>
 
       <div className="exp-gallery">
-        {/* Σ 3.85 */}
+        {/* Σ 4.06 */}
         <div className="exp-row">
+          {/* opens full size like the playground — the preview is sandboxed,
+              and the field is worth more than a tile's worth of it */}
           <ExperimentCard
-            title="Ping Pong"
-            description="A rally on a 7×7 matrix. Every frame is just the list of dots lit in it."
-            aspect={ASPECT.pingPong}
+            title="ASCII Cortex"
+            description="A glyph field breathing on one quantised clock. Rings lag by radius, then converge into unison."
+            aspect={ASPECT.asciiCortex}
+            href="/experiments/ascii-cortex.html"
+            // the glow is additive over its own near-black ground, in either
+            // theme — inverted it would be light on light
+            className="exp-on-dark"
             component={
-              // zoomed in .exp-pong so the matrix reads at the scale of the
-              // stills around it, without touching the component's own sizing
-              <div className="exp-pong">
-                <DotLoader
-                  frames={pingPongFrames}
-                  duration={110}
-                  // colour lives in .exp-dot so it follows the theme; fixed
-                  // neutrals inverted in light mode
-                  dotClassName="exp-dot"
-                />
-              </div>
+              <iframe
+                src="/experiments/ascii-cortex.html"
+                title="ASCII Cortex"
+                loading="lazy"
+                sandbox="allow-scripts"
+                scrolling="no"
+                className="absolute inset-0 block h-full w-full border-0"
+              />
             }
           />
 
@@ -148,17 +155,24 @@ export function Experiments() {
           />
         </div>
 
-        {/* Σ 3.54 — the tallest row, carried by the portrait clock */}
+        {/* Σ 4.11 — level with the row above it */}
         <div className="exp-row">
           <ExperimentCard
-            title="1111"
-            description="The clock catching itself at the moment everyone makes a wish."
-            aspect={ASPECT.clock}
+            title="Ping Pong"
+            description="A rally on a 7×7 matrix. Every frame is just the list of dots lit in it."
+            aspect={ASPECT.pingPong}
             component={
-              <PhotoTile
-                src="/bento/1111.webp"
-                alt="A digital clock reading 11:11 in the dark"
-              />
+              // zoomed in .exp-pong so the matrix reads at the scale of the
+              // stills around it, without touching the component's own sizing
+              <div className="exp-pong">
+                <DotLoader
+                  frames={pingPongFrames}
+                  duration={110}
+                  // colour lives in .exp-dot so it follows the theme; fixed
+                  // neutrals inverted in light mode
+                  dotClassName="exp-dot"
+                />
+              </div>
             }
           />
 

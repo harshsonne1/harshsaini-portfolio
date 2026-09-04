@@ -558,6 +558,31 @@ body {
   }
 }
 
+/* ---- Figure mat ----
+   The frame every case study figure sits in: a translucent mat with the media
+   on a plate inside it, so a screenshot is presented rather than butted
+   straight against the page.
+
+   Two overlays, as in the reference: `secondary` is the mat's fill, `primary`
+   is a hairline on the plate itself — a ring rather than a background, which
+   is why the plate can stay transparent and still read as an edge.
+
+   White at these alphas is the dark theme the site opens in. Light theme takes
+   the same alphas in black: a white overlay on a white surface is no overlay
+   at all, and these have to stay visible in both. */
+.overlay-secondary-white {
+  background: rgba(255, 255, 255, 0.04);
+}
+.overlay-primary-white {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+:root[data-theme="light"] .overlay-secondary-white {
+  background: rgba(0, 0, 0, 0.03);
+}
+:root[data-theme="light"] .overlay-primary-white {
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.06);
+}
+
 /* A figure that is a screenshot of a themed UI ships in both themes; only the
    one matching the reader's theme is shown. Swapped in CSS rather than in
    React so the right one is there on first paint, and lazily loaded so the
@@ -2019,12 +2044,18 @@ body {
   height: 280vh;
 }
 
+/* Hugs the stack rather than being a viewport-tall box that centres it. As a
+   100vh box it left (100vh - stack) / 2 of dead space at each end of the run —
+   around 260px above the frame where the run starts and the same below where
+   it ends, against the 16px every other figure sits at. The stack is ~508px
+   plus the frame's own padding, so the leftover was most of what you saw.
+
+   Pinned at the same 6rem as the copy panel beside it (`lg:top-24`), so the
+   two halves of the beat hold the same line while the run scrubs. */
 .flr-stage {
   position: sticky;
-  top: 0;
+  top: 6rem;
   display: flex;
-  height: 100vh;
-  align-items: center;
 }
 
 .flr-inner {

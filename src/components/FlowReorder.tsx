@@ -61,7 +61,8 @@ const LEAVE = [0.36, 0.46] as const;
 const MOVE = [0.44, 0.66] as const;
 const ARRIVE = [0.64, 0.8] as const;
 
-const ease = (t: number) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2);
+const ease = (t: number) =>
+  t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
 const clamp01 = (t: number) => (t < 0 ? 0 : t > 1 ? 1 : t);
 const across = (p: number, [from, to]: readonly [number, number]) =>
   clamp01((p - from) / (to - from));
@@ -141,7 +142,12 @@ export function FlowReorder() {
   return (
     <div className="flr" ref={runRef}>
       <div className="flr-stage">
-        <div className="flr-inner" ref={stageRef}>
+        {/* the mat sits here rather than around the whole run: this is the
+            only box the size of what is on screen */}
+        <div
+          className="flr-inner overlay-secondary-white rounded-lg p-4 sm:p-6"
+          ref={stageRef}
+        >
           {/* which order is on screen */}
           <div className="flr-head">
             <span className="flr-state" data-state="before">

@@ -10,7 +10,7 @@
 //
 // Reveals ride the shared ScrollReveal observer — see ScrollReveal.tsx.
 
-import { Fragment } from "react";
+import { Fragment, type ReactNode } from "react";
 import Image from "next/image";
 import type {
   CaseStudy,
@@ -26,7 +26,6 @@ import { ContextDiagram } from "@/components/ContextDiagram";
 import { InputFlowDiagram } from "@/components/InputFlowDiagram";
 import { WorkflowCanvas } from "@/components/WorkflowCanvas";
 import { MemoryCompare } from "@/components/MemoryCompare";
-import { IterationsReel } from "@/components/IterationsReel";
 import { ScreenGallery } from "@/components/ScreenGallery";
 import { ContextGraph } from "@/components/ContextGraph";
 import { ScanEras } from "@/components/ScanEras";
@@ -46,14 +45,23 @@ const SHOW_EMPTY_MEDIA = true;
 // content either side of it.
 const SECTION_PAD = "py-[clamp(3rem,6vw,6rem)]";
 
-// A section holds a screen of its own: a two-sentence beat is read on its own
-// rather than sharing the viewport with the one after it, so the story advances
-// a section at a time. `svh` rather than `vh` because mobile browser chrome
-// makes 100vh taller than what is actually on screen. The copy sits centred in
-// the screen it is given; a section already taller than the viewport is
-// unaffected, and the rule stays on the top edge — it is positioned, not laid
-// out by the flex column.
-const SECTION_FRAME = `relative flex min-h-[100svh] flex-col justify-center scroll-mt-24 ${SECTION_PAD}`;
+// The height a section reserves so a two-sentence beat is read on its own
+// rather than sharing the viewport with the one after it. It was a full 100svh,
+// which is a screen of height for content that is often a third of one — a
+// short beat sat in most of a screen of nothing, and a run of them read as
+// holes in the page rather than as pacing. 60svh still separates one beat from
+// the next while keeping what is left over close to the copy it belongs to.
+//
+// `svh` rather than `vh` because mobile browser chrome makes 100vh taller than
+// what is actually on screen. Every section in the story reserves this and
+// centres in it — the standalone ones below and the beats of a pinned run
+// alike, so the space above a heading is the same wherever it is set. A section
+// already taller than the reserve is unaffected.
+const SECTION_MIN = "min-h-[60svh]";
+
+// The rule stays on the top edge — it is positioned, not laid out by the flex
+// column.
+const SECTION_FRAME = `relative flex ${SECTION_MIN} flex-col justify-center scroll-mt-24 ${SECTION_PAD}`;
 
 // the reading column — capped and centred. Figures deliberately skip this and
 // run the full viewport in the footer's 16px gutters instead.
@@ -137,10 +145,6 @@ export function storyRailItems(story: CaseStudy): RailItem[] {
     ),
   ];
 }
-
-/* Figures that hold their own contents in place as the reader scrolls, and so
-   must not be put inside a pinned column. */
-const SELF_PINNING = new Set(["iterations-reel", "mood-reel", "flow-reorder"]);
 
 const isVideo = (src: string) => /\.(webm|mp4|mov)$/i.test(src);
 
@@ -276,7 +280,9 @@ function MediaInputs({
                     height={48}
                     unoptimized
                     className={`h-full w-full ${
-                      input.fit === "contain" ? "object-contain" : "object-cover"
+                      input.fit === "contain"
+                        ? "object-contain"
+                        : "object-cover"
                     }`}
                   />
                 </span>
@@ -292,6 +298,50 @@ function MediaInputs({
           </div>
         </Fragment>
       ))}
+    </div>
+  );
+}
+
+// The frame every figure wears: a translucent mat, the figure on a plate
+// inside it, and its note set underneath.
+//
+// No bottom pad when a note follows — the caption's own py-5 closes the mat,
+// which is what lands the plates 24px apart down a column: 16px of gap between
+// mats plus the next mat's 8px of top pad, and nothing under the plate above.
+// A figure with no note takes the pad on all four sides instead, or the plate
+// would sit flush against an edge that is padded on the other three.
+//
+// `clip` is off for a figure that pins its own contents: `overflow: hidden` on
+// any ancestor kills `position: sticky` inside it, and the stage would scroll
+// away instead of holding.
+function Mat({
+  note,
+  clip = true,
+  plateClassName = "",
+  plateStyle,
+  children,
+}: {
+  note?: string;
+  clip?: boolean;
+  plateClassName?: string;
+  plateStyle?: React.CSSProperties;
+  children: ReactNode;
+}) {
+  return (
+    <div
+      className={`overlay-secondary-white rounded-lg p-2 ${note ? "pb-0" : ""}`}
+    >
+      <div
+        className={`overlay-primary-white rounded-md ${clip ? "overflow-hidden" : ""} ${plateClassName}`}
+        style={plateStyle}
+      >
+        {children}
+      </div>
+      {note && (
+        <figcaption className="px-3 py-5 text-sm text-muted md:text-base">
+          {note}
+        </figcaption>
+      )}
     </div>
   );
 }
@@ -313,7 +363,10 @@ function Media({ item }: { item: CaseStudyMedia }) {
   // Sets its own height: the run has to be several screens long for the stack
   // to build, and each card takes the shape of the photo in it.
   // Brings its own <figure> and caption, and sets its own height from the grid.
-  if (item.figure === "onboarding-gallery" || item.figure === "memory-gallery") {
+  if (
+    item.figure === "onboarding-gallery" ||
+    item.figure === "memory-gallery"
+  ) {
     return (
       <ScreenGallery
         set={item.figure === "memory-gallery" ? "memory" : "onboarding"}
@@ -321,28 +374,31 @@ function Media({ item }: { item: CaseStudyMedia }) {
     );
   }
 
-  // Owns its own frame — 16:9, clipped corners, and the caption inside the art
-  // — so it is handed the slot rather than the ratio box.
+  // The canvas sets its own 16:9 and clips its own corners, so it needs no
+  // ratio box — but it wears the mat, and its note sits under it, like every
+  // other figure. Its root is a plain div: the mat brings the <figure>.
   if (item.figure === "structured-memory") {
-    return <ContextGraph />;
-  }
-
-  // Sets its own height: the stage has to have several screens of run to hold
-  // itself against while the sequence rearranges.
-  if (item.figure === "flow-reorder") {
     return (
-      <figure>
-        <FlowReorder />
+      <figure data-reveal="up">
+        <Mat note={item.note}>
+          <ContextGraph />
+        </Mat>
       </figure>
     );
   }
 
-  if (item.figure === "iterations-reel" || item.figure === "mood-reel") {
+  // Sets its own height: the stage has to have several screens of run to hold
+  // itself against while the sequence rearranges. That run is 280vh, so the
+  // mat cannot go around the figure — it would paint a panel nearly three
+  // screens tall around a stage that is one, which is what made it read as a
+  // column of fill rather than a frame. The mat is on `.flr-inner` instead,
+  // the one box that is the size of what you can actually see, and it travels
+  // with the pinned stage. The figure also carries its own before/after notes,
+  // so there is no caption to hang underneath.
+  if (item.figure === "flow-reorder") {
     return (
       <figure>
-        <IterationsReel
-          set={item.figure === "mood-reel" ? "mood" : "exploration"}
-        />
+        <FlowReorder />
       </figure>
     );
   }
@@ -368,59 +424,72 @@ function Media({ item }: { item: CaseStudyMedia }) {
 
     return (
       <figure data-reveal="up">
-        <div
-          className="relative w-full overflow-hidden"
-          style={{ aspectRatio: ratio }}
+        <Mat
+          note={item.note}
+          plateClassName="relative w-full"
+          plateStyle={{ aspectRatio: ratio }}
         >
-          {item.figure === "pipeline" ? (
-            <PipelineDiagram />
-          ) : item.figure === "context" ? (
-            <ContextDiagram />
-          ) : item.figure === "input-flow" ? (
-            <InputFlowDiagram />
-          ) : item.figure === "scan-funnel" ? (
-            <ScanFunnel />
-          ) : item.figure === "funnel-april" ? (
-            <ScanEras set="april" />
-          ) : item.figure === "funnel-august" ? (
-            <ScanEras set="august" />
-          ) : !item.src ? null : isVideo(item.src) ? (
-            // plays while it is on screen and stops when it isn't, so a wall
-            // of clips never runs four decoders at once off-screen
-            <CoverVideo src={item.src} />
-          ) : (
-            <>
-              <Image
-                src={item.src}
-                alt={item.title}
-                fill
-                sizes="100vw"
-                // already sized and encoded for the page; the optimizer would
-                // only re-encode a 1440px webp into another one
-                unoptimized
-                className={`object-cover ${item.srcLight ? "cs-media-dark" : ""}`}
+          <>
+            {item.figure === "pipeline" ? (
+              <PipelineDiagram />
+            ) : item.figure === "context" ? (
+              <ContextDiagram />
+            ) : item.figure === "input-flow" ? (
+              <InputFlowDiagram />
+            ) : item.figure === "scan-funnel" ? (
+              <ScanFunnel />
+            ) : item.figure === "funnel-april" ? (
+              <ScanEras set="april" />
+            ) : item.figure === "funnel-august" ? (
+              <ScanEras set="august" />
+            ) : item.figure === "signal-well" ? (
+              // A whole document rather than a component — its own reset, its own
+              // ground, and an SVG that scales itself to the box it is given, so
+              // it gets a plain frame and is left to fit (see FrameEmbed's note).
+              <iframe
+                src="/case-studies/adaptive-intelligence/signal-well.html"
+                title="Signal Well"
+                loading="lazy"
+                sandbox="allow-scripts"
+                scrolling="no"
+                className="absolute inset-0 block h-full w-full border-0"
               />
-              {/* the same screen in the other theme, swapped in CSS so there
-                  is no flash of the wrong one before hydration */}
-              {item.srcLight && (
+            ) : !item.src ? null : isVideo(item.src) ? (
+              // plays while it is on screen and stops when it isn't, so a wall
+              // of clips never runs four decoders at once off-screen
+              <CoverVideo src={item.src} />
+            ) : (
+              <>
                 <Image
-                  src={item.srcLight}
+                  src={item.src}
                   alt={item.title}
                   fill
                   sizes="100vw"
+                  // already sized and encoded for the page; the optimizer would
+                  // only re-encode a 1440px webp into another one
                   unoptimized
-                  className="cs-media-light object-cover"
+                  className={`object-cover ${item.srcLight ? "cs-media-dark" : ""}`}
                 />
-              )}
-            </>
-          )}
+                {/* the same screen in the other theme, swapped in CSS so there
+                  is no flash of the wrong one before hydration */}
+                {item.srcLight && (
+                  <Image
+                    src={item.srcLight}
+                    alt={item.title}
+                    fill
+                    sizes="100vw"
+                    unoptimized
+                    className="cs-media-light object-cover"
+                  />
+                )}
+              </>
+            )}
 
-          {item.inputs && item.inputs.length > 0 && (
-            <MediaInputs groups={item.inputs} bare={item.inputsBare} />
-          )}
-        </div>
-        {/* no visible caption: the figures sit under copy that already names
-            them. The title still travels as the image's alt text. */}
+            {item.inputs && item.inputs.length > 0 && (
+              <MediaInputs groups={item.inputs} bare={item.inputsBare} />
+            )}
+          </>
+        </Mat>
       </figure>
     );
   }
@@ -954,8 +1023,8 @@ function SplitSection({
               <div
                 className={`lg:col-span-6 lg:col-start-7 ${
                   shown.length >= 4
-                    ? "grid grid-cols-2 gap-2"
-                    : "flex flex-col gap-2"
+                    ? "grid grid-cols-2 gap-4"
+                    : "flex flex-col gap-4"
                 }`}
               >
                 {shown.map((item) => (
@@ -1045,7 +1114,7 @@ function StackedSection({
 
       {/* the figure runs the full viewport, in the footer's gutters */}
       {shown.length > 0 && (
-        <div className="mt-10 flex w-full flex-col gap-2 section-gutter lg:mt-14">
+        <div className="mt-10 flex w-full flex-col gap-4 section-gutter lg:mt-14">
           {shown.map((item) => (
             <Media key={item.title} item={item} />
           ))}
@@ -1135,17 +1204,15 @@ function StorySection({
         // screenshot loses its detail the moment it shares a row. Only tall
         // figures pack across, where a set of clips reads as a set and
         // stacking them would each be a screen of scrolling on its own.
-        // gap-2 is the experiments bento's 8px, matching the home page wall.
+        // One gap for both: 16px between figure mats, stacked or packed.
         const packs =
           items.length > 1 &&
-          items.every(
-            (i) => !i.width || !i.height || i.width / i.height < 1.2,
-          );
+          items.every((i) => !i.width || !i.height || i.width / i.height < 1.2);
         const mediaLayout = !packs
-          ? "flex flex-col gap-y-6"
+          ? "flex flex-col gap-y-4"
           : items.length >= 4
-            ? "grid grid-cols-2 gap-2 lg:grid-cols-4"
-            : "grid gap-2 sm:grid-cols-2";
+            ? "grid grid-cols-2 gap-4 lg:grid-cols-4"
+            : "grid gap-4 sm:grid-cols-2";
 
         return run.media ? (
           // Full viewport width, in the footer's 16px gutters. A trailing run
@@ -1238,8 +1305,7 @@ function groupSections(
     const joins =
       split &&
       !section.layout &&
-      (figures.length > 0 ||
-        (!section.blocks.some(isResult) && !aloneInAct));
+      (figures.length > 0 || (!section.blocks.some(isResult) && !aloneInAct));
     if (!joins) {
       // Copy-only sections run full width. Set beside a figure column they
       // have nothing to fill it with, and their copy reads as a caption on
@@ -1259,28 +1325,37 @@ function groupSections(
       heading: section.heading,
       copy: copy.map((block, bi) => <Block key={bi} block={block} split />),
       figures: figures.length ? (
-        /* The column is pinned so a short figure stays beside the copy it
-           belongs to. A figure that pins its own contents is not short and does
-           not want it: nesting one sticky mechanism inside another leaves the
-           inner one measuring its own position against a rect that has stopped
-           tracking the scroll, and the stack desyncs from what is on screen. */
-        <div
-          className={`${figures.some((f) => f.figure && SELF_PINNING.has(f.figure)) ? "" : "lg:sticky lg:top-24"} ${
-            figures.length >= 4
-              ? "grid grid-cols-2 gap-2"
-              : "flex flex-col gap-2"
-          }`}
-        >
+        /* One vertical column that always travels, however many figures a
+           beat carries. Only the copy panel is pinned: the figures scroll past
+           it and the panel swaps its text as each beat crosses the read line,
+           so the whole right-hand side is one continuous scroll rather than a
+           series of figures each caught beside its own paragraph.
+
+           Nothing here is sticky, which also settles the nested-sticky
+           problem: a figure that pins its own contents used to sit inside a
+           sticky column and measure its position against a rect that had
+           stopped tracking the scroll. */
+        <div className="flex flex-col gap-4">
           {figures.map((item) => (
             <Media key={item.title} item={item} />
           ))}
         </div>
       ) : null,
-      // Each beat holds a screen of its own, figure or not: the pinned panel
-      // keeps its copy for that screen instead of swapping twice in one, and a
-      // beat with nothing on the right is no longer scrolled through in an
-      // instant.
-      className: "min-h-[100svh] pb-8 lg:pb-14",
+      // A beat carrying figures is exactly as tall as they are — no reserve
+      // and no vertical padding, so nothing is left over underneath the last
+      // one. Its only pad is the 16px that carries the column's own rhythm
+      // across the beat boundary: the same gap the figures inside a beat sit
+      // at, so a figure is the same distance from the one above it whether or
+      // not a section starts between them. Below lg the next beat's copy
+      // follows instead, which wants more room than 16px.
+      //
+      // A beat with nothing on the right still reserves a beat's worth and
+      // centres in it. There is no figure column to give it height, so without
+      // the reserve it would collapse and the pinned panel would swap through
+      // its copy in an instant.
+      className: figures.length
+        ? "pb-10 lg:pb-4"
+        : `flex ${SECTION_MIN} flex-col justify-center`,
     };
 
     const last = groups[groups.length - 1];

@@ -63,8 +63,10 @@ export type CaseStudyMedia = {
      architecture view, or a generated result */
   kind: "ui" | "visual" | "system" | "output";
   title: string;
-  /* art direction while the slot is empty; becomes the caption once src is set */
-  note: string;
+  /* Art direction while the slot is empty; becomes the caption once src is
+     set. Optional: a figure that speaks for itself is left to, and the mat
+     closes up under it rather than holding a caption's worth of room. */
+  note?: string;
   /* drop the asset in /public and set this to replace the empty frame */
   src?: string;
   /* a drawn figure rather than a file — rendered by its own component, and
@@ -75,15 +77,14 @@ export type CaseStudyMedia = {
     | "input-flow"
     | "workflow"
     | "memory-compare"
-    | "iterations-reel"
-    | "mood-reel"
     | "onboarding-gallery"
     | "memory-gallery"
     | "structured-memory"
     | "scan-funnel"
     | "funnel-april"
     | "funnel-august"
-    | "flow-reorder";
+    | "flow-reorder"
+    | "signal-well";
   /* Light-theme counterpart of `src`, for figures that are themselves a
      screenshot of a themed UI. When set, `src` is the dark-theme one and the
      page shows whichever matches the theme the reader is in. */
@@ -535,6 +536,19 @@ export const projects: Project[] = [
               type: "p",
               text: "So we stopped adding more for the sake of adding more, and started figuring out **what the model actually needed to know**.",
             },
+            {
+              type: "media",
+              items: [
+                {
+                  kind: "visual",
+                  title: "More context, funnelled into one throat",
+                  note: "Every signal pouring down the same well — and the one that comes out the other side holding a steady orbit.",
+                  figure: "signal-well",
+                  width: 1200,
+                  height: 1180,
+                },
+              ],
+            },
           ],
         },
         {
@@ -554,7 +568,6 @@ export const projects: Project[] = [
                 {
                   kind: "visual",
                   title: "Breaking a brief into storyboards and keyframes",
-                  note: "The brief becoming concept ideas, storyboards and keyframes — one decision per step.",
                   src: "/case-studies/adaptive-intelligence/iter-storyboards.webp",
                   width: 1124,
                   height: 942,
@@ -582,7 +595,6 @@ export const projects: Project[] = [
                 {
                   kind: "ui",
                   title: "Refining an output instead of regenerating it",
-                  note: "The generated shot, its earlier attempts alongside, and the edits that avoid another full run.",
                   src: "/case-studies/adaptive-intelligence/retries.webp",
                   width: 1124,
                   height: 942,
@@ -661,7 +673,6 @@ export const projects: Project[] = [
                 {
                   kind: "ui",
                   title: "Before / after input flow",
-                  note: "Product + logo + scene reference → product + logo → the derived visual direction and hero image.",
                   figure: "input-flow",
                   width: 1200,
                   height: 800,
@@ -782,7 +793,6 @@ export const projects: Project[] = [
         {
           kind: "ui",
           title: "Brand Memory in the product",
-          note: "The product film: a generation that gets the image but not the brand, the assets and persona gathered into memory, then the same request holding consistent with memory switched on.",
           src: "/case-studies/brand-memory/demo.webm",
           width: 960,
           height: 540,
@@ -884,13 +894,60 @@ export const projects: Project[] = [
               text: "What should stay true, and what should be allowed to change?",
             },
             {
+              /* The whiteboards behind this act, one matted figure each rather
+                 than a stack that builds as the act is read. In the order they
+                 were worked through: the extraction pass, the scan as a
+                 pipeline, the memory screen, the wider system, the screen flow,
+                 and the question of what should be captured at all. */
               type: "media",
               items: [
                 {
                   kind: "visual",
-                  title: "Working the iterations out on a whiteboard",
-                  note: "The whiteboards behind this act, stacking as it is read: the attributes worth extracting, the scan as a pipeline, the memory screen, the wider system, and the question of what should be captured at all.",
-                  figure: "iterations-reel",
+                  title:
+                    "Whiteboard: a website resolved into the attributes worth keeping",
+                  note: "Logo, colours, font, tagline, buttons, voice and accent, pulled off the site and listed as the things worth extracting.",
+                  src: "/case-studies/brand-memory/exploration/06.webp",
+                  width: 1200,
+                  height: 555,
+                },
+                {
+                  kind: "visual",
+                  title: "Whiteboard: the scan drawn as a pipeline",
+                  note: "From the URL through to the memory it writes, drawn as one pass with a stage per decision.",
+                  src: "/case-studies/brand-memory/exploration/03.webp",
+                  width: 1200,
+                  height: 555,
+                },
+                {
+                  kind: "visual",
+                  title: "Whiteboard: the memory screen, beside what it reads",
+                  src: "/case-studies/brand-memory/exploration/04.webp",
+                  width: 1024,
+                  height: 590,
+                },
+                {
+                  kind: "visual",
+                  title:
+                    "Whiteboard: Brand Memory between the workflows either side of it",
+                  note: "The wider system, with memory sitting between the workflows that write it and the ones that read it.",
+                  src: "/case-studies/brand-memory/exploration/05.webp",
+                  width: 1200,
+                  height: 555,
+                },
+                {
+                  kind: "visual",
+                  title: "Whiteboard: screen by screen flow for the memory surface",
+                  src: "/case-studies/brand-memory/exploration/08.webp",
+                  width: 1200,
+                  height: 555,
+                },
+                {
+                  kind: "visual",
+                  title: "Whiteboard: memory as a core ringed by its playbooks",
+                  note: "Message, voice, visual playbook and the do's and don'ts around a core — beside the question of what should actually be captured.",
+                  src: "/case-studies/brand-memory/exploration/09.webp",
+                  width: 1024,
+                  height: 590,
                 },
               ],
             },
@@ -924,13 +981,40 @@ export const projects: Project[] = [
               text: "Mood was temporary. It could change from one campaign to the next. That gave us a much cleaner way to think about memory.",
             },
             {
+              /* What stays true, then what is allowed to change — the beat's
+                 own order. The product line and the reference language are
+                 Brand DNA; the moodboard and the lighting direction are one
+                 campaign's mood, and could be replaced next season without
+                 touching the brand. One figure each, read in a single scroll. */
               type: "media",
               items: [
                 {
                   kind: "visual",
-                  title: "Brand DNA beside Mood",
-                  note: "What stays true, then what changes: the product line and the reference language, then one campaign's moodboard and lighting direction.",
-                  figure: "mood-reel",
+                  title: "Brand DNA: the product line, front and back",
+                  src: "/case-studies/brand-memory/mood/22.webp",
+                  width: 1100,
+                  height: 1100,
+                },
+                {
+                  kind: "visual",
+                  title: "Brand DNA: the reference language",
+                  src: "/case-studies/brand-memory/mood/21.webp",
+                  width: 1100,
+                  height: 1100,
+                },
+                {
+                  kind: "visual",
+                  title: "Mood: one campaign's moodboard",
+                  src: "/case-studies/brand-memory/mood/19.webp",
+                  width: 1100,
+                  height: 1100,
+                },
+                {
+                  kind: "visual",
+                  title: "Mood: the lighting direction for that campaign",
+                  src: "/case-studies/brand-memory/mood/20.webp",
+                  width: 1100,
+                  height: 1100,
                 },
               ],
             },
@@ -951,7 +1035,6 @@ export const projects: Project[] = [
                 {
                   kind: "ui",
                   title: "One brand, everywhere",
-                  note: "The idea as a film: one composer, one switch, and the brand carried into whatever gets asked for next.",
                   src: "/case-studies/brand-memory/first-idea.webm",
                   width: 1280,
                   height: 720,
@@ -1037,7 +1120,6 @@ export const projects: Project[] = [
                 {
                   kind: "visual",
                   title: "Structured memory",
-                  note: "The brand as a context graph: one centre, five branches, and a query that walks to one of them.",
                   figure: "structured-memory",
                 },
               ],
@@ -1114,7 +1196,6 @@ export const projects: Project[] = [
                 {
                   kind: "visual",
                   title: "The funnel",
-                  note: "The control cohort read two ways: the chain of thirty-seven down to one, and the same thirty-seven counted, with the one that finished lit.",
                   figure: "scan-funnel",
                   width: 1200,
                   height: 960,
@@ -1145,7 +1226,6 @@ export const projects: Project[] = [
                 {
                   kind: "ui",
                   title: "The ask, before there is anything to ask about",
-                  note: "The empty board: set your visual direction, said to someone who has not generated anything yet and has no way of knowing what direction they want.",
                   src: "/case-studies/brand-memory/empty-board.webp",
                   width: 1600,
                   height: 961,
@@ -1182,7 +1262,6 @@ export const projects: Project[] = [
                 {
                   kind: "ui",
                   title: "Before and after",
-                  note: "The same steps in a different order: generate rises to first, memory drops to third, and the sentence that earns it arrives between them.",
                   figure: "flow-reorder",
                 },
               ],
@@ -1207,7 +1286,6 @@ export const projects: Project[] = [
                 {
                   kind: "system",
                   title: "Memory as a wiki",
-                  note: "One brand's memory read as articles: brand identity, creative, ad performance, email, store and product, kept in sync.",
                   src: "/case-studies/brand-memory/memory-wiki.webp",
                   width: 1600,
                   height: 962,
@@ -1215,7 +1293,6 @@ export const projects: Project[] = [
                 {
                   kind: "system",
                   title: "Memory as a graph",
-                  note: "The same memory as the graph underneath it: a hundred and two units in thirteen clusters, and the cluster the system is leaning on hardest called out beside them.",
                   src: "/case-studies/brand-memory/memory-graph.webp",
                   width: 1600,
                   height: 962,
@@ -1246,7 +1323,6 @@ export const projects: Project[] = [
                 {
                   kind: "visual",
                   title: "April, when the scan flow was broken",
-                  note: "Out of eighty-six onboarding completers: twenty clicked the scan, and one of them submitted a URL.",
                   figure: "funnel-april",
                   width: 1200,
                   height: 467,
@@ -1254,7 +1330,6 @@ export const projects: Project[] = [
                 {
                   kind: "visual",
                   title: "August, once the scan flow was fixed",
-                  note: "The same eighty-six: thirty-three clicked, thirty-two submitted a URL and thirty-two finished the scan — and fifty-four never entered it at all.",
                   figure: "funnel-august",
                   width: 1200,
                   height: 434,
@@ -1274,6 +1349,18 @@ export const projects: Project[] = [
             {
               type: "pull",
               text: "I'd watch what people are actually doing and understand why they still choose to skip it.",
+            },
+            {
+              type: "media",
+              items: [
+                {
+                  kind: "ui",
+                  title: "Brand Memory as it stands now",
+                  src: "/case-studies/brand-memory/next-brand-memory-home.webp",
+                  width: 1600,
+                  height: 1039,
+                },
+              ],
             },
           ],
         },

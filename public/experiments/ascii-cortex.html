@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>ASCII Cortex</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+  :root{ --app:#141416; }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--app);-webkit-font-smoothing:antialiased}
+
+  /* The host div, full-bleed. The field fits whatever box you give it and
+     paints nothing opaque — every pass is additive over a transparent canvas,
+     so there is no panel and no rectangle, only glyphs and light. */
+  .scan{position:fixed;inset:0;overflow:hidden}
+  .cortex{position:absolute;inset:0}
+</style>
+</head>
+<body>
+
+<div class="scan"><div class="cortex" id="cortex"></div></div>
+
+<script>
+/* ─────────────────────────────────────────────────────────────────────────
+   ASCII Cortex — a glyph field that breathes on one quantised clock.
+
+   createAsciiCortex(container, options) -> { destroy, resize }
+
+   Fits its CONTAINER, not the viewport. Phase comes from a particle's radius,
+   never from randomness, so the field converges into perfect unison once per
+   harmony cycle instead of shimmering at random.
+   ───────────────────────────────────────────────────────────────────────── */
+function createAsciiCortex(container, options) {
+  const ART = "                                    =+%%==+++  :-::                               \n                         += =- %%=++-==%%++====-===--=%*+-                        \n                   +%+++++++=+ *%#=++=: =%@#+===-:=++-=@%#*+++-                   \n               +#**#%###%%%%%= =%%%==== -%#*##+=--##=+=+-=---::-:-                \n             -*%%%%**###%%%%*%=%###+--==::**#++--%@%##+++=----- :=:               \n          **%%#####*#%%%%*#*#+==*##*++- =%@%%#++*++###*++==- -: :+=:              \n        #%%#######%%#%#+%#%%++-#%#*===-:*#*##+==%%%+++++++====**   :=:            \n      ##%%=#%###+%@@%##%#+-*++%%**#++--@%%@%*=-#%@%#+*%##+++=+=+- :  -+- :        \n     **%@=########%%++%%%%==-%%%#===+=%#%%*:=+%%%@#==-@%+#*##===   =+=-=-         \n   *%%%@+%%#%##%##%*==##%%#++%%%%==--%%%%%@=  #%%%#=- %**##**#= +===-:-=          \n  %%##%%%#%#%+=%%%*++##+%%##*%%%%%#--#%%%%@%=-##%%#=--##+#+--=*%%++-==---:  =     \n @%##%*+#####%*===+%#%####+=-@%%%%%==+%#%%%%+=#@%%#++%%@@%#*=:=%%%==-=-: -  =-    \n ######=######%=--#######%%%= ##%%%%*###%%@%@+%%%****#%##+*#*=+%%%%*-=:-:   --    \n=#####%######*==-%%####+%%%%*-%%%%%@%%%@@@@@%%%%@#=##*===%@%==-+%#==--==-:--  =   \n+#%###%%###%#++###%%##%+-##%%+*###%*%@%%****=+#++===--+#%%%%+=-+====+#+==--++: ==:\n -#%++%#########%#%%%%*#=%#####%%#%==**+===::+=+-:  +#%%@%%#=++===+--+==-== :-  : \n ##+*#%#%###%###%#%%%*#+==###%%%%#*+=:+=-::#*++=+-=:-#+#@%%++++=+=:-#=--++++=--=: \n *#######%%#%#====###*===--#++++==+- +%%==+*%%##**#==+*%%+#+#++==::%#++=:*#*=-    \n  =#*#%%**=#%#%#++=*===--:*=+++++===-#%#%%%%%#*@%%##*+*#%%##**===%%*==-=+#%*=-    \n    =--+==%%%%***#=--: =#%%#%#####%##%%##%@%+-#%%%##=++####++==#%%%+=:=*=--+=::== \n      ===%*#++++===+-##########%######%%%##=-%%%#++=+=%%++--:%@@%===::#+=--+=:==- \n        -==+++==--=#####%%%###%%%%%%%%##+==:=+-:--:-#=+-+--%%@%=+=+::**=-:=#*= --=\n                 #%%%%###%%%@%@+=-===++-=+%#%%%%%#+#=%@@%%+*%++==:-===+-=::==:  =:\n                 *#%@%%#++===-:-%###%%%@@@@%+%%%%+===+++++=+++++-=-=:--++::=:  =- \n                  :=**%#=-=#%#%%%%%%%%%##%%#%+==========+=--++++-=-===+++:-:: -   \n                    #%*+-=#%%%%#**#+++++++==++=%#+++++%%%%%*==---=+==:-: -:       \n                     =+++%##+%++++==%#%%#%%%%%%%#=====*%%#+------=--=:-: :        \n                          =####====++++=====-----=%%#%%%==+*#%==+*-+=::-          \n                                             ++%%#%%%#%%=+#:==+=--:---:           \n                                               +#%%%%%%##%*+-===-=:               \n                                                -*%#%%@%%%==+--:-: :              \n                                                  *#####+##-=-::                  \n                                                  =%%%=                           \n                                                   -%%%=                          ";
+  const LVL = "0000000000000000000000000000000000004588445550023220000000000000000000000000000000\n0000000000000000000000000540430884553448855444434443348653000000000000000000000000\n0000000000000000000585555555450687455420489754443245534987655530000000000000000000\n0000000000000005766787778888840488844440387677543377454534333223230000000000000000\n0000000000000368888667778888684877753344226675533898775554333330242000000000000000\n0000000000668877777678888676754467765530489887556557776554430320254200000000000000\n0000000078877777778878758788553787644432676775448885555555444466000242000000000000\n0000007788478777589987787536558866755339889864378987568775554545302003530200000000\n0000066894777777778855888844388874445487886245888974439857677444000454343000000000\n0006888958878778778644778875588884433888889400788874308667766740544432340000000000\n0088778887878548886557758877688888733788889843778874337757533468855344333200400000\n0987786577777864445878777754398888844587888854798875588998764248884434320300430000\n0777777477777784337777777888407788886777889895888666678775676458888634232000330000\n4777778777777644388777758888638888898889999988889747764448984435874433443233004000\n5787778877787557778877853778856777868988666645755444335788885435444457544335520442\n0378558777777777878888674877777887844665444225453200578898874554445335443440230020\n0775678787778777878886754477788887654254322765545342375798855554542374335555433420\n0677777778878744447776444337555544530588445688776674456885757554422875542676430000\n0047678866478787554644433264555554443787888887698877656788776644488644345786430000\n0000433544888866674332047887877777877887789853788877455777755447888542464335422440\n0000004448675555444537777777777877777788877438887554548855332899844422754335424430\n0000000034455544334777778887778888888877544245323323745353388984545226643247640334\n0000000000000000078888777888989543444553458788888757489988568554423444534224420042\n0000000000000000067898875544432387778889999858888544455555455555343423355224200430\n0000000000000000002466874347878888888887788785444444444454335555343444555232203000\n0000000000000000000078653478888766755555554455487555558888864433345442320320000000\n0000000000000000000004555877585555448788788888887444446887533333343342320200000000\n0000000000000000000000000047777444455554444433333488788844567844563542230000000000\n0000000000000000000000000000000000000000000005588788878845724454332333200000000000\n0000000000000000000000000000000000000000000000057888888778653444342000000000000000\n0000000000000000000000000000000000000000000000003687889888445332320200000000000000\n0000000000000000000000000000000000000000000000000067777757734322000000000000000000\n0000000000000000000000000000000000000000000000000048884000000000000000000000000000\n0000000000000000000000000000000000000000000000000003888400000000000000000000000000";
+  const COLS = 82, ROWS = 34, ASPECT = 1.995;
+  const RAMP = ".:-=+*#%@";
+
+  const o = Object.assign({
+    ink:     '#efe7f4',   // glyph colour
+    halo:    '#cba6e8',   // wide-glow tint
+    ambient: '#2b1b29',   // atmospheric haze; null to disable
+    ambientAlpha: 0.42,
+    fitX: 0.94,           // fraction of container width the lattice may use
+    fitY: 0.88,
+    breath: 2600,         // ms — one full inhale/exhale
+    tick: 90,             // ms — modulation is quantised to this step
+    steps: 12,            // discrete brightness levels
+    harmony: 4,           // breaths per convergence cycle
+    swell: 1.6,           // px of radial breathing
+    reveal: true,         // ordered ring-by-ring entrance
+    font: '"JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace'
+  }, options || {});
+
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  if (getComputedStyle(container).position === 'static') container.style.position = 'relative';
+  const cv = document.createElement('canvas');
+  cv.setAttribute('aria-hidden', 'true');
+  cv.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none';
+  container.appendChild(cv);
+
+  const ctx  = cv.getContext('2d');
+  const gl   = document.createElement('canvas'), glx  = gl.getContext('2d');
+  const bl   = document.createElement('canvas'), blx  = bl.getContext('2d');
+  const bl2  = document.createElement('canvas'), bl2x = bl2.getContext('2d');
+  const hz   = document.createElement('canvas'), hzx  = hz.getContext('2d');
+  const atlas= document.createElement('canvas'), atx  = atlas.getContext('2d');
+
+  /* ── particles: phase comes from position, never from randomness ──────── */
+  const artRows = ART.split('\n'), lvlRows = LVL.split('\n');
+  const chars = [...RAMP];
+  const idxOf = new Map(chars.map((g, i) => [g, i]));
+  const P = [];
+  let cx = 0, cy = 0;
+  for (let r = 0; r < ROWS; r++) {
+    /* ART and LVL are both 34x82. Read the row once and skip a missing one, so
+       an edit that shortens either string thins the field instead of throwing
+       partway through building it. */
+    const artRow = artRows[r], lvlRow = lvlRows[r];
+    if (!artRow) continue;
+    for (let c = 0; c < COLS; c++) {
+      const g = artRow[c];
+      if (!g || g === ' ') continue;
+      const lv = (+(lvlRow && lvlRow[c]) || 1) / 9;
+      P.push({ gx: c + .5, gy: r + .5, g0: idxOf.get(g) ?? 0,
+               base: .34 + .66 * lv, hx: 0, hy: 0, dx: 0, dy: 0, phase: 0 });
+      cx += c; cy += r;
+    }
+  }
+  cx = cx / P.length + .5;
+  cy = cy / P.length + .5;
+  let maxD = 0;
+  for (const p of P) {
+    const ux = p.gx - cx, uy = (p.gy - cy) * ASPECT;
+    const d = Math.hypot(ux, uy) || 1e-6;
+    p.dx = ux / d; p.dy = uy / d; p.phase = d;
+    if (d > maxD) maxD = d;
+  }
+  for (const p of P) p.phase /= maxD;
+
+  /* ── layout: driven by the container box, re-run on ResizeObserver ────── */
+  let dpr = 1, W = 0, H = 0, cw = 0, chh = 0, tileW = 0, tileH = 0, amb = null, ready = false;
+
+  function layout() {
+    const r = container.getBoundingClientRect();
+    const w = Math.floor(r.width), h = Math.floor(r.height);
+    if (w < 8 || h < 8) { ready = false; return; }      // hidden / not laid out yet
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+    W = w; H = h;
+
+    for (const [cn, cc] of [[cv, ctx], [gl, glx]]) {
+      cn.width  = Math.max(1, Math.round(W * dpr));
+      cn.height = Math.max(1, Math.round(H * dpr));
+      cc.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    bl.width  = Math.max(1, Math.round(W * dpr / 4));
+    bl.height = Math.max(1, Math.round(H * dpr / 4));
+    bl2.width = Math.max(1, Math.round(W * dpr / 16));
+    bl2.height= Math.max(1, Math.round(H * dpr / 16));
+    hz.width = bl2.width; hz.height = bl2.height;
+    blx.imageSmoothingEnabled = true; bl2x.imageSmoothingEnabled = true;
+    try { bl2x.filter = 'blur(1.4px)'; } catch (e) {}
+
+    cw  = Math.min(W * o.fitX / COLS, H * o.fitY / (ROWS * ASPECT));
+    chh = cw * ASPECT;
+    const ox = (W - COLS * cw) / 2, oy = (H - ROWS * chh) / 2;
+    for (const p of P) { p.hx = ox + p.gx * cw; p.hy = oy + p.gy * chh; }
+
+    if (o.ambient) {
+      const R = Math.max(W, H) * .62;
+      amb = ctx.createRadialGradient(W * .5, H * .5, 0, W * .5, H * .5, R);
+      const c3 = hexRGB(o.ambient);
+      amb.addColorStop(0,   'rgba(' + c3 + ',' + o.ambientAlpha + ')');
+      amb.addColorStop(.55, 'rgba(' + c3 + ',' + (o.ambientAlpha * .38) + ')');
+      amb.addColorStop(1,   'rgba(' + c3 + ',0)');   // fades out — never a rectangle
+    }
+
+    buildAtlas();
+    ready = true;
+  }
+
+  function hexRGB(h) {
+    const n = parseInt(h.replace('#', ''), 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255].join(',');
+  }
+
+  function buildAtlas() {
+    const fpx = Math.max(4, chh * dpr * .96);
+    tileW = Math.ceil(cw * dpr * 2);
+    tileH = Math.ceil(chh * dpr * 1.25);
+    atlas.width = Math.max(1, tileW * chars.length);
+    atlas.height = Math.max(1, tileH);
+    atx.setTransform(1, 0, 0, 1, 0, 0);
+    atx.clearRect(0, 0, atlas.width, atlas.height);
+    atx.font = fpx + 'px ' + o.font;
+    atx.textAlign = 'center';
+    atx.textBaseline = 'middle';
+    atx.fillStyle = o.ink;
+    for (let i = 0; i < chars.length; i++)
+      atx.fillText(chars[i], tileW * i + tileW / 2, tileH / 2);
+  }
+
+  /* ── loop ─────────────────────────────────────────────────────────────── */
+  const T0 = performance.now();
+  let raf = 0, visible = true;
+
+  function frame(now) {
+    raf = requestAnimationFrame(frame);
+    if (!ready || !visible) return;
+
+    const t   = reduce ? o.breath * .25 : Math.floor((now - T0) / o.tick) * o.tick;
+    const age = now - T0;
+
+    // phase lag by radius swings 0 → 0.7 → 0: rings, then perfect unison
+    const conv   = .5 - .5 * Math.cos(2 * Math.PI * t / (o.breath * o.harmony));
+    const spread = reduce ? 0 : .7 * conv;
+    const cycBase = t / o.breath;
+
+    const qenv = v => Math.round((.5 - .5 * Math.cos(2 * Math.PI * v)) * o.steps) / o.steps;
+    const glow = .70 + .62 * qenv(cycBase + .5 * spread);
+
+    const dw = tileW / dpr, dh = tileH / dpr;
+    glx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    glx.clearRect(0, 0, W, H);
+
+    for (let i = 0; i < P.length; i++) {
+      const p = P[i];
+      let rev = 1;
+      if (o.reveal && !reduce) {
+        const k = (age - p.phase * 820) / 640;
+        if (k <= 0) continue;
+        rev = k >= 1 ? 1 : 1 - Math.pow(1 - k, 3);
+      }
+      const env = qenv(cycBase + p.phase * spread);
+      const a = p.base * (.62 + .38 * env) * rev;
+      if (a <= .012) continue;
+      const s = (env - .5) * o.swell * rev;
+      glx.globalAlpha = a;
+      glx.drawImage(atlas, p.g0 * tileW, 0, tileW, tileH,
+                    p.hx + p.dx * s - dw / 2, p.hy + p.dy * s - dh / 2, dw, dh);
+    }
+
+    blx.setTransform(1, 0, 0, 1, 0, 0);
+    blx.clearRect(0, 0, bl.width, bl.height);
+    blx.drawImage(gl, 0, 0, bl.width, bl.height);
+    bl2x.setTransform(1, 0, 0, 1, 0, 0);
+    bl2x.clearRect(0, 0, bl2.width, bl2.height);
+    bl2x.drawImage(bl, 0, 0, bl2.width, bl2.height);
+    hzx.setTransform(1, 0, 0, 1, 0, 0);
+    hzx.globalCompositeOperation = 'source-over';
+    hzx.clearRect(0, 0, hz.width, hz.height);
+    try { hzx.filter = 'blur(1.8px)'; } catch (e) {}
+    hzx.drawImage(bl2, 0, 0);
+    hzx.globalCompositeOperation = 'source-in';
+    hzx.filter = 'none';
+    hzx.fillStyle = o.halo;
+    hzx.fillRect(0, 0, hz.width, hz.height);
+
+    // every pass additive over a transparent canvas — nothing opaque is painted
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.clearRect(0, 0, W, H);
+    ctx.globalCompositeOperation = 'lighter';
+    if (amb) { ctx.globalAlpha = glow * .8; ctx.fillStyle = amb; ctx.fillRect(0, 0, W, H); }
+    ctx.globalAlpha = .40 * glow; ctx.drawImage(hz,  -W * .13, -H * .17, W * 1.26, H * 1.34);
+    ctx.globalAlpha = .30 * glow; ctx.drawImage(hz,  -W * .04, -H * .05, W * 1.08, H * 1.10);
+    ctx.globalAlpha = .34 * glow; ctx.drawImage(bl2, 0, 0, W, H);
+    ctx.globalAlpha = 1;          ctx.drawImage(gl,  0, 0, W, H);
+    ctx.globalCompositeOperation = 'source-over';
+  }
+
+  /* ── observers ────────────────────────────────────────────────────────── */
+  const ro = new ResizeObserver(layout);
+  ro.observe(container);
+  const io = new IntersectionObserver(e => { visible = e[0].isIntersecting; }, { threshold: 0 });
+  io.observe(container);
+  const onDpr = () => layout();
+  addEventListener('resize', onDpr);
+
+  function boot() { layout(); raf = requestAnimationFrame(frame); }
+  if (document.fonts && document.fonts.load) {
+    Promise.race([
+      document.fonts.load('500 40px ' + o.font.split(',')[0]).then(() => document.fonts.ready),
+      new Promise(r => setTimeout(r, 2000))
+    ]).then(boot);
+  } else boot();
+
+  return {
+    resize: layout,
+    destroy() {
+      cancelAnimationFrame(raf);
+      ro.disconnect(); io.disconnect();
+      removeEventListener('resize', onDpr);
+      cv.remove();
+    }
+  };
+}
+/* The host div keeps its size; these only say how much of it the lattice may
+   take. Held equal so neither axis crops first — the tile already carries the
+   lattice's own 82 : 34x1.995 ratio, so the smaller of the two simply wins —
+   and the halo still spreads across the full box, leaving the brain smaller in
+   a wider field of light. */
+createAsciiCortex(document.getElementById('cortex'), { fitX: 0.66, fitY: 0.66 });
+</script>
+</body>
+</html>

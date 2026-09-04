@@ -87,7 +87,13 @@ const rad = (deg: number) => (deg * Math.PI) / 180;
 type Node = { x: number; y: number; r: number; label: string; branch: number };
 
 /* the graph, laid out once */
-const CORE: Node = { x: CX, y: CY, r: R_CORE, label: "Context graph", branch: -1 };
+const CORE: Node = {
+  x: CX,
+  y: CY,
+  r: R_CORE,
+  label: "Context graph",
+  branch: -1,
+};
 
 const NODES: { branch: Node; leaves: Node[] }[] = BRANCHES.map((b, i) => {
   const bx = CX + Math.cos(rad(b.angle)) * b.dist;
@@ -145,7 +151,7 @@ const SEGMENTS: Segment[] = (() => {
 const FLOW_MS = 3200;
 
 export function ContextGraph() {
-  const hostRef = useRef<HTMLElement>(null);
+  const hostRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -343,7 +349,9 @@ export function ContextGraph() {
       // labels last, so nothing is drawn over them
       NODES.forEach(({ branch, leaves }, i) => {
         const on = i === active;
-        leaves.forEach((leaf) => leafLabel(leaf, on ? 0.82 : light ? 0.6 : 0.46));
+        leaves.forEach((leaf) =>
+          leafLabel(leaf, on ? 0.82 : light ? 0.6 : 0.46),
+        );
         text(branch.label, branch.x, branch.y + 30, {
           size: 15,
           alpha: on ? 1 : light ? 0.88 : 0.82,
@@ -429,7 +437,9 @@ export function ContextGraph() {
   }, []);
 
   return (
-    <figure ref={hostRef} className="cgr">
+    /* a div, not a figure: the mat around this brings the <figure> and the
+       caption, and one figure nested in another is nobody's idea of markup */
+    <div ref={hostRef} className="cgr">
       <canvas
         ref={canvasRef}
         aria-hidden="true"
@@ -445,6 +455,6 @@ export function ContextGraph() {
         walks to one branch and takes its nodes, rather than reading the whole
         history.
       </p>
-    </figure>
+    </div>
   );
 }
